@@ -1,0 +1,225 @@
+{
+  "app": {
+    "title": "UFW Manager",
+    "subtitle": "Uzak güvenlik duvarı kontrolü",
+    "metadataTitle": "UFW Remote Manager",
+    "metadataDescription": "SSH üzerinden kendi barındırılan uzak UFW yönetimi"
+  },
+  "language": {
+    "label": "Dil"
+  },
+  "sidebar": {
+    "noServers": "Henüz sunucu yok",
+    "operationsHistory": "İşlem Geçmişi",
+    "logout": "Çıkış"
+  },
+  "common": {
+    "cancel": "İptal",
+    "open": "Aç",
+    "dash": "—"
+  },
+  "auth": {
+    "login": {
+      "title": "Giriş Yap",
+      "description": "UFW Remote Manager erişimi",
+      "email": "E-posta",
+      "password": "Şifre",
+      "submit": "Giriş Yap",
+      "submitting": "Giriş yapılıyor...",
+      "failed": "Giriş başarısız"
+    },
+    "setup": {
+      "title": "İlk Kurulum",
+      "description": "UFW Remote Manager için ilk yönetici hesabını oluşturun.",
+      "name": "Ad",
+      "email": "E-posta",
+      "password": "Şifre",
+      "confirmPassword": "Şifreyi Onayla",
+      "submit": "Kurulumu Tamamla",
+      "submitting": "Oluşturuluyor..."
+    }
+  },
+  "servers": {
+    "title": "Sunucular",
+    "description": "Uzak Linux sunucularını ve UFW kurallarını yönetin.",
+    "addServer": "Sunucu Ekle",
+    "editServer": "Sunucuyu Düzenle",
+    "rulesUnavailable": "Kural düzenleme, UFW kurulup etkinleştirildikten sonra kullanılabilir olur.",
+    "new": {
+      "title": "Sunucu Ekle",
+      "description": "SSH kimlik bilgileri depolanmadan önce şifrelenir. Kaydetmeden önce bağlantı doğrulanır.",
+      "detailsTitle": "Sunucu Detayları",
+      "detailsDescription": "Seçilen kimlik doğrulama yöntemine göre tüm alanlar zorunludur."
+    },
+    "edit": {
+      "title": "Sunucuyu Düzenle",
+      "detailsTitle": "Sunucu Detayları",
+      "detailsDescription": "Kimlik bilgilerini güncellemek başarılı bir SSH testi gerektirir.",
+      "hostKeyFingerprint": "SSH anahtar parmak izi"
+    },
+    "delete": {
+      "button": "Sunucuyu sil",
+      "title": "Sunucu silinsin mi?",
+      "description": "\"{name}\" sunucusu ve tüm yerel verileri kalıcı olarak silinecek: onaylanmış kurallar, taslaklar, anlık görüntüler, etiket geçmişi ve uygulama oturumları. Uzak sunucudaki UFW değiştirilmez.",
+      "confirm": "Sil",
+      "deleting": "Siliniyor...",
+      "dangerTitle": "Tehlikeli bölge",
+      "dangerDescription": "Bir sunucuyu silmek, yerel veritabanındaki tüm ilgili kayıtları kaldırır."
+    }
+  },
+  "serverForm": {
+    "name": "Ad",
+    "host": "Sunucu",
+    "port": "Port",
+    "username": "Kullanıcı adı",
+    "authMethod": "Kimlik Doğrulama Yöntemi",
+    "selectMethod": "Yöntem seçin",
+    "passwordAuth": "Şifre",
+    "privateKeyAuth": "Özel Anahtar",
+    "privateKeyPassphraseAuth": "Parolalı Özel Anahtar",
+    "password": "Şifre",
+    "privateKey": "Özel Anahtar",
+    "passphrase": "Parola",
+    "createServer": "Sunucu Oluştur",
+    "updateServer": "Sunucuyu Güncelle",
+    "creating": "Oluşturuluyor...",
+    "updating": "Güncelleniyor...",
+    "missingServerId": "Sunucu ID'si eksik"
+  },
+  "ufw": {
+    "installed": "UFW Kurulu",
+    "notInstalled": "UFW Kurulu Değil",
+    "active": "UFW Etkin",
+    "inactive": "UFW Etkin Değil",
+    "remoteRules": "{count} uzak kural",
+    "testSsh": "SSH Test Et",
+    "refreshStatus": "Durumu Yenile",
+    "installUfw": "UFW Kur",
+    "activateUfw": "UFW Etkinleştir",
+    "installTitle": "UFW kurulsun mu?",
+    "installDescription": "UFW, SSH üzerinden uzak sunucuya kurulacaktır.",
+    "confirmInstall": "Kurulumu Onayla",
+    "activateTitle": "UFW etkinleştirilsin mi?",
+    "activateDescription": "UFW uzak sunucuda etkinleştirilecektir. SSH erişiminin izinli olduğundan emin olun.",
+    "confirmActivate": "Etkinleştirmeyi Onayla"
+  },
+  "rules": {
+    "toolbar": {
+      "addRule": "Kural Ekle",
+      "saveDraft": "Taslak Kaydet",
+      "saveRules": "Kuralları Kaydet",
+      "import": "İçe Aktar",
+      "draftSaved": "Taslak yerel olarak kaydedildi. Sunucudaki UFW değişmedi.",
+      "hint": "Değişiklikler kaydedilene kadar yerel olarak tutulur. Sunucudaki UFW yalnızca <highlight>Save Rules</highlight> ve iletişim kutusundaki onaydan sonra değişir.",
+      "export": "Dışa aktar",
+      "importDuplicatesSkipped": "İçe aktarma sırasında {count} yinelenen kural atlandı."
+    },
+    "applyDialog": {
+      "title": "UFW kural değişikliklerini onayla",
+      "description": "Bu, değişiklikleri uzak sunucu güvenlik duvarına uygulayacaktır. Onaylamadan önce aşağıdaki planı inceleyin.",
+      "add": "Ekle: {count}",
+      "remove": "Kaldır: {count}",
+      "reorder": "Yeniden sırala: {count}",
+      "apply": "UFW'ye Uygula",
+      "applying": "Uygulanıyor...",
+      "failed": "Uygulama başarısız",
+      "partialResync": "Some rules were applied before the error. Use Force resync to align local state with UFW.",
+      "forceResync": "Force resync from server",
+      "forceResyncing": "Resyncing...",
+      "forceResyncFailed": "Resync failed"
+    },
+    "table": {
+      "searchPlaceholder": "Kural ara...",
+      "legendRemoteOnly": "Sunucuda, yerel DB'de değil",
+      "legendMatched": "Sunucuda ve yerel DB'de",
+      "legendLocalOnly": "Sunucuda değil, yerel DB'de",
+      "legendPendingNoHighlight": "Save Draft öncesi yeni kurallar vurgulanmaz",
+      "clearFiltersToReorder": "Kuralları yeniden sıralamak için arama ve sütun filtrelerini temizleyin",
+      "noRulesFound": "Kural bulunamadı",
+      "filterAll": "Tümü",
+      "filterNoMatches": "Eşleşme yok",
+      "filterColumn": "{label} filtrele",
+      "filterClear": "{label} filtresini temizle",
+      "filterShowOptions": "{label} seçeneklerini göster",
+      "filterOptions": "{label} seçenekleri",
+      "orderColumn": "Sıra",
+      "deleteRule": "Kuralı sil"
+    }
+  },
+  "operationsPage": {
+    "title": "İşlem Geçmişi",
+    "description": "Tüm sunuculardaki son işlem günlükleri ve denetim olayları.",
+    "logsTitle": "İşlem Günlükleri",
+    "auditTitle": "Denetim Olayları",
+    "time": "Zaman",
+    "type": "Tür",
+    "status": "Durum",
+    "message": "Mesaj",
+    "action": "Eylem",
+    "user": "Kullanıcı",
+    "entity": "Varlık"
+  },
+  "operations": {
+    "status": {
+      "RUNNING": "ÇALIŞIYOR",
+      "SUCCESS": "BAŞARILI",
+      "FAILED": "BAŞARISIZ",
+      "PENDING": "BEKLEMEDE"
+    },
+    "types": {
+      "apply_rules": "UFW kuralları uygulanıyor",
+      "ufw_sync": "Sunucu ile senkronize ediliyor",
+      "ufw_refresh": "UFW durumu yenileniyor",
+      "ufw_install": "UFW kuruluyor",
+      "ufw_enable": "UFW etkinleştiriliyor",
+      "ssh_test": "SSH test ediliyor",
+      "server_create": "Sunucu oluşturuluyor"
+    },
+    "banner": {
+      "success": "Tamamlandı: tüm işlemler başarıyla tamamlandı",
+      "errors": "Hatalar:",
+      "details": "Ayrıntılar ({count} adım)",
+      "dismiss": "Kapat"
+    },
+    "summary": {
+      "added": "eklendi: {count}",
+      "removed": "kaldırıldı: {count}",
+      "reordered": "yeniden sıralandı: {count}"
+    },
+    "messages": {
+      "apply_prepare": "UFW kuralları uygulanmaya hazırlanıyor",
+      "apply_progress": "{total} komuttan {current}. uygulanıyor: {command}",
+      "apply_complete": "Tamamlandı: tüm kural değişiklikleri başarıyla uygulandı",
+      "apply_failed": "Kural uygulama hatası: {error}",
+      "sync_start": "Kurallar sunucu ile senkronize ediliyor",
+      "sync_complete": "Tamamlandı: kurallar sunucu ile senkronize edildi",
+      "refresh_start": "UFW durumu yenileniyor",
+      "refresh_complete": "Tamamlandı: UFW durumu güncellendi",
+      "install_start": "UFW kuruluyor",
+      "install_complete": "Tamamlandı: UFW kuruldu",
+      "enable_start": "UFW etkinleştiriliyor",
+      "enable_complete": "Tamamlandı: UFW etkinleştirildi ve kurallar senkronize edildi",
+      "ssh_start": "SSH bağlantısı test ediliyor",
+      "ssh_complete": "SSH bağlantısı başarılı",
+      "server_create_complete": "Sunucu {name} oluşturuldu",
+      "operation_failed": "İşlem başarısız: {error}"
+    },
+    "phases": {
+      "ufw_commands": "UFW komutları uygulanıyor",
+      "snapshot": "Sunucudan anlık görüntü yükleniyor",
+      "sync_db": "Yerel veritabanı senkronize ediliyor",
+      "origin_states": "Kural durumları güncelleniyor"
+    },
+    "steps": {
+      "snapshot": "Sunucudan anlık görüntü yükleniyor",
+      "sync_db": "Yerel veritabanı senkronize ediliyor",
+      "origin_states": "Kural durumları güncelleniyor",
+      "detect": "UFW durumu algılanıyor",
+      "load_ufw": "UFW durumu yükleniyor",
+      "draft_sync": "Taslak senkronize ediliyor",
+      "install": "Sunucuya UFW kuruluyor",
+      "enable": "Sunucuda UFW etkinleştiriliyor",
+      "ssh": "SSH bağlantısı test ediliyor"
+    }
+  }
+}

@@ -1,0 +1,225 @@
+{
+  "app": {
+    "title": "UFW Manager",
+    "subtitle": "Удалённое управление брандмауэром",
+    "metadataTitle": "UFW Remote Manager",
+    "metadataDescription": "Самостоятельно размещаемое удалённое управление UFW через SSH"
+  },
+  "language": {
+    "label": "Язык"
+  },
+  "sidebar": {
+    "noServers": "Серверов пока нет",
+    "operationsHistory": "История операций",
+    "logout": "Выйти"
+  },
+  "common": {
+    "cancel": "Отмена",
+    "open": "Открыть",
+    "dash": "—"
+  },
+  "auth": {
+    "login": {
+      "title": "Вход",
+      "description": "Доступ к UFW Remote Manager",
+      "email": "Email",
+      "password": "Пароль",
+      "submit": "Войти",
+      "submitting": "Вход...",
+      "failed": "Ошибка входа"
+    },
+    "setup": {
+      "title": "Первоначальная настройка",
+      "description": "Создайте первую учётную запись администратора для UFW Remote Manager.",
+      "name": "Имя",
+      "email": "Email",
+      "password": "Пароль",
+      "confirmPassword": "Подтвердите пароль",
+      "submit": "Завершить настройку",
+      "submitting": "Создание..."
+    }
+  },
+  "servers": {
+    "title": "Серверы",
+    "description": "Управление удалёнными Linux-серверами и правилами UFW.",
+    "addServer": "Добавить сервер",
+    "editServer": "Изменить сервер",
+    "rulesUnavailable": "Редактирование правил станет доступно после установки и активации UFW.",
+    "new": {
+      "title": "Добавить сервер",
+      "description": "Учётные данные SSH шифруются перед сохранением. Подключение проверяется перед сохранением.",
+      "detailsTitle": "Данные сервера",
+      "detailsDescription": "Все поля обязательны в зависимости от выбранного способа аутентификации."
+    },
+    "edit": {
+      "title": "Изменить сервер",
+      "detailsTitle": "Данные сервера",
+      "detailsDescription": "Обновление учётных данных требует успешной проверки SSH.",
+      "hostKeyFingerprint": "Отпечаток SSH-ключа хоста"
+    },
+    "delete": {
+      "button": "Удалить сервер",
+      "title": "Удалить сервер?",
+      "description": "Сервер «{name}» и все его локальные данные будут безвозвратно удалены: подтверждённые правила, черновики, снимки, история тегов и сессии применения. UFW на удалённом сервере не изменится.",
+      "confirm": "Удалить",
+      "deleting": "Удаление...",
+      "dangerTitle": "Опасная зона",
+      "dangerDescription": "Удаление сервера удаляет все связанные записи из локальной базы данных."
+    }
+  },
+  "serverForm": {
+    "name": "Имя",
+    "host": "Хост",
+    "port": "Порт",
+    "username": "Имя пользователя",
+    "authMethod": "Способ аутентификации",
+    "selectMethod": "Выберите способ",
+    "passwordAuth": "Пароль",
+    "privateKeyAuth": "Приватный ключ",
+    "privateKeyPassphraseAuth": "Приватный ключ с парольной фразой",
+    "password": "Пароль",
+    "privateKey": "Приватный ключ",
+    "passphrase": "Парольная фраза",
+    "createServer": "Создать сервер",
+    "updateServer": "Обновить сервер",
+    "creating": "Создание...",
+    "updating": "Обновление...",
+    "missingServerId": "Отсутствует ID сервера"
+  },
+  "ufw": {
+    "installed": "UFW установлен",
+    "notInstalled": "UFW не установлен",
+    "active": "UFW активен",
+    "inactive": "UFW неактивен",
+    "remoteRules": "{count} удалённых правил",
+    "testSsh": "Проверить SSH",
+    "refreshStatus": "Обновить статус",
+    "installUfw": "Установить UFW",
+    "activateUfw": "Активировать UFW",
+    "installTitle": "Установить UFW?",
+    "installDescription": "UFW будет установлен на удалённом сервере через SSH.",
+    "confirmInstall": "Подтвердить установку",
+    "activateTitle": "Активировать UFW?",
+    "activateDescription": "UFW будет включён на удалённом сервере. Убедитесь, что доступ по SSH разрешён.",
+    "confirmActivate": "Подтвердить активацию"
+  },
+  "rules": {
+    "toolbar": {
+      "addRule": "Добавить правило",
+      "saveDraft": "Сохранить черновик",
+      "saveRules": "Сохранить правила",
+      "import": "Импорт",
+      "draftSaved": "Черновик сохранён локально. UFW на сервере не изменён.",
+      "hint": "Изменения хранятся локально до сохранения. UFW на сервере изменится только после <highlight>Save Rules</highlight> и подтверждения в диалоге.",
+      "export": "Экспорт",
+      "importDuplicatesSkipped": "Пропущено дубликатов правил при импорте: {count}."
+    },
+    "applyDialog": {
+      "title": "Подтвердите изменения правил UFW",
+      "description": "Изменения будут применены к брандмауэру удалённого сервера. Проверьте план ниже перед подтверждением.",
+      "add": "Добавить: {count}",
+      "remove": "Удалить: {count}",
+      "reorder": "Изменить порядок: {count}",
+      "apply": "Применить к UFW",
+      "applying": "Применение...",
+      "failed": "Ошибка применения",
+      "partialResync": "Часть правил была применена до ошибки. Нажмите «Принудительная синхронизация», чтобы выровнять локальное состояние с UFW.",
+      "forceResync": "Принудительная синхронизация с сервером",
+      "forceResyncing": "Синхронизация...",
+      "forceResyncFailed": "Синхронизация не удалась"
+    },
+    "table": {
+      "searchPlaceholder": "Поиск правил...",
+      "legendRemoteOnly": "На сервере, нет в локальной БД",
+      "legendMatched": "На сервере и в локальной БД",
+      "legendLocalOnly": "Не на сервере, есть в локальной БД",
+      "legendPendingNoHighlight": "Новые правила до Save Draft без подсветки",
+      "clearFiltersToReorder": "Сбросьте поиск и фильтры колонок для изменения порядка",
+      "noRulesFound": "Правила не найдены",
+      "filterAll": "Все",
+      "filterNoMatches": "Нет совпадений",
+      "filterColumn": "Фильтр {label}",
+      "filterClear": "Сбросить фильтр {label}",
+      "filterShowOptions": "Показать варианты {label}",
+      "filterOptions": "Варианты {label}",
+      "orderColumn": "Порядок",
+      "deleteRule": "Удалить правило"
+    }
+  },
+  "operationsPage": {
+    "title": "История операций",
+    "description": "Недавние журналы операций и события аудита на всех серверах.",
+    "logsTitle": "Журнал операций",
+    "auditTitle": "События аудита",
+    "time": "Время",
+    "type": "Тип",
+    "status": "Статус",
+    "message": "Сообщение",
+    "action": "Действие",
+    "user": "Пользователь",
+    "entity": "Объект"
+  },
+  "operations": {
+    "status": {
+      "RUNNING": "ВЫПОЛНЯЕТСЯ",
+      "SUCCESS": "УСПЕХ",
+      "FAILED": "ОШИБКА",
+      "PENDING": "ОЖИДАНИЕ"
+    },
+    "types": {
+      "apply_rules": "Применение правил UFW",
+      "ufw_sync": "Синхронизация с сервером",
+      "ufw_refresh": "Обновление статуса UFW",
+      "ufw_install": "Установка UFW",
+      "ufw_enable": "Включение UFW",
+      "ssh_test": "Проверка SSH",
+      "server_create": "Создание сервера"
+    },
+    "banner": {
+      "success": "Готово: все операции успешно завершены",
+      "errors": "Ошибки:",
+      "details": "Подробности ({count} шагов)",
+      "dismiss": "Закрыть"
+    },
+    "summary": {
+      "added": "добавлено: {count}",
+      "removed": "удалено: {count}",
+      "reordered": "изменён порядок: {count}"
+    },
+    "messages": {
+      "apply_prepare": "Подготовка к применению правил UFW",
+      "apply_progress": "Выполнение команды {current} из {total}: {command}",
+      "apply_complete": "Готово: все изменения правил успешно применены",
+      "apply_failed": "Ошибка применения правил: {error}",
+      "sync_start": "Синхронизация правил с сервером",
+      "sync_complete": "Готово: правила синхронизированы с сервером",
+      "refresh_start": "Обновление статуса UFW",
+      "refresh_complete": "Готово: статус UFW обновлён",
+      "install_start": "Установка UFW",
+      "install_complete": "Готово: UFW установлен",
+      "enable_start": "Включение UFW",
+      "enable_complete": "Готово: UFW включён и правила синхронизированы",
+      "ssh_start": "Проверка SSH-подключения",
+      "ssh_complete": "SSH-подключение успешно",
+      "server_create_complete": "Сервер {name} создан",
+      "operation_failed": "Ошибка операции: {error}"
+    },
+    "phases": {
+      "ufw_commands": "Применение команд UFW",
+      "snapshot": "Загрузка снимка с сервера",
+      "sync_db": "Синхронизация локальной базы данных",
+      "origin_states": "Обновление состояний правил"
+    },
+    "steps": {
+      "snapshot": "Загрузка снимка с сервера",
+      "sync_db": "Синхронизация локальной базы данных",
+      "origin_states": "Обновление состояний правил",
+      "detect": "Определение состояния UFW",
+      "load_ufw": "Загрузка состояния UFW",
+      "draft_sync": "Синхронизация черновика",
+      "install": "Установка UFW на сервере",
+      "enable": "Включение UFW на сервере",
+      "ssh": "Проверка SSH-подключения"
+    }
+  }
+}

@@ -1,0 +1,225 @@
+{
+  "app": {
+    "title": "UFW Manager",
+    "subtitle": "Remote firewall control",
+    "metadataTitle": "UFW Remote Manager",
+    "metadataDescription": "Self-hosted remote UFW management over SSH"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "sidebar": {
+    "noServers": "No servers yet",
+    "operationsHistory": "Operations History",
+    "logout": "Logout"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "open": "Open",
+    "dash": "—"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "description": "Access UFW Remote Manager",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign In",
+      "submitting": "Signing in...",
+      "failed": "Login failed"
+    },
+    "setup": {
+      "title": "Initial Setup",
+      "description": "Create the first administrator account for UFW Remote Manager.",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Complete Setup",
+      "submitting": "Creating..."
+    }
+  },
+  "servers": {
+    "title": "Servers",
+    "description": "Manage remote Linux servers and their UFW rules.",
+    "addServer": "Add Server",
+    "editServer": "Edit Server",
+    "rulesUnavailable": "Rules editing becomes available after UFW is installed and active.",
+    "new": {
+      "title": "Add Server",
+      "description": "SSH credentials are encrypted before storage. Connection is verified before save.",
+      "detailsTitle": "Server Details",
+      "detailsDescription": "All fields are required based on the selected auth method."
+    },
+    "edit": {
+      "title": "Edit Server",
+      "detailsTitle": "Server Details",
+      "detailsDescription": "Updating credentials requires a successful SSH test.",
+      "hostKeyFingerprint": "SSH host key fingerprint"
+    },
+    "delete": {
+      "button": "Delete Server",
+      "title": "Delete server?",
+      "description": "Server \"{name}\" and all of its local data will be permanently removed: confirmed rules, drafts, snapshots, tag history, and apply sessions. Remote UFW on the server is not changed.",
+      "confirm": "Delete",
+      "deleting": "Deleting...",
+      "dangerTitle": "Danger Zone",
+      "dangerDescription": "Deleting a server removes all related records from the local database."
+    }
+  },
+  "serverForm": {
+    "name": "Name",
+    "host": "Host",
+    "port": "Port",
+    "username": "Username",
+    "authMethod": "Authentication Method",
+    "selectMethod": "Select method",
+    "passwordAuth": "Password",
+    "privateKeyAuth": "Private Key",
+    "privateKeyPassphraseAuth": "Private Key with Passphrase",
+    "password": "Password",
+    "privateKey": "Private Key",
+    "passphrase": "Passphrase",
+    "createServer": "Create Server",
+    "updateServer": "Update Server",
+    "creating": "Creating...",
+    "updating": "Updating...",
+    "missingServerId": "Missing server ID"
+  },
+  "ufw": {
+    "installed": "UFW Installed",
+    "notInstalled": "UFW Not Installed",
+    "active": "UFW Active",
+    "inactive": "UFW Inactive",
+    "remoteRules": "{count} remote rules",
+    "testSsh": "Test SSH",
+    "refreshStatus": "Refresh Status",
+    "installUfw": "Install UFW",
+    "activateUfw": "Activate UFW",
+    "installTitle": "Install UFW?",
+    "installDescription": "This will install UFW on the remote server via SSH.",
+    "confirmInstall": "Confirm Install",
+    "activateTitle": "Activate UFW?",
+    "activateDescription": "This will enable UFW on the remote server. Ensure SSH access is allowed.",
+    "confirmActivate": "Confirm Activate"
+  },
+  "rules": {
+    "toolbar": {
+      "addRule": "Add Rule",
+      "saveDraft": "Save Draft",
+      "saveRules": "Save Rules",
+      "import": "Import",
+      "export": "Export",
+      "draftSaved": "Draft saved locally. UFW on the server is unchanged.",
+      "importDuplicatesSkipped": "Skipped {count} duplicate rule(s) during import.",
+      "hint": "Edits are kept locally until you save. Remote UFW changes happen only after <highlight>Save Rules</highlight> and confirmation in the dialog."
+    },
+    "applyDialog": {
+      "title": "Confirm UFW rule changes",
+      "description": "This will apply changes to the remote server firewall. Review the plan below before confirming.",
+      "add": "Add: {count}",
+      "remove": "Remove: {count}",
+      "reorder": "Reorder: {count}",
+      "apply": "Apply to UFW",
+      "applying": "Applying...",
+      "failed": "Apply failed",
+      "partialResync": "Some rules were applied before the error. Use Force resync to align local state with UFW.",
+      "forceResync": "Force resync from server",
+      "forceResyncing": "Resyncing...",
+      "forceResyncFailed": "Resync failed"
+    },
+    "table": {
+      "searchPlaceholder": "Search rules...",
+      "legendRemoteOnly": "On server, not in local DB",
+      "legendMatched": "On server and in local DB",
+      "legendLocalOnly": "Not on server, in local DB",
+      "legendPendingNoHighlight": "New rules before Save Draft have no highlight",
+      "clearFiltersToReorder": "Clear search and column filters to reorder rules",
+      "noRulesFound": "No rules found",
+      "filterAll": "All",
+      "filterNoMatches": "No matches",
+      "filterColumn": "Filter {label}",
+      "filterClear": "Clear {label} filter",
+      "filterShowOptions": "Show {label} options",
+      "filterOptions": "{label} options",
+      "orderColumn": "Order",
+      "deleteRule": "Delete rule"
+    }
+  },
+  "operationsPage": {
+    "title": "Operations History",
+    "description": "Recent operation logs and audit events across all servers.",
+    "logsTitle": "Operation Logs",
+    "auditTitle": "Audit Events",
+    "time": "Time",
+    "type": "Type",
+    "status": "Status",
+    "message": "Message",
+    "action": "Action",
+    "user": "User",
+    "entity": "Entity"
+  },
+  "operations": {
+    "status": {
+      "RUNNING": "RUNNING",
+      "SUCCESS": "SUCCESS",
+      "FAILED": "FAILED",
+      "PENDING": "PENDING"
+    },
+    "types": {
+      "apply_rules": "Applying UFW rules",
+      "ufw_sync": "Syncing with server",
+      "ufw_refresh": "Refreshing UFW status",
+      "ufw_install": "Installing UFW",
+      "ufw_enable": "Enabling UFW",
+      "ssh_test": "Testing SSH",
+      "server_create": "Creating server"
+    },
+    "banner": {
+      "success": "Done: all operations completed successfully",
+      "errors": "Errors:",
+      "details": "Details ({count} steps)",
+      "dismiss": "Dismiss"
+    },
+    "summary": {
+      "added": "added: {count}",
+      "removed": "removed: {count}",
+      "reordered": "reordered: {count}"
+    },
+    "messages": {
+      "apply_prepare": "Preparing to apply UFW rules",
+      "apply_progress": "Applying command {current} of {total}: {command}",
+      "apply_complete": "Done: all rule changes applied successfully",
+      "apply_failed": "Rule apply error: {error}",
+      "sync_start": "Syncing rules with server",
+      "sync_complete": "Done: rules synced with server",
+      "refresh_start": "Refreshing UFW status",
+      "refresh_complete": "Done: UFW status updated",
+      "install_start": "Installing UFW",
+      "install_complete": "Done: UFW installed",
+      "enable_start": "Enabling UFW",
+      "enable_complete": "Done: UFW enabled and rules synced",
+      "ssh_start": "Testing SSH connection",
+      "ssh_complete": "SSH connection successful",
+      "server_create_complete": "Server {name} created",
+      "operation_failed": "Operation failed: {error}"
+    },
+    "phases": {
+      "ufw_commands": "Applying UFW commands",
+      "snapshot": "Loading snapshot from server",
+      "sync_db": "Syncing local database",
+      "origin_states": "Updating rule states"
+    },
+    "steps": {
+      "snapshot": "Loading snapshot from server",
+      "sync_db": "Syncing local database",
+      "origin_states": "Updating rule states",
+      "detect": "Detecting UFW state",
+      "load_ufw": "Loading UFW state",
+      "draft_sync": "Syncing draft",
+      "install": "Installing UFW on server",
+      "enable": "Enabling UFW on server",
+      "ssh": "Testing SSH connection"
+    }
+  }
+}

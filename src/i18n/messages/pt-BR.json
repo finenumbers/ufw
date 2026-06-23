@@ -1,0 +1,225 @@
+{
+  "app": {
+    "title": "UFW Manager",
+    "subtitle": "Controle remoto do firewall",
+    "metadataTitle": "UFW Remote Manager",
+    "metadataDescription": "Gerenciamento remoto de UFW auto-hospedado via SSH"
+  },
+  "language": {
+    "label": "Idioma"
+  },
+  "sidebar": {
+    "noServers": "Nenhum servidor ainda",
+    "operationsHistory": "Histórico de operações",
+    "logout": "Sair"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "open": "Abrir",
+    "dash": "—"
+  },
+  "auth": {
+    "login": {
+      "title": "Entrar",
+      "description": "Acesso ao UFW Remote Manager",
+      "email": "E-mail",
+      "password": "Senha",
+      "submit": "Entrar",
+      "submitting": "Entrando...",
+      "failed": "Falha no login"
+    },
+    "setup": {
+      "title": "Configuração inicial",
+      "description": "Crie a primeira conta de administrador para o UFW Remote Manager.",
+      "name": "Nome",
+      "email": "E-mail",
+      "password": "Senha",
+      "confirmPassword": "Confirmar senha",
+      "submit": "Concluir configuração",
+      "submitting": "Criando..."
+    }
+  },
+  "servers": {
+    "title": "Servidores",
+    "description": "Gerencie servidores Linux remotos e suas regras UFW.",
+    "addServer": "Adicionar servidor",
+    "editServer": "Editar servidor",
+    "rulesUnavailable": "A edição de regras ficará disponível após o UFW ser instalado e ativado.",
+    "new": {
+      "title": "Adicionar servidor",
+      "description": "As credenciais SSH são criptografadas antes do armazenamento. A conexão é verificada antes de salvar.",
+      "detailsTitle": "Detalhes do servidor",
+      "detailsDescription": "Todos os campos são obrigatórios conforme o método de autenticação selecionado."
+    },
+    "edit": {
+      "title": "Editar servidor",
+      "detailsTitle": "Detalhes do servidor",
+      "detailsDescription": "Atualizar credenciais requer um teste SSH bem-sucedido.",
+      "hostKeyFingerprint": "Impressão digital da chave SSH do host"
+    },
+    "delete": {
+      "button": "Excluir servidor",
+      "title": "Excluir servidor?",
+      "description": "O servidor \"{name}\" e todos os dados locais serão removidos permanentemente: regras confirmadas, rascunhos, snapshots, histórico de tags e sessões de aplicação. O UFW no servidor remoto não será alterado.",
+      "confirm": "Excluir",
+      "deleting": "Excluindo...",
+      "dangerTitle": "Zona de perigo",
+      "dangerDescription": "Excluir um servidor remove todos os registros relacionados do banco local."
+    }
+  },
+  "serverForm": {
+    "name": "Nome",
+    "host": "Host",
+    "port": "Porta",
+    "username": "Nome de usuário",
+    "authMethod": "Método de autenticação",
+    "selectMethod": "Selecionar método",
+    "passwordAuth": "Senha",
+    "privateKeyAuth": "Chave privada",
+    "privateKeyPassphraseAuth": "Chave privada com frase secreta",
+    "password": "Senha",
+    "privateKey": "Chave privada",
+    "passphrase": "Frase secreta",
+    "createServer": "Criar servidor",
+    "updateServer": "Atualizar servidor",
+    "creating": "Criando...",
+    "updating": "Atualizando...",
+    "missingServerId": "ID do servidor ausente"
+  },
+  "ufw": {
+    "installed": "UFW instalado",
+    "notInstalled": "UFW não instalado",
+    "active": "UFW ativo",
+    "inactive": "UFW inativo",
+    "remoteRules": "{count} regras remotas",
+    "testSsh": "Testar SSH",
+    "refreshStatus": "Atualizar status",
+    "installUfw": "Instalar UFW",
+    "activateUfw": "Ativar UFW",
+    "installTitle": "Instalar UFW?",
+    "installDescription": "Isso instalará o UFW no servidor remoto via SSH.",
+    "confirmInstall": "Confirmar instalação",
+    "activateTitle": "Ativar UFW?",
+    "activateDescription": "Isso habilitará o UFW no servidor remoto. Certifique-se de que o acesso SSH está permitido.",
+    "confirmActivate": "Confirmar ativação"
+  },
+  "rules": {
+    "toolbar": {
+      "addRule": "Adicionar regra",
+      "saveDraft": "Salvar rascunho",
+      "saveRules": "Salvar regras",
+      "import": "Importar",
+      "draftSaved": "Rascunho salvo localmente. O UFW no servidor não foi alterado.",
+      "hint": "As alterações ficam locais até salvar. O UFW no servidor só muda após <highlight>Save Rules</highlight> e confirmação no diálogo.",
+      "export": "Exportar",
+      "importDuplicatesSkipped": "Ignoradas {count} regra(s) duplicada(s) durante a importação."
+    },
+    "applyDialog": {
+      "title": "Confirmar alterações nas regras UFW",
+      "description": "Isso aplicará alterações ao firewall do servidor remoto. Revise o plano abaixo antes de confirmar.",
+      "add": "Adicionar: {count}",
+      "remove": "Remover: {count}",
+      "reorder": "Reordenar: {count}",
+      "apply": "Aplicar ao UFW",
+      "applying": "Aplicando...",
+      "failed": "Falha ao aplicar",
+      "partialResync": "Some rules were applied before the error. Use Force resync to align local state with UFW.",
+      "forceResync": "Force resync from server",
+      "forceResyncing": "Resyncing...",
+      "forceResyncFailed": "Resync failed"
+    },
+    "table": {
+      "searchPlaceholder": "Pesquisar regras...",
+      "legendRemoteOnly": "No servidor, não na BD local",
+      "legendMatched": "No servidor e na BD local",
+      "legendLocalOnly": "Não no servidor, na BD local",
+      "legendPendingNoHighlight": "Novas regras antes de Save Draft não têm destaque",
+      "clearFiltersToReorder": "Limpe a pesquisa e os filtros de coluna para reordenar regras",
+      "noRulesFound": "Nenhuma regra encontrada",
+      "filterAll": "Todos",
+      "filterNoMatches": "Sem correspondências",
+      "filterColumn": "Filtrar {label}",
+      "filterClear": "Limpar filtro {label}",
+      "filterShowOptions": "Mostrar opções de {label}",
+      "filterOptions": "Opções de {label}",
+      "orderColumn": "Ordem",
+      "deleteRule": "Excluir regra"
+    }
+  },
+  "operationsPage": {
+    "title": "Histórico de operações",
+    "description": "Registros recentes de operações e eventos de auditoria em todos os servidores.",
+    "logsTitle": "Registros de operações",
+    "auditTitle": "Eventos de auditoria",
+    "time": "Hora",
+    "type": "Tipo",
+    "status": "Status",
+    "message": "Mensagem",
+    "action": "Ação",
+    "user": "Usuário",
+    "entity": "Entidade"
+  },
+  "operations": {
+    "status": {
+      "RUNNING": "EM EXECUÇÃO",
+      "SUCCESS": "SUCESSO",
+      "FAILED": "FALHA",
+      "PENDING": "PENDENTE"
+    },
+    "types": {
+      "apply_rules": "Aplicando regras UFW",
+      "ufw_sync": "Sincronizando com o servidor",
+      "ufw_refresh": "Atualizando status do UFW",
+      "ufw_install": "Instalando UFW",
+      "ufw_enable": "Habilitando UFW",
+      "ssh_test": "Testando SSH",
+      "server_create": "Criando servidor"
+    },
+    "banner": {
+      "success": "Concluído: todas as operações foram bem-sucedidas",
+      "errors": "Erros:",
+      "details": "Detalhes ({count} etapas)",
+      "dismiss": "Dispensar"
+    },
+    "summary": {
+      "added": "adicionadas: {count}",
+      "removed": "removidas: {count}",
+      "reordered": "reordenadas: {count}"
+    },
+    "messages": {
+      "apply_prepare": "Preparando para aplicar regras UFW",
+      "apply_progress": "Aplicando comando {current} de {total}: {command}",
+      "apply_complete": "Concluído: todas as alterações de regras foram aplicadas",
+      "apply_failed": "Erro ao aplicar regras: {error}",
+      "sync_start": "Sincronizando regras com o servidor",
+      "sync_complete": "Concluído: regras sincronizadas com o servidor",
+      "refresh_start": "Atualizando status do UFW",
+      "refresh_complete": "Concluído: status do UFW atualizado",
+      "install_start": "Instalando UFW",
+      "install_complete": "Concluído: UFW instalado",
+      "enable_start": "Habilitando UFW",
+      "enable_complete": "Concluído: UFW habilitado e regras sincronizadas",
+      "ssh_start": "Testando conexão SSH",
+      "ssh_complete": "Conexão SSH bem-sucedida",
+      "server_create_complete": "Servidor {name} criado",
+      "operation_failed": "Falha na operação: {error}"
+    },
+    "phases": {
+      "ufw_commands": "Aplicando comandos UFW",
+      "snapshot": "Carregando snapshot do servidor",
+      "sync_db": "Sincronizando banco de dados local",
+      "origin_states": "Atualizando estados das regras"
+    },
+    "steps": {
+      "snapshot": "Carregando snapshot do servidor",
+      "sync_db": "Sincronizando banco de dados local",
+      "origin_states": "Atualizando estados das regras",
+      "detect": "Detectando estado do UFW",
+      "load_ufw": "Carregando estado do UFW",
+      "draft_sync": "Sincronizando rascunho",
+      "install": "Instalando UFW no servidor",
+      "enable": "Habilitando UFW no servidor",
+      "ssh": "Testando conexão SSH"
+    }
+  }
+}

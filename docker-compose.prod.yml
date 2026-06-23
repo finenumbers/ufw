@@ -1,0 +1,25 @@
+# Production override for deployment behind an EXISTING Nginx Proxy Manager (NPM).
+# NPM is NOT part of this stack — it must already be running on the host.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Prerequisites:
+#   1. Set NPM_NETWORK in .env to the Docker network name NPM already uses.
+#   2. Configure a Proxy Host in NPM UI: Forward Hostname=ufw-app, Port=3000, Scheme=http.
+#   3. Set APP_URL to the public HTTPS URL before build (NEXT_PUBLIC_APP_URL is baked in).
+
+services:
+  postgres:
+    ports: !reset []
+
+  app:
+    ports: !reset []
+    networks:
+      - default
+      - npm_proxy
+
+networks:
+  npm_proxy:
+    external: true
+    name: ${NPM_NETWORK:?NPM_NETWORK is required for production deploy behind NPM}

@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run tests
+        run: npm test
+
+      - name: i18n check
+        run: npm run i18n:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://ufw:ufw@localhost:5432/ufw?schema=public
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and smoke test Docker stack
+        run: |
+          cat > .env <<'EOF'
+          APP_URL=http://localhost:3000
+          BETTER_AUTH_SECRET=ci-test-auth-secret-32bytes-long!!
+          APP_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          POSTGRES_PASSWORD=ufw
+          EOF
+          docker compose build
+          docker compose up -d --wait
+          curl -sf --retry 30 --retry-delay 2 --retry-all-errors http://127.0.0.1:3000/api/health
+
+      - name: Stop Docker stack
+        if: always()
+        run: docker compose down -v

@@ -1,0 +1,225 @@
+{
+  "app": {
+    "title": "UFW Manager",
+    "subtitle": "Віддалене керування брандмауером",
+    "metadataTitle": "UFW Remote Manager",
+    "metadataDescription": "Самостійно розміщене віддалене керування UFW через SSH"
+  },
+  "language": {
+    "label": "Мова"
+  },
+  "sidebar": {
+    "noServers": "Серверів поки немає",
+    "operationsHistory": "Історія операцій",
+    "logout": "Вийти"
+  },
+  "common": {
+    "cancel": "Скасувати",
+    "open": "Відкрити",
+    "dash": "—"
+  },
+  "auth": {
+    "login": {
+      "title": "Вхід",
+      "description": "Доступ до UFW Remote Manager",
+      "email": "Email",
+      "password": "Пароль",
+      "submit": "Увійти",
+      "submitting": "Вхід...",
+      "failed": "Помилка входу"
+    },
+    "setup": {
+      "title": "Початкове налаштування",
+      "description": "Створіть перший обліковий запис адміністратора для UFW Remote Manager.",
+      "name": "Ім'я",
+      "email": "Email",
+      "password": "Пароль",
+      "confirmPassword": "Підтвердіть пароль",
+      "submit": "Завершити налаштування",
+      "submitting": "Створення..."
+    }
+  },
+  "servers": {
+    "title": "Сервери",
+    "description": "Керуйте віддаленими Linux-серверами та їхніми правилами UFW.",
+    "addServer": "Додати сервер",
+    "editServer": "Редагувати сервер",
+    "rulesUnavailable": "Редагування правил стане доступним після встановлення та активації UFW.",
+    "new": {
+      "title": "Додати сервер",
+      "description": "Облікові дані SSH шифруються перед збереженням. Підключення перевіряється перед збереженням.",
+      "detailsTitle": "Дані сервера",
+      "detailsDescription": "Усі поля обов'язкові залежно від обраного способу автентифікації."
+    },
+    "edit": {
+      "title": "Редагувати сервер",
+      "detailsTitle": "Дані сервера",
+      "detailsDescription": "Оновлення облікових даних потребує успішної перевірки SSH.",
+      "hostKeyFingerprint": "Відбиток SSH-ключа хоста"
+    },
+    "delete": {
+      "button": "Видалити сервер",
+      "title": "Видалити сервер?",
+      "description": "Сервер «{name}» і всі його локальні дані будуть безповоротно видалені: підтверджені правила, чернетки, знімки, історія тегів і сесії застосування. UFW на віддаленому сервері не зміниться.",
+      "confirm": "Видалити",
+      "deleting": "Видалення...",
+      "dangerTitle": "Небезпечна зона",
+      "dangerDescription": "Видалення сервера прибирає всі пов'язані записи з локальної бази даних."
+    }
+  },
+  "serverForm": {
+    "name": "Ім'я",
+    "host": "Хост",
+    "port": "Порт",
+    "username": "Ім'я користувача",
+    "authMethod": "Спосіб автентифікації",
+    "selectMethod": "Оберіть спосіб",
+    "passwordAuth": "Пароль",
+    "privateKeyAuth": "Приватний ключ",
+    "privateKeyPassphraseAuth": "Приватний ключ з парольною фразою",
+    "password": "Пароль",
+    "privateKey": "Приватний ключ",
+    "passphrase": "Парольна фраза",
+    "createServer": "Створити сервер",
+    "updateServer": "Оновити сервер",
+    "creating": "Створення...",
+    "updating": "Оновлення...",
+    "missingServerId": "Відсутній ID сервера"
+  },
+  "ufw": {
+    "installed": "UFW встановлено",
+    "notInstalled": "UFW не встановлено",
+    "active": "UFW активний",
+    "inactive": "UFW неактивний",
+    "remoteRules": "{count} віддалених правил",
+    "testSsh": "Перевірити SSH",
+    "refreshStatus": "Оновити статус",
+    "installUfw": "Встановити UFW",
+    "activateUfw": "Активувати UFW",
+    "installTitle": "Встановити UFW?",
+    "installDescription": "UFW буде встановлено на віддаленому сервері через SSH.",
+    "confirmInstall": "Підтвердити встановлення",
+    "activateTitle": "Активувати UFW?",
+    "activateDescription": "UFW буде увімкнено на віддаленому сервері. Переконайтеся, що доступ SSH дозволено.",
+    "confirmActivate": "Підтвердити активацію"
+  },
+  "rules": {
+    "toolbar": {
+      "addRule": "Додати правило",
+      "saveDraft": "Зберегти чернетку",
+      "saveRules": "Зберегти правила",
+      "import": "Імпорт",
+      "draftSaved": "Чернетку збережено локально. UFW на сервері не змінено.",
+      "hint": "Зміни зберігаються локально до збереження. UFW на сервері зміниться лише після <highlight>Save Rules</highlight> і підтвердження в діалозі.",
+      "export": "Експорт",
+      "importDuplicatesSkipped": "Пропущено {count} дублікатів правил під час імпорту."
+    },
+    "applyDialog": {
+      "title": "Підтвердити зміни правил UFW",
+      "description": "Зміни буде застосовано до брандмауера віддаленого сервера. Перевірте план нижче перед підтвердженням.",
+      "add": "Додати: {count}",
+      "remove": "Видалити: {count}",
+      "reorder": "Змінити порядок: {count}",
+      "apply": "Застосувати до UFW",
+      "applying": "Застосування...",
+      "failed": "Помилка застосування",
+      "partialResync": "Some rules were applied before the error. Use Force resync to align local state with UFW.",
+      "forceResync": "Force resync from server",
+      "forceResyncing": "Resyncing...",
+      "forceResyncFailed": "Resync failed"
+    },
+    "table": {
+      "searchPlaceholder": "Пошук правил...",
+      "legendRemoteOnly": "На сервері, немає в локальній БД",
+      "legendMatched": "На сервері та в локальній БД",
+      "legendLocalOnly": "Не на сервері, є в локальній БД",
+      "legendPendingNoHighlight": "Нові правила до Save Draft без підсвітки",
+      "clearFiltersToReorder": "Скиньте пошук і фільтри колонок для зміни порядку",
+      "noRulesFound": "Правила не знайдено",
+      "filterAll": "Усі",
+      "filterNoMatches": "Немає збігів",
+      "filterColumn": "Фільтр {label}",
+      "filterClear": "Скинути фільтр {label}",
+      "filterShowOptions": "Показати варіанти {label}",
+      "filterOptions": "Варіанти {label}",
+      "orderColumn": "Порядок",
+      "deleteRule": "Видалити правило"
+    }
+  },
+  "operationsPage": {
+    "title": "Історія операцій",
+    "description": "Останні журнали операцій та події аудиту на всіх серверах.",
+    "logsTitle": "Журнал операцій",
+    "auditTitle": "Події аудиту",
+    "time": "Час",
+    "type": "Тип",
+    "status": "Статус",
+    "message": "Повідомлення",
+    "action": "Дія",
+    "user": "Користувач",
+    "entity": "Об'єкт"
+  },
+  "operations": {
+    "status": {
+      "RUNNING": "ВИКОНУЄТЬСЯ",
+      "SUCCESS": "УСПІХ",
+      "FAILED": "ПОМИЛКА",
+      "PENDING": "ОЧІКУВАННЯ"
+    },
+    "types": {
+      "apply_rules": "Застосування правил UFW",
+      "ufw_sync": "Синхронізація з сервером",
+      "ufw_refresh": "Оновлення статусу UFW",
+      "ufw_install": "Встановлення UFW",
+      "ufw_enable": "Увімкнення UFW",
+      "ssh_test": "Перевірка SSH",
+      "server_create": "Створення сервера"
+    },
+    "banner": {
+      "success": "Готово: усі операції успішно завершено",
+      "errors": "Помилки:",
+      "details": "Деталі ({count} кроків)",
+      "dismiss": "Закрити"
+    },
+    "summary": {
+      "added": "додано: {count}",
+      "removed": "видалено: {count}",
+      "reordered": "змінено порядок: {count}"
+    },
+    "messages": {
+      "apply_prepare": "Підготовка до застосування правил UFW",
+      "apply_progress": "Виконання команди {current} з {total}: {command}",
+      "apply_complete": "Готово: усі зміни правил успішно застосовано",
+      "apply_failed": "Помилка застосування правил: {error}",
+      "sync_start": "Синхронізація правил із сервером",
+      "sync_complete": "Готово: правила синхронізовано з сервером",
+      "refresh_start": "Оновлення статусу UFW",
+      "refresh_complete": "Готово: статус UFW оновлено",
+      "install_start": "Встановлення UFW",
+      "install_complete": "Готово: UFW встановлено",
+      "enable_start": "Увімкнення UFW",
+      "enable_complete": "Готово: UFW увімкнено та правила синхронізовано",
+      "ssh_start": "Перевірка SSH-з'єднання",
+      "ssh_complete": "SSH-з'єднання успішне",
+      "server_create_complete": "Сервер {name} створено",
+      "operation_failed": "Помилка операції: {error}"
+    },
+    "phases": {
+      "ufw_commands": "Застосування команд UFW",
+      "snapshot": "Завантаження знімка з сервера",
+      "sync_db": "Синхронізація локальної бази даних",
+      "origin_states": "Оновлення станів правил"
+    },
+    "steps": {
+      "snapshot": "Завантаження знімка з сервера",
+      "sync_db": "Синхронізація локальної бази даних",
+      "origin_states": "Оновлення станів правил",
+      "detect": "Визначення стану UFW",
+      "load_ufw": "Завантаження стану UFW",
+      "draft_sync": "Синхронізація чернетки",
+      "install": "Встановлення UFW на сервері",
+      "enable": "Увімкнення UFW на сервері",
+      "ssh": "Перевірка SSH-з'єднання"
+    }
+  }
+}

@@ -1,0 +1,389 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  draftSessions DraftSession[]
+  applySessions ApplySession[]
+  auditEvents   AuditEvent[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+enum AuthMethod {
+  PASSWORD
+  PRIVATE_KEY
+  PRIVATE_KEY_WITH_PASSPHRASE
+}
+
+enum RuleAction {
+  ALLOW
+  DENY
+  REJECT
+  LIMIT
+}
+
+enum RuleDirection {
+  IN
+  OUT
+  ROUTE
+}
+
+enum RuleProtocol {
+  TCP
+  UDP
+  ICMP
+  ANY
+}
+
+enum LogMode {
+  NONE
+  LOG
+  LOG_ALL
+}
+
+enum RuleOriginState {
+  MATCHED
+  REMOTE_ONLY
+  LOCAL_ONLY
+  DRAFT_ONLY
+  CONFLICT
+}
+
+enum OperationStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  PARTIAL
+  CANCELLED
+}
+
+enum ApplyItemAction {
+  ADD
+  REMOVE
+  UPDATE
+}
+
+enum AuditAction {
+  SETUP_COMPLETED
+  SERVER_CREATED
+  SERVER_UPDATED
+  SERVER_DELETED
+  SSH_TEST
+  UFW_INSTALL
+  UFW_ENABLE
+  SNAPSHOT_LOADED
+  DRAFT_SAVED
+  RULES_IMPORTED
+  APPLY_PREVIEWED
+  APPLY_CONFIRMED
+  APPLY_COMPLETED
+  APPLY_FAILED
+  LOGIN
+  LOGOUT
+}
+
+enum TagKind {
+  GROUP
+  NAME
+}
+
+model Server {
+  id                    String     @id @default(cuid())
+  name                  String
+  host                  String
+  port                  Int        @default(22)
+  username              String
+  authMethod            AuthMethod
+  sshHostKeyFingerprint String?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  credential    ServerCredential?
+  snapshots     ServerSnapshot[]
+  ruleRecords   RuleRecord[]
+  draftSessions DraftSession[]
+  applySessions ApplySession[]
+  operationLogs OperationLog[]
+  tagValues     TagValue[]
+
+  @@unique([host, port, username])
+  @@map("server")
+}
+
+model ServerCredential {
+  id            String   @id @default(cuid())
+  serverId      String   @unique
+  server        Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  encryptedData String
+  iv            String
+  authTag       String
+  keyVersion    Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("server_credential")
+}
+
+model ServerSnapshot {
+  id                String   @id @default(cuid())
+  serverId          String
+  server            Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  ufwInstalled      Boolean
+  ufwActive         Boolean
+  rawStatus         String?
+  interfaceOptions  String[] @default([])
+  capturedAt        DateTime @default(now())
+
+  rules ServerSnapshotRule[]
+
+  @@index([serverId, capturedAt(sort: Desc)])
+  @@map("server_snapshot")
+}
+
+model ServerSnapshotRule {
+  id          String         @id @default(cuid())
+  snapshotId  String
+  snapshot    ServerSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  fingerprint String
+  sortOrder   Int
+
+  action      RuleAction
+  direction   RuleDirection?
+  interface   String?
+  protocol    RuleProtocol?
+  fromAddress String?
+  fromPort    String?
+  toAddress   String?
+  toPort      String?
+  appName     String?
+  logMode     LogMode        @default(NONE)
+  ruleComment String?
+  ipv6        Boolean        @default(false)
+  rawLine     String?
+
+  @@unique([snapshotId, fingerprint])
+  @@index([snapshotId, sortOrder])
+  @@map("server_snapshot_rule")
+}
+
+model RuleRecord {
+  id          String @id @default(cuid())
+  serverId    String
+  server      Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  fingerprint String
+  sortOrder   Int
+
+  action      RuleAction
+  direction   RuleDirection?
+  interface   String?
+  protocol    RuleProtocol?
+  fromAddress String?
+  fromPort    String?
+  toAddress   String?
+  toPort      String?
+  appName     String?
+  logMode     LogMode        @default(NONE)
+  ruleComment String?
+  ipv6        Boolean        @default(false)
+
+  group       String?
+  name        String?
+  notes       String?
+
+  confirmedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([serverId, fingerprint])
+  @@index([serverId, sortOrder])
+  @@map("rule_record")
+}
+
+model DraftSession {
+  id        String   @id @default(cuid())
+  serverId  String
+  server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isActive  Boolean  @default(true)
+  savedAt   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rules DraftRule[]
+
+  @@index([serverId, userId, isActive])
+  @@map("draft_session")
+}
+
+model DraftRule {
+  id             String       @id @default(cuid())
+  draftSessionId String
+  draftSession   DraftSession @relation(fields: [draftSessionId], references: [id], onDelete: Cascade)
+  clientRowId    String
+  fingerprint    String
+  sortOrder      Int
+
+  action      RuleAction
+  direction   RuleDirection?
+  interface   String?
+  protocol    RuleProtocol?
+  fromAddress String?
+  fromPort    String?
+  toAddress   String?
+  toPort      String?
+  appName     String?
+  logMode     LogMode        @default(NONE)
+  ruleComment String?
+  ipv6        Boolean        @default(false)
+
+  group       String?
+  name        String?
+  notes       String?
+
+  originState RuleOriginState @default(DRAFT_ONLY)
+  isDeleted   Boolean         @default(false)
+
+  @@index([draftSessionId, sortOrder])
+  @@map("draft_rule")
+}
+
+model ApplySession {
+  id           String          @id @default(cuid())
+  serverId     String
+  server       Server          @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       OperationStatus @default(PENDING)
+  summary      Json?
+  desiredJson  Json?
+  confirmedAt  DateTime?
+  completedAt  DateTime?
+  errorMessage String?
+  createdAt    DateTime        @default(now())
+
+  items ApplySessionItem[]
+
+  @@index([serverId, createdAt(sort: Desc)])
+  @@map("apply_session")
+}
+
+model ApplySessionItem {
+  id             String          @id @default(cuid())
+  applySessionId String
+  applySession   ApplySession    @relation(fields: [applySessionId], references: [id], onDelete: Cascade)
+  action         ApplyItemAction
+  fingerprint    String
+  beforeJson     Json?
+  afterJson      Json?
+  remoteCommand  String?
+  status         OperationStatus @default(PENDING)
+  errorMessage   String?
+  sortOrder      Int
+
+  @@index([applySessionId, sortOrder])
+  @@map("apply_session_item")
+}
+
+model OperationLog {
+  id        String          @id @default(cuid())
+  serverId  String?
+  server    Server?         @relation(fields: [serverId], references: [id], onDelete: SetNull)
+  userId    String?
+  type      String
+  status    OperationStatus
+  message   String?
+  metadata  Json?
+  createdAt DateTime        @default(now())
+
+  @@index([serverId, createdAt(sort: Desc)])
+  @@map("operation_log")
+}
+
+model AuditEvent {
+  id         String      @id @default(cuid())
+  userId     String?
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     AuditAction
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_event")
+}
+
+model TagValue {
+  id       String  @id @default(cuid())
+  serverId String
+  server   Server  @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  kind     TagKind
+  value    String
+  useCount Int     @default(1)
+
+  @@unique([serverId, kind, value])
+  @@map("tag_value")
+}

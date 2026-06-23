@@ -1,0 +1,83 @@
+import type { OperationStatus, Prisma } from "@prisma/client";
+
+import { db } from "@/lib/db";
+
+export async function createOperationLog(params: {
+  serverId?: string | null;
+  userId?: string | null;
+  type: string;
+  status: OperationStatus;
+  message?: string;
+  metadata?: Prisma.InputJsonValue;
+}) {
+  return db.operationLog.create({
+    data: {
+      serverId: params.serverId ?? null,
+      userId: params.userId ?? null,
+      type: params.type,
+      status: params.status,
+      message: params.message,
+      metadata: params.metadata ?? undefined,
+    },
+  });
+}
+
+export async function listOperationLogs(params: {
+  serverId?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const page = params.page ?? 1;
+  const pageSize = params.pageSize ?? 50;
+  const skip = (page - 1) * pageSize;
+
+  const where = params.serverId ? { serverId: params.serverId } : {};
+
+  const [items, total] = await Promise.all([
+    db.operationLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    db.operationLog.count({ where }),
+  ]);
+
+  return { items, total, page, pageSize };
+}
+
+export async function getLatestOperationLog(serverId: string) {
+  return db.operationLog.findFirst({
+    where: { serverId },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function updateOperationLog(
+  id: string,
+  params: {
+    status?: OperationStatus;
+    message?: string;
+    metadata?: Prisma.InputJsonValue;
+  },
+) {
+  return db.operationLog.update({
+    where: { id },
+    data: {
+      status: params.status,
+      message: params.message,
+      metadata: params.metadata,
+    },
+  });
+}
+
+export async function getActiveOperationLog(serverId: string, userId?: string) {
+  return db.operationLog.findFirst({
+    where: {
+      serverId,
+      status: "RUNNING",
+      ...(userId ? { userId } : {}),
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
