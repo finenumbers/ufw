@@ -1,6 +1,6 @@
 {
   "name": "ufw-remote-manager",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -14,6 +14,7 @@
     "db:studio": "prisma studio",
     "auth:generate": "npx @better-auth/cli generate",
     "i18n:check": "npx tsx scripts/i18n-check.ts",
+    "docs:check": "npx tsx scripts/docs-check.ts",
     "deadcode:check": "knip --include files,dependencies",
     "test": "npx tsx --test src/lib/**/*.test.ts src/lib/*.test.ts src/server/**/*.test.ts"
   },

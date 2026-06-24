@@ -7,7 +7,7 @@
 #   3. Set all required environment variables in Portainer (never commit real values to git).
 #   4. Configure NPM Proxy Host: ufw-app:3000, WebSockets ON, Force SSL.
 #
-# See docs/deploy/portainer.md
+# See docs/en/deployment/portainer.md
 
 name: ufw-remote-manager
 

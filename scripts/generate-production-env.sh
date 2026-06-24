@@ -62,7 +62,7 @@ cat <<EOF
 Created ${TARGET_FILE} (mode 600).
 
 Next steps:
-  1. Pull or build GHCR images (see docs/deploy/ghcr.md).
+  1. Pull or build GHCR images (see docs/en/deployment/ghcr-compose.md).
   2. Deploy with Portainer or:
        docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file ${TARGET_FILE} up -d
   3. Configure NPM Proxy Host → ufw-app:3000

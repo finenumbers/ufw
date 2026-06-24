@@ -28,6 +28,9 @@ jobs:
       - name: i18n check
         run: npm run i18n:check
 
+      - name: Docs check
+        run: npm run docs:check
+
       - name: Dead code check
         run: npm run deadcode:check
 

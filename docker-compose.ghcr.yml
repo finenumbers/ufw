@@ -1,7 +1,7 @@
 # Pull pre-built images from GitHub Container Registry (GHCR).
 #
 # Prerequisites:
-#   1. Build or pull images (see docs/deploy/ghcr.md).
+#   1. Build or pull images (see docs/en/deployment/ghcr-compose.md).
 #   2. Set GHCR_APP_IMAGE and GHCR_MIGRATE_IMAGE in .env (see .env.production.example).
 #
 # Usage (production behind NPM):

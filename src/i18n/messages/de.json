@@ -13,6 +13,11 @@
     "identities": "SSH-Identitäten",
     "logout": "Abmelden"
   },
+  "footer": {
+    "documentation": "Dokumentation",
+    "support": "Support",
+    "aboutVendor": "Finenumbers"
+  },
   "common": {
     "cancel": "Abbrechen",
     "open": "Öffnen",

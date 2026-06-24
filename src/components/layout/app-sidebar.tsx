@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
+import { getDocsUrl, getSupportMailtoUrl } from "@/lib/docs-url";
+import type { AppLocale } from "@/i18n/config";
 import { getServerPath, isServerPathActive } from "@/lib/server-path";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +24,7 @@ type AppSidebarProps = {
 
 export function AppSidebar({ servers }: AppSidebarProps) {
   const pathname = usePathname();
+  const locale = useLocale() as AppLocale;
   const t = useTranslations();
 
   async function handleLogout() {
@@ -75,6 +78,23 @@ export function AppSidebar({ servers }: AppSidebarProps) {
         <Button variant="outline" className="w-full" onClick={handleLogout}>
           {t("sidebar.logout")}
         </Button>
+        <div className="space-y-1 pt-2 text-xs text-muted-foreground">
+          <a
+            href={getDocsUrl(locale)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block underline-offset-4 hover:underline"
+          >
+            {t("footer.documentation")}
+          </a>
+          <a
+            href={getSupportMailtoUrl()}
+            className="block underline-offset-4 hover:underline"
+          >
+            {t("footer.support")}
+          </a>
+          <p className="pt-1">{t("footer.aboutVendor")}</p>
+        </div>
       </div>
     </aside>
   );

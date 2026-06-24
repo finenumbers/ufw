@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 120" fill="none">
+  <rect width="640" height="120" rx="12" fill="#f8fafc"/>
+  <rect x="20" y="36" width="100" height="48" rx="8" stroke="#334155" stroke-width="2" fill="#fff"/>
+  <rect x="150" y="36" width="100" height="48" rx="8" stroke="#334155" stroke-width="2" fill="#fff"/>
+  <rect x="280" y="36" width="100" height="48" rx="8" stroke="#334155" stroke-width="2" fill="#fff"/>
+  <rect x="410" y="36" width="100" height="48" rx="8" stroke="#16a34a" stroke-width="2" fill="#f0fdf4"/>
+  <rect x="540" y="36" width="80" height="48" rx="8" stroke="#2563eb" stroke-width="2" fill="#eff6ff"/>
+  <path d="M120 60h20M250 60h20M380 60h20M510 60h20" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/></marker></defs>
+</svg>

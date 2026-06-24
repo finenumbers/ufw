@@ -46,3 +46,7 @@ Out of scope:
 - Restrict network access to the admin UI (VPN, IP allowlist)
 - Use strong unique values for `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, and `APP_ENCRYPTION_KEY`
 - Rotate secrets if a `.env` file or config export may have been exposed
+
+## Documentation
+
+User and operator guides are available in **seven languages** under [docs/](docs/README.md) (English, German, French, Spanish, Italian, Portuguese, Russian). Security policy remains in this file (English).

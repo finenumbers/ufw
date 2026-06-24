@@ -8,6 +8,7 @@
 #   1. Set NPM_NETWORK in .env to the Docker network name NPM already uses.
 #   2. Configure a Proxy Host in NPM UI: Forward Hostname=ufw-app, Port=3000, Scheme=http.
 #   3. Set APP_URL in .env to the public HTTPS URL exposed by NPM.
+#   4. Full guide: docs/en/deployment/nginx-proxy-manager.md
 
 services:
   postgres:

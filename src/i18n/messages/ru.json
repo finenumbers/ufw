@@ -13,6 +13,11 @@
     "logout": "Выйти",
     "identities": "SSH-идентификации"
   },
+  "footer": {
+    "documentation": "Документация",
+    "support": "Поддержка",
+    "aboutVendor": "Finenumbers"
+  },
   "common": {
     "cancel": "Отмена",
     "open": "Открыть",

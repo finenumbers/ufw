@@ -7,7 +7,7 @@ set -euo pipefail
 #   ./scripts/backup-postgres.sh
 #   BACKUP_DIR=/var/backups/ufw ENV_FILE=.env ./scripts/backup-postgres.sh
 #
-# See docs/operations/backup-restore.md
+# See docs/en/operations/backup-restore.md
 
 BACKUP_DIR="${BACKUP_DIR:-./backups}"
 ENV_FILE="${ENV_FILE:-}"

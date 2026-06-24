@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 280" fill="none">
+  <rect width="720" height="280" rx="12" fill="#f8fafc"/>
+  <rect x="24" y="100" width="120" height="64" rx="8" stroke="#334155" stroke-width="2" fill="#fff"/>
+  <rect x="200" y="100" width="120" height="64" rx="8" stroke="#334155" stroke-width="2" fill="#fff"/>
+  <rect x="376" y="40" width="120" height="64" rx="8" stroke="#2563eb" stroke-width="2" fill="#eff6ff"/>
+  <rect x="376" y="140" width="120" height="64" rx="8" stroke="#2563eb" stroke-width="2" fill="#eff6ff"/>
+  <rect x="552" y="100" width="120" height="64" rx="8" stroke="#334155" stroke-width="2" fill="#fff"/>
+  <path d="M144 132h44" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M320 132h44" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M496 104v-20h32v20" stroke="#64748b" stroke-width="2"/>
+  <path d="M496 172v20h32v-20" stroke="#64748b" stroke-width="2"/>
+  <path d="M496 132h44" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="84" cy="132" r="16" fill="#e2e8f0" stroke="#64748b"/>
+  <circle cx="260" cy="132" r="16" fill="#e2e8f0" stroke="#64748b"/>
+  <circle cx="612" cy="132" r="16" fill="#e2e8f0" stroke="#64748b"/>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>

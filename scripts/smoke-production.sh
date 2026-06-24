@@ -7,7 +7,7 @@ set -euo pipefail
 #   ./scripts/smoke-production.sh --env-file .env --ghcr
 #   ./scripts/smoke-production.sh --env-file .env --app-url https://ufw.example.com
 #
-# See docs/operations/upgrade-rollback.md
+# See docs/en/operations/smoke-tests.md
 
 ENV_FILE=""
 USE_GHCR=0
@@ -150,7 +150,7 @@ Automated checks passed. Complete these in a browser:
   4. Servers → add server → run SSH test
   5. Rules → run apply preview (no apply required)
 
-Docs: docs/operations/upgrade-rollback.md
+Docs: docs/en/operations/smoke-tests.md
 
 EOF
 
