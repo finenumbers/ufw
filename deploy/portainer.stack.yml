@@ -5,7 +5,7 @@
 #   1. Copy .env.production.example → set secrets on the host (or Portainer env UI).
 #   2. Portainer → Stacks → Add stack → Web editor → paste this file.
 #   3. Set all required environment variables in Portainer (never commit real values to git).
-#   4. Configure NPM Proxy Host: ufw-app:3000, WebSockets ON, Force SSL.
+#   4. Configure NPM Proxy Host: ufw-app:8088, WebSockets ON, Force SSL.
 #
 # See docs/en/deployment/portainer.md
 
@@ -49,13 +49,14 @@ services:
       BETTER_AUTH_URL: ${APP_URL:?APP_URL is required}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY is required}
+      PORT: 8088
       NODE_ENV: production
       LOG_LEVEL: info
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "node -e \"fetch('http://127.0.0.1:3000/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+          "node -e \"fetch('http://127.0.0.1:8088/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
         ]
       interval: 30s
       timeout: 5s

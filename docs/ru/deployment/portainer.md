@@ -45,7 +45,7 @@ docker inspect <npm_container> --format '{{range $k,$v := .NetworkSettings.Netwo
 
 ## Настройка NPM
 
-См. [Nginx Proxy Manager](./nginx-proxy-manager.md) — проксирование на `ufw-app:3000`.
+См. [Nginx Proxy Manager](./nginx-proxy-manager.md) — проксирование на `ufw-app:8088`.
 
 ## Проверка
 

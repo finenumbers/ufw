@@ -5,7 +5,7 @@ Nginx Proxy Manager (NPM) должен быть **уже установлен** 
 ## Поток трафика
 
 ```
-Internet → NPM:443 (TLS) → ufw-app:3000 (HTTP, Docker network)
+Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, Docker network)
 ```
 
 NPM завершает HTTPS. Приложение устанавливает HSTS в продакшене, но полагается на NPM для сертификатов.
@@ -19,7 +19,7 @@ NPM завершает HTTPS. Приложение устанавливает HS
 | Domain Names | Хост из `APP_URL` (например, `ufw.example.com`) |
 | Scheme | `http` |
 | Forward Hostname / IP | `ufw-app` |
-| Forward Port | `3000` |
+| Forward Port | `8088` |
 | Websockets Support | **Enabled** |
 | Block Common Exploits | Recommended |
 | SSL | Let's Encrypt or existing certificate |

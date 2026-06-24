@@ -45,7 +45,7 @@ Erforderlich: `APP_URL`, `NPM_NETWORK`, `GHCR_APP_IMAGE`, `GHCR_MIGRATE_IMAGE`, 
 
 ## NPM konfigurieren
 
-Siehe [Nginx Proxy Manager](./nginx-proxy-manager.md) — Weiterleitung an `ufw-app:3000`.
+Siehe [Nginx Proxy Manager](./nginx-proxy-manager.md) — Weiterleitung an `ufw-app:8088`.
 
 ## Verifizieren
 

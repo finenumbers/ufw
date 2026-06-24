@@ -13,7 +13,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Open **http://localhost:3000** → complete `/setup` → create an **SSH Identity** → **Add Server**.
+Open **http://localhost:8088** → complete `/setup` → create an **SSH Identity** → **Add Server**.
 
 ## Documentation
 

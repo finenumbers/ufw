@@ -21,7 +21,7 @@ Esta página describe cómo está construido UFW Remote Manager, cómo fluyen lo
 ```mermaid
 flowchart LR
   Browser -->|HTTPS| NPM[Nginx_Proxy_Manager]
-  NPM -->|HTTP| App[ufw_app:3000]
+  NPM -->|HTTP| App[ufw_app:8088]
   App --> DB[(PostgreSQL)]
   App -->|SSH| Server1[Linux_UFW]
   App -->|SSH| Server2[Linux_UFW]

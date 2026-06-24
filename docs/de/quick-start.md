@@ -28,7 +28,7 @@ Sie sollten `ufw-postgres` (healthy), `ufw-migrate` (exited 0) und `ufw-app` (he
 
 ## 3. Oberfläche öffnen
 
-Öffnen Sie **http://localhost:3000** in Ihrem Browser.
+Öffnen Sie **http://localhost:8088** in Ihrem Browser.
 
 - **Erster Besuch:** `/setup` — das einzige Administratorkonto anlegen
 - **Spätere Besuche:** `/login`

@@ -4,7 +4,7 @@ Au premier lancement, UFW Remote Manager n'a **aucun utilisateur**. Vous devez c
 
 ## Page de configuration (`/setup`)
 
-1. Ouvrir l'URL de l'application (ex. `http://localhost:3000` ou votre `APP_URL`)
+1. Ouvrir l'URL de l'application (ex. `http://localhost:8088` ou votre `APP_URL`)
 2. Vous êtes redirigé automatiquement vers `/setup`
 3. Saisir le nom, l'e-mail, le mot de passe et la confirmation du mot de passe
 4. Cliquer sur **Terminer la configuration**
@@ -27,7 +27,7 @@ Pour ajouter une autre personne, elle partagerait les identifiants admin (non re
 
 Après déploiement derrière HTTPS :
 
-1. Configurer NPM Proxy Host → `ufw-app:3000`
+1. Configurer NPM Proxy Host → `ufw-app:8088`
 2. Définir `APP_URL=https://your-domain.example` dans `.env`
 3. Ouvrir `https://your-domain.example/setup`
 4. Terminer la configuration avant d'exposer l'URL largement

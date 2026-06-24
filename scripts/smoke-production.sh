@@ -114,7 +114,7 @@ if [[ "$APP_HEALTH" != "healthy" ]]; then
 fi
 
 HEALTH_JSON="$(docker exec "$APP_CONTAINER" node -e \
-  "fetch('http://127.0.0.1:3000/api/health').then(async (r) => console.log(await r.text())).catch((e) => { console.error(e); process.exit(1); })")"
+  "fetch('http://127.0.0.1:8088/api/health').then(async (r) => console.log(await r.text())).catch((e) => { console.error(e); process.exit(1); })")"
 
 echo "$HEALTH_JSON"
 echo "$HEALTH_JSON" | grep -q '"status":"ok"' \

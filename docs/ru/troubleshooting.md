@@ -47,7 +47,7 @@
 ## Health API
 
 ```bash
-docker exec ufw-app node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>r.json()).then(console.log)"
+docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r.json()).then(console.log)"
 ```
 
 Ожидается: `{"status":"ok","db":"ok"}`

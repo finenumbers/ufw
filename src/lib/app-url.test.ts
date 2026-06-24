@@ -36,7 +36,7 @@ test("getPublicAppUrl defaults to localhost", () => {
   delete process.env.APP_URL;
   delete process.env.BETTER_AUTH_URL;
 
-  assert.equal(getPublicAppUrl(), "http://localhost:3000");
+  assert.equal(getPublicAppUrl(), "http://localhost:8088");
 
   process.env.APP_URL = previousAppUrl;
   process.env.BETTER_AUTH_URL = previousBetterAuthUrl;

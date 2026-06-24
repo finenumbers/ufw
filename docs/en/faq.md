@@ -28,7 +28,7 @@ No. Set `APP_URL` in `.env` at runtime. One GHCR image works for any HTTPS domai
 No. NPM (or another reverse proxy) must be installed separately.
 
 **Can I run without HTTPS?**  
-Local development uses `http://localhost:3000`. Production expects HTTPS for secure cookies and HSTS.
+Local development uses `http://localhost:8088`. Production expects HTTPS for secure cookies and HSTS.
 
 ## Firewall operations
 

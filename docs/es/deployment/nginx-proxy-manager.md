@@ -5,7 +5,7 @@ Nginx Proxy Manager (NPM) debe estar **ya instalado** en su host Docker. Este pr
 ## Flujo de tráfico
 
 ```
-Internet → NPM:443 (TLS) → ufw-app:3000 (HTTP, red Docker)
+Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, red Docker)
 ```
 
 NPM termina HTTPS. La aplicación establece HSTS en producción pero depende de NPM para los certificados.
@@ -19,7 +19,7 @@ Cree o actualice un **Proxy Host** en la interfaz de NPM:
 | Domain Names | Host de `APP_URL` (p. ej. `ufw.example.com`) |
 | Scheme | `http` |
 | Forward Hostname / IP | `ufw-app` |
-| Forward Port | `3000` |
+| Forward Port | `8088` |
 | Websockets Support | **Enabled** |
 | Block Common Exploits | Recomendado |
 | SSL | Let's Encrypt o certificado existente |

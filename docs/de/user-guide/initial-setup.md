@@ -4,7 +4,7 @@ Beim ersten Start hat UFW Remote Manager **keine Benutzer**. Sie müssen einmal 
 
 ## Einrichtungsseite (`/setup`)
 
-1. Anwendungs-URL öffnen (z. B. `http://localhost:3000` oder Ihre `APP_URL`)
+1. Anwendungs-URL öffnen (z. B. `http://localhost:8088` oder Ihre `APP_URL`)
 2. Sie werden automatisch zu `/setup` weitergeleitet
 3. Name, E-Mail, Passwort und Passwortbestätigung eingeben
 4. **Einrichtung abschließen** klicken
@@ -27,7 +27,7 @@ Um eine weitere Person hinzuzufügen, würde diese die Admin-Zugangsdaten teilen
 
 Nach Bereitstellung hinter HTTPS:
 
-1. NPM Proxy Host konfigurieren → `ufw-app:3000`
+1. NPM Proxy Host konfigurieren → `ufw-app:8088`
 2. `APP_URL=https://your-domain.example` in `.env` setzen
 3. `https://your-domain.example/setup` öffnen
 4. Einrichtung abschließen, bevor Sie die URL breit verfügbar machen

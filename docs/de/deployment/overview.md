@@ -27,7 +27,7 @@ Nginx Proxy Manager ist **immer extern** — nicht in diesem Repository enthalte
 1. Image-Tag `v0.1.0` (oder neuestes Release) von GHCR abrufen
 2. `.env` auf dem Server generieren: `./scripts/generate-production-env.sh .env`
 3. Mit Compose + `docker-compose.prod.yml` + `docker-compose.ghcr.yml` bereitstellen
-4. NPM Proxy Host konfigurieren → `ufw-app:3000`
+4. NPM Proxy Host konfigurieren → `ufw-app:8088`
 5. `APP_URL/setup` öffnen, Admin anlegen
 6. `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"` ausführen
 

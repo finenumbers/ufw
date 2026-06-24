@@ -1,4 +1,6 @@
-const DEFAULT_APP_URL = "http://localhost:3000";
+import { getDefaultAppUrl } from "@/lib/app-port";
+
+const DEFAULT_APP_URL = getDefaultAppUrl();
 
 export function getPublicAppUrl(): string {
   const raw =

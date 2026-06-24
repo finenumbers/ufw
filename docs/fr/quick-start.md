@@ -28,7 +28,7 @@ Vous devriez voir `ufw-postgres` (healthy), `ufw-migrate` (exited 0) et `ufw-app
 
 ## 3. Ouvrir l'interface
 
-Ouvrez **http://localhost:3000** dans votre navigateur.
+Ouvrez **http://localhost:8088** dans votre navigateur.
 
 - **Première visite :** `/setup` — créer le compte administrateur unique
 - **Visites suivantes :** `/login`

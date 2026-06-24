@@ -65,7 +65,7 @@ Next steps:
   1. Pull or build GHCR images (see docs/en/deployment/ghcr-compose.md).
   2. Deploy with Portainer or:
        docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file ${TARGET_FILE} up -d
-  3. Configure NPM Proxy Host → ufw-app:3000
+  3. Configure NPM Proxy Host → ufw-app:8088
   4. Run: ./scripts/smoke-production.sh --env-file ${TARGET_FILE} --ghcr --app-url ${APP_URL}
   5. Open ${APP_URL}/setup and create the admin account
 

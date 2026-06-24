@@ -27,7 +27,7 @@ Die Laufzeitkonfiguration wird über `.env` (Compose) oder die Portainer-Umgebun
 |----------|--------------|----------|
 | `SSH_ALLOWED_CIDRS` | Kommagetrennte CIDRs als erlaubte SSH-Ziele | Leer (private IPs blockiert) |
 | `APP_BIND` | Lokale Compose-Bind-Adresse | `127.0.0.1` |
-| `APP_PORT` | Host-Port für lokales Compose | `3000` |
+| `APP_PORT` | Host-Port für lokales Compose | `8088` |
 | `POSTGRES_PORT` | Host-Port für Postgres in Dev | `5434` |
 | `LOG_LEVEL` | Pino-Log-Level | `info` |
 
@@ -36,8 +36,8 @@ Die Laufzeitkonfiguration wird über `.env` (Compose) oder die Portainer-Umgebun
 In `docker-compose.yml`:
 
 ```yaml
-APP_URL: ${APP_URL:-http://localhost:3000}
-BETTER_AUTH_URL: ${APP_URL:-http://localhost:3000}
+APP_URL: ${APP_URL:-http://localhost:8088}
+BETTER_AUTH_URL: ${APP_URL:-http://localhost:8088}
 ```
 
 Die App liest `APP_URL` oder `BETTER_AUTH_URL` zur Laufzeit (`getPublicAppUrl()`).

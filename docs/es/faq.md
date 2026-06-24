@@ -28,7 +28,7 @@ No. Configure `APP_URL` en `.env` en tiempo de ejecución. Una imagen GHCR sirve
 No. NPM (u otro proxy inverso) debe instalarse por separado.
 
 **¿Puedo ejecutarlo sin HTTPS?**  
-El desarrollo local usa `http://localhost:3000`. Producción espera HTTPS para cookies seguras y HSTS.
+El desarrollo local usa `http://localhost:8088`. Producción espera HTTPS para cookies seguras y HSTS.
 
 ## Operaciones de firewall
 

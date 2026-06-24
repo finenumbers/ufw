@@ -27,7 +27,7 @@
 |------------|----------|--------------|
 | `SSH_ALLOWED_CIDRS` | Разрешённые CIDR через запятую как SSH-цели | Пусто (частные IP блокируются) |
 | `APP_BIND` | Адрес bind для локального compose | `127.0.0.1` |
-| `APP_PORT` | Порт хоста для локального compose | `3000` |
+| `APP_PORT` | Порт хоста для локального compose | `8088` |
 | `POSTGRES_PORT` | Порт хоста для Postgres в dev | `5434` |
 | `LOG_LEVEL` | Уровень логов Pino | `info` |
 
@@ -36,8 +36,8 @@
 В `docker-compose.yml`:
 
 ```yaml
-APP_URL: ${APP_URL:-http://localhost:3000}
-BETTER_AUTH_URL: ${APP_URL:-http://localhost:3000}
+APP_URL: ${APP_URL:-http://localhost:8088}
+BETTER_AUTH_URL: ${APP_URL:-http://localhost:8088}
 ```
 
 Приложение читает `APP_URL` или `BETTER_AUTH_URL` во время выполнения (`getPublicAppUrl()`).

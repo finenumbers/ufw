@@ -27,7 +27,7 @@ La configurazione di runtime è fornita tramite `.env` (Compose) o interfaccia v
 |----------|-------------|---------|
 | `SSH_ALLOWED_CIDRS` | CIDR separati da virgola consentiti come target SSH | Vuoto (IP privati bloccati) |
 | `APP_BIND` | Indirizzo bind compose locale | `127.0.0.1` |
-| `APP_PORT` | Porta host per compose locale | `3000` |
+| `APP_PORT` | Porta host per compose locale | `8088` |
 | `POSTGRES_PORT` | Porta host Postgres in dev | `5434` |
 | `LOG_LEVEL` | Livello log Pino | `info` |
 
@@ -36,8 +36,8 @@ La configurazione di runtime è fornita tramite `.env` (Compose) o interfaccia v
 In `docker-compose.yml`:
 
 ```yaml
-APP_URL: ${APP_URL:-http://localhost:3000}
-BETTER_AUTH_URL: ${APP_URL:-http://localhost:3000}
+APP_URL: ${APP_URL:-http://localhost:8088}
+BETTER_AUTH_URL: ${APP_URL:-http://localhost:8088}
 ```
 
 L'app legge `APP_URL` o `BETTER_AUTH_URL` a runtime (`getPublicAppUrl()`).

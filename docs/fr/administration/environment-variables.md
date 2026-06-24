@@ -27,7 +27,7 @@ La configuration d'exécution est fournie via `.env` (Compose) ou l'interface d'
 |----------|-------------|--------|
 | `SSH_ALLOWED_CIDRS` | CIDR séparés par des virgules autorisés comme cibles SSH | Vide (IP privées bloquées) |
 | `APP_BIND` | Adresse de liaison compose locale | `127.0.0.1` |
-| `APP_PORT` | Port hôte pour compose local | `3000` |
+| `APP_PORT` | Port hôte pour compose local | `8088` |
 | `POSTGRES_PORT` | Port hôte Postgres en dev | `5434` |
 | `LOG_LEVEL` | Niveau de journal Pino | `info` |
 
@@ -36,8 +36,8 @@ La configuration d'exécution est fournie via `.env` (Compose) ou l'interface d'
 Dans `docker-compose.yml` :
 
 ```yaml
-APP_URL: ${APP_URL:-http://localhost:3000}
-BETTER_AUTH_URL: ${APP_URL:-http://localhost:3000}
+APP_URL: ${APP_URL:-http://localhost:8088}
+BETTER_AUTH_URL: ${APP_URL:-http://localhost:8088}
 ```
 
 L'application lit `APP_URL` ou `BETTER_AUTH_URL` à l'exécution (`getPublicAppUrl()`).
