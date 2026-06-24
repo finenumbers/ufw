@@ -128,6 +128,7 @@ export function buildApplyPlan(
       addCount,
       removeCount: permanentRemoveCount,
       updateCount,
+      orderResync,
     },
   };
 }

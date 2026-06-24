@@ -7,7 +7,7 @@ import {
   exportRulesToXlsxBuffer,
   unifiedRowToImportRow,
   unifiedRowsToImportRows,
-} from "@/lib/exports/rules-export";
+} from "@/lib/exports/rules-export.helpers";
 import { parseXlsxRules } from "@/lib/imports/xlsx";
 import { RULES_FILE_COLUMNS } from "@/lib/rules/file-columns";
 import type { UnifiedRuleRow } from "@/types/rule";

@@ -30,10 +30,17 @@ export function AppSidebar({ servers }: AppSidebarProps) {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r bg-card">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r bg-card">
       <div className="border-b p-4">
-        <h1 className="text-lg font-semibold">{t("app.title")}</h1>
-        <p className="text-xs text-muted-foreground">{t("app.subtitle")}</p>
+        <Link href="/servers" className="inline-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/full_black.png"
+            alt="fine numbers"
+            className="h-10 w-auto"
+          />
+        </Link>
+        <p className="mt-2 text-xs text-muted-foreground">{t("app.subtitle")}</p>
         <LanguageSwitcher className="mt-3" />
       </div>
 
@@ -46,8 +53,9 @@ export function AppSidebar({ servers }: AppSidebarProps) {
               key={server.id}
               href={getServerPath(server.host)}
               className={cn(
-                "mb-1 block rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent",
-                isServerPathActive(pathname, server.host) && "bg-accent font-medium",
+                "mb-1 block rounded-md px-3 py-2 text-sm transition-colors hover:bg-zinc-100",
+                isServerPathActive(pathname, server.host) &&
+                  "bg-zinc-200 font-medium text-foreground hover:bg-zinc-200",
               )}
             >
               <div>{server.name}</div>
@@ -60,6 +68,9 @@ export function AppSidebar({ servers }: AppSidebarProps) {
       <div className="space-y-2 border-t p-4">
         <Button asChild variant="ghost" className="w-full justify-start">
           <Link href="/operations">{t("sidebar.operationsHistory")}</Link>
+        </Button>
+        <Button asChild variant="ghost" className="w-full justify-start">
+          <Link href="/identities">{t("sidebar.identities")}</Link>
         </Button>
         <Button variant="outline" className="w-full" onClick={handleLogout}>
           {t("sidebar.logout")}

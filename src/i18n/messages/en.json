@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "UFW Manager",
-    "subtitle": "Remote firewall control",
+    "subtitle": "UFW Remote Manager",
     "metadataTitle": "UFW Remote Manager",
     "metadataDescription": "Self-hosted remote UFW management over SSH"
   },
@@ -11,6 +10,7 @@
   "sidebar": {
     "noServers": "No servers yet",
     "operationsHistory": "Operations History",
+    "identities": "SSH Identities",
     "logout": "Logout"
   },
   "common": {
@@ -43,24 +43,41 @@
     "title": "Servers",
     "description": "Manage remote Linux servers and their UFW rules.",
     "addServer": "Add Server",
+    "saveConfig": "Save configuration",
+    "loadConfig": "Load configuration",
+    "configExportWarning": "The file will contain SSH credentials in plain text. Store it securely.",
+    "configExportTitle": "Export configuration?",
+    "configExportDescription": "Re-enter your password to download a configuration file with SSH credentials in plain text.",
+    "configExportPassword": "Password",
+    "configExportConfirm": "Export",
+    "configExportFailed": "Failed to export configuration",
+    "configImportTitle": "Load server configuration?",
+    "configImportDescription": "Servers missing from the file will be deleted along with all their rules and snapshots.",
+    "configImportDeleteList": "Servers to delete:",
+    "configImportCreate": "Create: {count}",
+    "configImportUpdate": "Update: {count}",
+    "configImportConfirm": "Load configuration",
+    "configImportSuccess": "Configuration loaded.",
+    "configImportFailed": "Failed to load configuration",
     "editServer": "Edit Server",
     "rulesUnavailable": "Rules editing becomes available after UFW is installed and active.",
     "new": {
       "title": "Add Server",
-      "description": "SSH credentials are encrypted before storage. Connection is verified before save.",
+      "description": "Choose a saved SSH identity. Connection is verified before save.",
       "detailsTitle": "Server Details",
-      "detailsDescription": "All fields are required based on the selected auth method."
+      "detailsDescription": "Host, port, and SSH identity are required."
     },
     "edit": {
       "title": "Edit Server",
       "detailsTitle": "Server Details",
-      "detailsDescription": "Updating credentials requires a successful SSH test.",
-      "hostKeyFingerprint": "SSH host key fingerprint"
+      "detailsDescription": "Changing host or identity requires a successful SSH test.",
+      "hostKeyFingerprint": "SSH host key fingerprint",
+      "hostKeyUnverified": "Host key imported from configuration — run SSH test to verify"
     },
     "delete": {
       "button": "Delete Server",
       "title": "Delete server?",
-      "description": "Server \"{name}\" and all of its local data will be permanently removed: confirmed rules, drafts, snapshots, tag history, and apply sessions. Remote UFW on the server is not changed.",
+      "description": "Server \"{name}\" and all of its local data will be permanently removed: confirmed rules, drafts, snapshots, and apply sessions. Remote UFW on the server is not changed.",
       "confirm": "Delete",
       "deleting": "Deleting...",
       "dangerTitle": "Danger Zone",
@@ -71,6 +88,55 @@
     "name": "Name",
     "host": "Host",
     "port": "Port",
+    "identity": "SSH Identity",
+    "selectIdentity": "Select identity",
+    "noIdentities": "Create an SSH identity before adding a server.",
+    "createIdentityLink": "Create SSH identity",
+    "createServer": "Create Server",
+    "updateServer": "Update Server",
+    "creating": "Creating...",
+    "updating": "Updating...",
+    "missingServerId": "Missing server ID"
+  },
+  "identities": {
+    "title": "SSH Identities",
+    "description": "Reusable SSH credentials for connecting to servers. Secrets are encrypted locally.",
+    "addIdentity": "Add Identity",
+    "empty": "No SSH identities yet. Create one to use when adding servers.",
+    "editAction": "Edit",
+    "columns": {
+      "name": "Name",
+      "username": "Username",
+      "authMethod": "Auth method",
+      "servers": "Servers"
+    },
+    "new": {
+      "title": "Add SSH Identity",
+      "description": "Credentials are encrypted before storage.",
+      "detailsTitle": "Identity Details",
+      "detailsDescription": "All fields are required based on the selected auth method."
+    },
+    "edit": {
+      "title": "Edit SSH Identity",
+      "detailsTitle": "Identity Details",
+      "linkedServersTitle": "Used by servers",
+      "linkedServersDescription": "Servers added to the system that connect with this SSH identity.",
+      "linkedServersEmpty": "This identity is not used by any server yet."
+    },
+    "delete": {
+      "button": "Delete Identity",
+      "title": "Delete identity?",
+      "description": "Identity \"{name}\" will be permanently removed.",
+      "blockedTitle": "Cannot delete identity",
+      "blockedDescription": "This identity is used by {count} server(s). Reassign or delete those servers first.",
+      "confirm": "Delete",
+      "deleting": "Deleting...",
+      "dangerTitle": "Danger Zone",
+      "dangerDescription": "Deleting an unused identity removes its encrypted credentials from the local database."
+    }
+  },
+  "identityForm": {
+    "name": "Name",
     "username": "Username",
     "authMethod": "Authentication Method",
     "selectMethod": "Select method",
@@ -80,46 +146,49 @@
     "password": "Password",
     "privateKey": "Private Key",
     "passphrase": "Passphrase",
-    "createServer": "Create Server",
-    "updateServer": "Update Server",
+    "credentialsSavedTitle": "Your SSH credentials are saved",
+    "credentialsSavedDescription": "For security, passwords and private keys are never shown again after saving. They remain encrypted in the local database and are used when connecting to servers. Empty fields below do not mean data was lost — leave them blank to keep the current secret, or enter a new value to replace it.",
+    "secretFieldEditHint": "Empty = keep the saved value. Fill in only if you want to change it.",
+    "passwordPlaceholderEdit": "Saved password is hidden — leave empty to keep it",
+    "privateKeyPlaceholderEdit": "Saved private key is hidden — leave empty to keep it",
+    "passphrasePlaceholderEdit": "Saved passphrase is hidden — leave empty to keep it",
+    "createIdentity": "Create Identity",
+    "updateIdentity": "Update Identity",
     "creating": "Creating...",
     "updating": "Updating...",
-    "missingServerId": "Missing server ID"
+    "updateWarningTitle": "Update identity for all servers?",
+    "updateWarningDescription": "This identity is used by {count} server(s). Saving will change SSH access for all of them.",
+    "confirmUpdate": "Save changes"
   },
   "ufw": {
     "installed": "UFW Installed",
     "notInstalled": "UFW Not Installed",
     "active": "UFW Active",
     "inactive": "UFW Inactive",
-    "remoteRules": "{count} remote rules",
+    "dbRules": "{count} rules in DB",
     "testSsh": "Test SSH",
     "refreshStatus": "Refresh Status",
     "installUfw": "Install UFW",
-    "activateUfw": "Activate UFW",
     "installTitle": "Install UFW?",
-    "installDescription": "This will install UFW on the remote server via SSH.",
-    "confirmInstall": "Confirm Install",
-    "activateTitle": "Activate UFW?",
-    "activateDescription": "This will enable UFW on the remote server. Ensure SSH access is allowed.",
-    "confirmActivate": "Confirm Activate"
+    "installDescription": "UFW will be installed and activated on the remote server via SSH.",
+    "confirmInstall": "Confirm Install"
   },
   "rules": {
     "toolbar": {
       "addRule": "Add Rule",
-      "saveDraft": "Save Draft",
       "saveRules": "Save Rules",
       "import": "Import",
       "export": "Export",
-      "draftSaved": "Draft saved locally. UFW on the server is unchanged.",
       "importDuplicatesSkipped": "Skipped {count} duplicate rule(s) during import.",
-      "hint": "Edits are kept locally until you save. Remote UFW changes happen only after <highlight>Save Rules</highlight> and confirmation in the dialog."
+      "hint": "Unsaved table edits are discarded when you refresh status. Save to the local database and remote UFW only via <highlight>Save Rules</highlight> with confirmation."
     },
     "applyDialog": {
       "title": "Confirm UFW rule changes",
-      "description": "This will apply changes to the remote server firewall. Review the plan below before confirming.",
+      "description": "Rules from the table will be saved to the local database and applied to the remote firewall when needed. Review the plan below before confirming.",
       "add": "Add: {count}",
       "remove": "Remove: {count}",
       "reorder": "Reorder: {count}",
+      "dbSync": "Save to local database",
       "apply": "Apply to UFW",
       "applying": "Applying...",
       "failed": "Apply failed",
@@ -130,10 +199,9 @@
     },
     "table": {
       "searchPlaceholder": "Search rules...",
-      "legendRemoteOnly": "On server, not in local DB",
-      "legendMatched": "On server and in local DB",
-      "legendLocalOnly": "Not on server, in local DB",
-      "legendPendingNoHighlight": "New rules before Save Draft have no highlight",
+      "legendRemoteOnly": "Present on UFW, not in local DB",
+      "legendMatched": "Present on UFW and in local DB",
+      "legendLocalOnly": "Not on UFW, present in local DB",
       "clearFiltersToReorder": "Clear search and column filters to reorder rules",
       "noRulesFound": "No rules found",
       "filterAll": "All",
@@ -143,7 +211,10 @@
       "filterShowOptions": "Show {label} options",
       "filterOptions": "{label} options",
       "orderColumn": "Order",
-      "deleteRule": "Delete rule"
+      "deleteRule": "Delete rule",
+      "loadingMore": "Loading more...",
+      "scrollForMore": "Scroll down for more",
+      "loadedCount": "Showing {loaded} of {total} rules"
     }
   },
   "operationsPage": {
@@ -157,14 +228,24 @@
     "message": "Message",
     "action": "Action",
     "user": "User",
-    "entity": "Entity"
+    "entity": "Entity",
+    "loadingMore": "Loading more...",
+    "scrollForMore": "Scroll down for more",
+    "clearHistory": "Clear history",
+    "clearHistoryTitle": "Clear operations history?",
+    "clearHistoryDescription": "All operation logs and audit events will be permanently deleted. This cannot be undone.",
+    "clearHistoryConfirm": "Clear history",
+    "clearHistoryClearing": "Clearing...",
+    "clearHistoryBlocked": "Cannot clear history while an operation is running."
   },
   "operations": {
     "status": {
       "RUNNING": "RUNNING",
       "SUCCESS": "SUCCESS",
       "FAILED": "FAILED",
-      "PENDING": "PENDING"
+      "PENDING": "PENDING",
+      "PARTIAL": "PARTIAL",
+      "CANCELLED": "CANCELLED"
     },
     "types": {
       "apply_rules": "Applying UFW rules",
@@ -196,13 +277,14 @@
       "refresh_start": "Refreshing UFW status",
       "refresh_complete": "Done: UFW status updated",
       "install_start": "Installing UFW",
-      "install_complete": "Done: UFW installed",
+      "install_complete": "Done: UFW installed and activated",
       "enable_start": "Enabling UFW",
       "enable_complete": "Done: UFW enabled and rules synced",
       "ssh_start": "Testing SSH connection",
       "ssh_complete": "SSH connection successful",
       "server_create_complete": "Server {name} created",
-      "operation_failed": "Operation failed: {error}"
+      "operation_failed": "Operation failed: {error}",
+      "operation_cancelled": "Operation cancelled"
     },
     "phases": {
       "ufw_commands": "Applying UFW commands",

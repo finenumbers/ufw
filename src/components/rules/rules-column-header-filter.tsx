@@ -56,13 +56,13 @@ export function RulesColumnHeaderFilter({
   }, [open]);
 
   return (
-    <div ref={rootRef} className={cn("relative min-w-[8rem]", className)}>
+    <div ref={rootRef} className={cn("relative w-full", className)}>
       <div className="flex items-center gap-0.5">
         <Input
           value={value}
           placeholder={label}
           aria-label={filterAria}
-          className="h-6 min-h-6 px-1.5 py-0 text-[10px] leading-tight"
+          className="h-6 min-h-6 px-1.5 py-0 text-[10px] font-medium leading-tight text-foreground placeholder:font-medium placeholder:text-foreground"
           onChange={(event) => onChange(event.target.value)}
           onFocus={() => setOpen(true)}
         />

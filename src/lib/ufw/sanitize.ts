@@ -1,12 +1,19 @@
+import type { LogMode, RuleAction, RuleDirection, RuleProtocol } from "@prisma/client";
+
 import type { RuleCore } from "@/types/rule";
 
 import { UfwRuleValidationError } from "@/lib/ufw/commands";
 import { ANYWHERE, normalizeAddress } from "@/lib/ufw/types";
 
+const ALLOWED_ACTIONS = new Set<RuleAction>(["ALLOW", "DENY", "REJECT", "LIMIT"]);
+const ALLOWED_DIRECTIONS = new Set<RuleDirection>(["IN", "OUT", "ROUTE"]);
+const ALLOWED_PROTOCOLS = new Set<RuleProtocol>(["TCP", "UDP", "ICMP", "ANY"]);
+const ALLOWED_LOG_MODES = new Set<LogMode>(["NONE", "LOG", "LOG_ALL"]);
+
 const SHELL_METACHAR_PATTERN = /[;`$|\r\n&<>]/;
 
 const INTERFACE_PATTERN = /^[a-zA-Z0-9._-]+$/;
-const PORT_PATTERN = /^\d+(:\d+)?$/;
+const PORT_PATTERN = /^\d+(:\d+)?(?:,\d+(?::\d+)?)*$/;
 const APP_NAME_PATTERN = /^[a-zA-Z0-9._ -]+$/;
 const IPV4_CIDR_PATTERN =
   /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d?\d)){3})(?:\/(?:[0-9]|[12]\d|3[0-2]))?$/;
@@ -92,7 +99,29 @@ function assertRuleComment(value: string | null | undefined): void {
   assertNoShellMetacharacters(value, "ruleComment");
 }
 
+function assertEnumValue<T extends string>(
+  value: T | null | undefined,
+  field: string,
+  allowed: Set<T>,
+  required = false,
+): void {
+  if (value == null || value === "") {
+    if (required) {
+      reject(field, "is required");
+    }
+    return;
+  }
+
+  if (!allowed.has(value)) {
+    reject(field, "contains an invalid value");
+  }
+}
+
 export function sanitizeRuleCoreForUfwCommand(core: RuleCore): void {
+  assertEnumValue(core.action, "action", ALLOWED_ACTIONS, true);
+  assertEnumValue(core.direction ?? null, "direction", ALLOWED_DIRECTIONS);
+  assertEnumValue(core.protocol ?? null, "protocol", ALLOWED_PROTOCOLS);
+  assertEnumValue(core.logMode, "logMode", ALLOWED_LOG_MODES, true);
   assertInterface(core.interface);
   assertAddress(core.fromAddress, "fromAddress");
   assertAddress(core.toAddress, "toAddress");

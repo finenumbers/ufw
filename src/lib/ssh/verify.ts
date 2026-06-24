@@ -1,4 +1,8 @@
 import { withSshConnection, type SshConnectionConfig } from "@/lib/ssh/client";
+import {
+  sanitizeSshClientError,
+  sanitizeSshCommandError,
+} from "@/lib/errors/sanitize";
 
 export type SshVerifyResult = {
   success: boolean;
@@ -19,7 +23,7 @@ export async function verifySshConnection(
     if (result.code !== 0 || !result.stdout.includes("ok")) {
       return {
         success: false,
-        message: result.stderr || "SSH command failed",
+        message: sanitizeSshCommandError(result.stderr),
       };
     }
 
@@ -35,16 +39,6 @@ export async function verifySshConnection(
       hostKeyFingerprint: hostKeyFingerprint ?? config.expectedHostKeyFingerprint ?? undefined,
     };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown SSH error";
-
-    if (message.toLowerCase().includes("host key")) {
-      return {
-        success: false,
-        message: "SSH host key verification failed. The server key may have changed.",
-      };
-    }
-
-    return { success: false, message };
+    return { success: false, message: sanitizeSshClientError(error) };
   }
 }

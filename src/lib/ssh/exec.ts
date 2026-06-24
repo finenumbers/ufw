@@ -32,5 +32,5 @@ export async function execSudo(
     );
   }
 
-  return client.exec(`sudo ${ufwCommand}`);
+  return client.exec(`sudo bash -c ${shellQuote(ufwCommand)}`);
 }

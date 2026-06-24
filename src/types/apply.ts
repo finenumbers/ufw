@@ -17,6 +17,8 @@ export type ApplyPlan = {
     addCount: number;
     removeCount: number;
     updateCount: number;
+    dbSync?: boolean;
+    orderResync?: boolean;
   };
 };
 

@@ -3,15 +3,27 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
+import { verifyUserPassword } from "@/lib/auth/password-verify";
 import { auth } from "@/lib/auth";
+import { createExportToken } from "@/lib/export-token";
+import {
+  sanitizeConfigImportError,
+  sanitizeGenericClientError,
+} from "@/lib/errors/sanitize";
+import { assertImportFileSize } from "@/lib/imports/import-limits";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { decodeServerAddress, getServerPath } from "@/lib/server-path";
 import { serverSchema, type ServerInput } from "@/lib/validations/server";
+import {
+  applyServersConfigImport,
+  diffServersConfigImport,
+} from "@/server/services/server-config.service";
 import {
   createServer,
   deleteServer,
   getServerByHost,
   getServerById,
-  listServers,
+  listServersWithRuleCounts,
   testServerConnection,
   updateServer,
 } from "@/server/services/server.service";
@@ -26,6 +38,18 @@ import {
   semanticStep,
   startOperation,
 } from "@/server/services/operation-progress.service";
+
+const refreshCooldownMs = 30_000;
+const lastRefreshByServer = new Map<string, number>();
+
+function assertServerRefreshCooldown(serverId: string): void {
+  const now = Date.now();
+  const lastRefresh = lastRefreshByServer.get(serverId) ?? 0;
+  if (now - lastRefresh < refreshCooldownMs) {
+    throw new Error("Refresh recently completed. Please wait before trying again.");
+  }
+  lastRefreshByServer.set(serverId, now);
+}
 
 async function requireUserId(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -45,7 +69,7 @@ async function revalidateServerPaths(serverId: string) {
 
 export async function getServersAction() {
   await requireUserId();
-  return listServers();
+  return listServersWithRuleCounts();
 }
 
 export async function getServerByAddressAction(serverAddress: string) {
@@ -122,26 +146,43 @@ export async function deleteServerAction(
 
 export async function testServerConnectionAction(serverId: string) {
   const userId = await requireUserId();
+  const rateLimit = assertRateLimit(`ssh-test:${userId}`, { limit: 10, windowMs: 60_000 });
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      message: "Too many connection tests. Please try again later.",
+    };
+  }
+
   return testServerConnection(serverId, userId);
 }
 
 export async function syncRemoteRulesAction(
   serverId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  return runRemoteRulesSync(serverId, { forceDraft: false });
+  return runRemoteRulesSync(serverId);
 }
 
 export async function forceResyncFromRemoteAction(
   serverId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  return runRemoteRulesSync(serverId, { forceDraft: true });
+  return runRemoteRulesSync(serverId);
 }
 
 async function runRemoteRulesSync(
   serverId: string,
-  options: { forceDraft: boolean },
 ): Promise<{ success: boolean; error?: string }> {
   const userId = await requireUserId();
+
+  try {
+    assertServerRefreshCooldown(serverId);
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Refresh cooldown active",
+    };
+  }
+
   const tracker = await startOperation({
     serverId,
     userId,
@@ -154,14 +195,12 @@ async function runRemoteRulesSync(
   });
 
   try {
-    await refreshRemoteRules(serverId, userId, tracker, {
-      forceDraft: options.forceDraft,
-    });
+    await refreshRemoteRules(serverId, userId, tracker);
     await revalidateServerPaths(serverId);
     await tracker.complete({ key: "messages.sync_complete" });
     return { success: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Sync failed";
+    const message = sanitizeGenericClientError(error, "Sync failed");
     await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
     return { success: false, error: message };
   }
@@ -169,6 +208,21 @@ async function runRemoteRulesSync(
 
 export async function loadUfwStateAction(serverId: string) {
   const userId = await requireUserId();
+
+  try {
+    assertServerRefreshCooldown(serverId);
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : "Refresh cooldown active");
+  }
+
+  const rateLimit = assertRateLimit(`ufw-refresh:${serverId}`, {
+    limit: 1,
+    windowMs: refreshCooldownMs,
+  });
+  if (!rateLimit.allowed) {
+    throw new Error("Refresh recently completed. Please wait before trying again.");
+  }
+
   const tracker = await startOperation({
     serverId,
     userId,
@@ -196,9 +250,9 @@ export async function loadUfwStateAction(serverId: string) {
     await tracker.complete({ key: "messages.refresh_complete" });
     return state;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Refresh failed";
+    const message = sanitizeGenericClientError(error, "Refresh failed");
     await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
-    throw error;
+    throw new Error(message);
   }
 }
 
@@ -206,16 +260,29 @@ export async function installUfwAction(
   serverId: string,
 ): Promise<{ success: boolean; message: string }> {
   const userId = await requireUserId();
+  const rateLimit = assertRateLimit(`ufw-install:${serverId}`, { limit: 3, windowMs: 60_000 });
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      message: "Too many install attempts. Please try again later.",
+    };
+  }
+
   const tracker = await startOperation({
     serverId,
     userId,
     type: "ufw.install",
     messageI18n: { key: "messages.install_start" },
-    steps: [semanticStep("install", "steps.install")],
+    steps: [
+      semanticStep("install", "steps.install"),
+      semanticStep("enable", "steps.enable"),
+      semanticStep("load_ufw", "steps.load_ufw"),
+      semanticStep("draft_sync", "steps.draft_sync"),
+    ],
   });
 
   try {
-    const result = await remoteInstallUfw(serverId, {
+    const installResult = await remoteInstallUfw(serverId, {
       onStart: async () => {
         await tracker.markRunning();
         await tracker.startStep("install", semanticStep("install", "steps.install"));
@@ -227,50 +294,23 @@ export async function installUfwAction(
       action: "UFW_INSTALL",
       entityType: "server",
       entityId: serverId,
-      metadata: { success: result.success },
+      metadata: { success: installResult.success },
     });
 
-    if (!result.success) {
-      await tracker.failStep("install", result.message);
+    if (!installResult.success) {
+      await tracker.failStep("install", installResult.message);
       await tracker.fail(
-        { key: "messages.operation_failed", params: { error: result.message } },
-        [result.message],
+        { key: "messages.operation_failed", params: { error: installResult.message } },
+        [installResult.message],
       );
       await revalidateServerPaths(serverId);
-      return result;
+      return installResult;
     }
 
     await tracker.completeStep("install");
-    await tracker.complete({ key: "messages.install_complete" });
-    await revalidateServerPaths(serverId);
-    return result;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Install failed";
-    await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
-    return { success: false, message };
-  }
-}
 
-export async function enableUfwAction(
-  serverId: string,
-): Promise<{ success: boolean; message: string }> {
-  const userId = await requireUserId();
-  const tracker = await startOperation({
-    serverId,
-    userId,
-    type: "ufw.enable",
-    messageI18n: { key: "messages.enable_start" },
-    steps: [
-      semanticStep("enable", "steps.enable"),
-      semanticStep("load_ufw", "steps.load_ufw"),
-      semanticStep("draft_sync", "steps.draft_sync"),
-    ],
-  });
-
-  try {
-    const result = await remoteEnableUfw(serverId, {
+    const enableResult = await remoteEnableUfw(serverId, {
       onStart: async () => {
-        await tracker.markRunning();
         await tracker.startStep("enable", semanticStep("enable", "steps.enable"));
       },
     });
@@ -280,27 +320,125 @@ export async function enableUfwAction(
       action: "UFW_ENABLE",
       entityType: "server",
       entityId: serverId,
-      metadata: { success: result.success },
+      metadata: { success: enableResult.success },
     });
 
-    if (!result.success) {
-      await tracker.failStep("enable", result.message);
+    if (!enableResult.success) {
+      await tracker.failStep("enable", enableResult.message);
       await tracker.fail(
-        { key: "messages.operation_failed", params: { error: result.message } },
-        [result.message],
+        { key: "messages.operation_failed", params: { error: enableResult.message } },
+        [enableResult.message],
       );
       await revalidateServerPaths(serverId);
-      return result;
+      return enableResult;
     }
 
     await tracker.completeStep("enable");
+
+    const state = await detectUfwState(serverId);
+    if (!state.installed || !state.active) {
+      const message = "UFW is not active after install and enable";
+      await tracker.fail(
+        { key: "messages.operation_failed", params: { error: message } },
+        [message],
+      );
+      await revalidateServerPaths(serverId);
+      return { success: false, message };
+    }
+
     await refreshRemoteRules(serverId, userId, tracker);
-    await tracker.complete({ key: "messages.enable_complete" });
+    await tracker.complete({ key: "messages.install_complete" });
     await revalidateServerPaths(serverId);
-    return result;
+    return { success: true, message: "UFW installed and enabled successfully" };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Enable failed";
+    const message = sanitizeGenericClientError(error, "Install failed");
     await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
     return { success: false, message };
+  }
+}
+
+async function readConfigFile(formData: FormData): Promise<string> {
+  const file = formData.get("file");
+
+  if (!(file instanceof File)) {
+    throw new Error("No file provided");
+  }
+
+  assertImportFileSize(file.size);
+  return file.text();
+}
+
+export async function previewImportServersConfigAction(
+  formData: FormData,
+): Promise<
+  | {
+      success: true;
+      diff: Awaited<ReturnType<typeof diffServersConfigImport>>;
+    }
+  | { success: false; error: string }
+> {
+  try {
+    await requireUserId();
+    const content = await readConfigFile(formData);
+    const diff = await diffServersConfigImport(content);
+    return { success: true, diff };
+  } catch (error) {
+    return { success: false, error: sanitizeConfigImportError(error) };
+  }
+}
+
+export async function confirmConfigExportAction(
+  password: string,
+): Promise<{ success: true; token: string } | { success: false; error: string }> {
+  const userId = await requireUserId();
+  const rateLimit = assertRateLimit(`config-export:${userId}`, {
+    limit: 5,
+    windowMs: 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return { success: false, error: "Too many export attempts. Please try again later." };
+  }
+
+  const valid = await verifyUserPassword(userId, password);
+  if (!valid) {
+    return { success: false, error: "Invalid password" };
+  }
+
+  return { success: true, token: createExportToken(userId) };
+}
+
+export async function importServersConfigAction(
+  formData: FormData,
+): Promise<
+  | { success: true; diff: Awaited<ReturnType<typeof diffServersConfigImport>> }
+  | { success: false; error: string }
+> {
+  const userId = await requireUserId();
+  const rateLimit = assertRateLimit(`servers-config-import:${userId}`, {
+    limit: 10,
+    windowMs: 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return { success: false, error: "Too many import attempts. Please try again later." };
+  }
+
+  try {
+    const content = await readConfigFile(formData);
+    const deletedHosts = (await diffServersConfigImport(content)).toDelete.map(
+      (entry) => entry.host,
+    );
+    const { diff } = await applyServersConfigImport(content, userId);
+
+    revalidatePath("/servers");
+    for (const host of deletedHosts) {
+      revalidatePath(getServerPath(host));
+      revalidatePath(getServerPath(host, "/edit"));
+    }
+
+    return { success: true, diff };
+  } catch (error) {
+    return { success: false, error: sanitizeConfigImportError(error) };
   }
 }

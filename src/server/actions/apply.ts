@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
+import { sanitizeApplyClientError, sanitizeGenericClientError } from "@/lib/errors/sanitize";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { getServerPath } from "@/lib/server-path";
-import type { UnifiedRuleRow } from "@/types/rule";
 import type { ApplyPreviewResult } from "@/types/apply";
 import { previewApply, confirmApply, getApplySession } from "@/server/services/apply.service";
 import { getServerById } from "@/server/services/server.service";
@@ -21,15 +21,17 @@ async function requireUserId(): Promise<string> {
 
 export async function previewApplyAction(
   serverId: string,
-  desired: UnifiedRuleRow[],
+  desired: import("@/types/rule").UnifiedRuleRow[],
 ): Promise<{ success: true; data: ApplyPreviewResult } | { success: false; error: string }> {
   const userId = await requireUserId();
   try {
     const data = await previewApply(serverId, userId, desired);
     return { success: true, data };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Preview failed";
-    return { success: false, error: message };
+    return {
+      success: false,
+      error: sanitizeGenericClientError(error, "Preview failed"),
+    };
   }
 }
 
@@ -47,8 +49,8 @@ export async function confirmApplyAction(
     return { success: false, error: "Too many apply attempts. Please try again later." };
   }
 
-    const result = await confirmApply(sessionId, userId);
-    if (result.success) {
+  const result = await confirmApply(sessionId, userId);
+  if (result.success) {
     const session = await getApplySession(sessionId);
     if (session) {
       const server = await getServerById(session.serverId);
@@ -59,6 +61,13 @@ export async function confirmApplyAction(
     revalidatePath("/servers");
     revalidatePath("/operations");
   }
+
+  if (!result.success && result.error) {
+    return {
+      ...result,
+      error: sanitizeApplyClientError([result.error]),
+    };
+  }
+
   return result;
 }
-

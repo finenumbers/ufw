@@ -3,11 +3,13 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { APIError } from "better-auth/api";
 import { createAuthMiddleware } from "better-auth/api";
 
+import { getPublicAppUrl } from "@/lib/app-url";
 import { db } from "@/lib/db";
 import { getAuthSecret } from "@/lib/env";
+import { createAuditEvent } from "@/server/services/audit.service";
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  baseURL: getPublicAppUrl(),
   secret: getAuthSecret(),
   database: prismaAdapter(db, {
     provider: "postgresql",
@@ -46,6 +48,28 @@ export const auth = betterAuth({
           if (userCount > 0) {
             return false;
           }
+        },
+      },
+    },
+    session: {
+      create: {
+        after: async (session) => {
+          await createAuditEvent({
+            userId: session.userId,
+            action: "LOGIN",
+            entityType: "session",
+            entityId: session.id,
+          });
+        },
+      },
+      delete: {
+        after: async (session) => {
+          await createAuditEvent({
+            userId: session.userId,
+            action: "LOGOUT",
+            entityType: "session",
+            entityId: session.id,
+          });
         },
       },
     },

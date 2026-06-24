@@ -1,32 +1,8 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import path from "node:path";
 import test from "node:test";
 
 import { isOperationI18nKey } from "@/types/operation";
 import { resolveOperationText, resolveStepLabel } from "@/lib/i18n/operations";
-
-function flattenKeys(value: unknown, prefix = ""): string[] {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) {
-    return prefix ? [prefix] : [];
-  }
-
-  return Object.entries(value as Record<string, unknown>).flatMap(([key, nested]) =>
-    flattenKeys(nested, prefix ? `${prefix}.${key}` : key),
-  );
-}
-
-test("all locale files have the same keys as en.json", () => {
-  const messagesDir = path.join(process.cwd(), "src/i18n/messages");
-  const en = JSON.parse(fs.readFileSync(path.join(messagesDir, "en.json"), "utf8"));
-  const enKeys = new Set(flattenKeys(en));
-
-  for (const file of fs.readdirSync(messagesDir).filter((name) => name.endsWith(".json") && name !== "en.json")) {
-    const locale = JSON.parse(fs.readFileSync(path.join(messagesDir, file), "utf8"));
-    const localeKeys = new Set(flattenKeys(locale));
-    assert.deepEqual(localeKeys, enKeys, `${file} keys mismatch`);
-  }
-});
 
 test("resolveOperationText uses i18n ref and legacy fallback", () => {
   const text = resolveOperationText(

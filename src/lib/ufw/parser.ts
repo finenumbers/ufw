@@ -1,3 +1,4 @@
+import type { LogMode, RuleAction, RuleDirection } from "@prisma/client";
 import type { RuleCore } from "@/types/rule";
 import type { ParsedRemoteRule, UfwStatus } from "@/types/ufw";
 import {
@@ -9,9 +10,6 @@ import {
   normalizeProtocol,
 } from "@/lib/ufw/types";
 import { computeFingerprint } from "@/lib/ufw/fingerprint";
-
-const NUMBERED_RULE_REGEX =
-  /^\[\s*(\d+)\]\s+(.+?)\s+(ALLOW|DENY|REJECT|LIMIT)(?:\s+(IN|OUT))?\s+(.+)$/i;
 
 function parseUfwStatusOutput(rawStatus: string): UfwStatus {
   const lines = rawStatus.split("\n");
@@ -39,36 +37,159 @@ function parseUfwStatusOutput(rawStatus: string): UfwStatus {
   };
 }
 
-function parseDestinationColumn(value: string) {
-  const cleaned = value.replace(/\s*\(v6\)\s*/gi, "").trim();
+function stripRuleNumber(trimmed: string): { number?: number; content: string } {
+  const match = trimmed.match(/^\[\s*(\d+)\]\s*(.+)$/);
+  if (match) {
+    return { number: parseInt(match[1], 10), content: match[2].trim() };
+  }
+  return { content: trimmed };
+}
 
-  if (cleaned.includes("/")) {
-    const [first, second] = cleaned.split("/", 2);
-    if (normalizeProtocol(second)) {
+function splitToActionFrom(content: string): {
+  destination: string;
+  action: RuleAction;
+  tail: string;
+} | null {
+  const match = content.match(/^(.+)\s+(ALLOW|DENY|REJECT|LIMIT)\b(.*)$/i);
+  if (!match) return null;
+
+  return {
+    destination: match[1].trim(),
+    action: normalizeAction(match[2]),
+    tail: match[3].trim(),
+  };
+}
+
+function parseActionTail(tail: string): {
+  logMode: LogMode;
+  direction: RuleDirection;
+  source: string;
+} {
+  let remaining = tail;
+  let logMode: LogMode = "NONE";
+  let direction: RuleDirection = "IN";
+
+  const logMatch = remaining.match(/^(LOG(?:-ALL)?)\s+(.*)$/i);
+  if (logMatch) {
+    logMode = normalizeLogMode(logMatch[1]);
+    remaining = logMatch[2].trim();
+  }
+
+  const dirMatch = remaining.match(/^(IN|OUT|FWD)\s+(.*)$/i);
+  if (dirMatch) {
+    direction = normalizeDirection(dirMatch[1]) ?? "IN";
+    remaining = dirMatch[2].trim();
+  }
+
+  return {
+    logMode,
+    direction,
+    source: remaining || normalizeAddress("anywhere")!,
+  };
+}
+
+function isBarePortToken(value: string): boolean {
+  return /^\d+(?::\d+)?(?:,\d+(?::\d+)?)*$/.test(value);
+}
+
+function looksLikeNetworkAddress(value: string): boolean {
+  const v = value.trim().toLowerCase();
+  if (
+    /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d?\d)){3})(?:\/(?:[0-9]|[12]\d|3[0-2]))?$/.test(
+      v,
+    )
+  ) {
+    return true;
+  }
+  return /^[0-9a-f:]+(?:\/(?:[0-9]{1,3}|12[0-8]))?$/i.test(v);
+}
+
+function extractInterfaceSuffix(value: string): {
+  body: string;
+  interface: string | null;
+} {
+  const suffixMatch = value.match(/^(.+?)\s+on\s+(\S+)$/i);
+  if (suffixMatch) {
+    return { body: suffixMatch[1].trim(), interface: suffixMatch[2].trim() };
+  }
+
+  const prefixMatch = value.match(/^on\s+(\S+)$/i);
+  if (prefixMatch) {
+    return { body: "anywhere", interface: prefixMatch[1].trim() };
+  }
+
+  return { body: value.trim(), interface: null };
+}
+
+function extractAppAnnotation(value: string): {
+  body: string;
+  appName: string | null;
+} {
+  const match = value.match(/^(.+?)\s+\(([^)]+)\)\s*$/);
+  if (match) {
+    return { body: match[1].trim(), appName: match[2].trim() };
+  }
+  return { body: value.trim(), appName: null };
+}
+
+function parsePortProtocolToken(token: string): {
+  port: string | null;
+  protocol: ReturnType<typeof normalizeProtocol>;
+} | null {
+  if (token.includes("/")) {
+    const slashIdx = token.lastIndexOf("/");
+    const portPart = token.slice(0, slashIdx);
+    const protoPart = token.slice(slashIdx + 1);
+    if (normalizeProtocol(protoPart)) {
       return {
-        toAddress: null as string | null,
-        toPort: normalizePort(first),
-        protocol: normalizeProtocol(second),
-        appName: null as string | null,
-        interface: null as string | null,
+        port: normalizePort(portPart),
+        protocol: normalizeProtocol(protoPart),
       };
     }
+    return null;
+  }
+
+  if (token.includes(":")) {
+    const colonIdx = token.indexOf(":");
+    const first = token.slice(0, colonIdx);
+    const second = token.slice(colonIdx + 1);
+    if (/^\d/.test(first) && normalizeProtocol(second)) {
+      return {
+        port: normalizePort(first),
+        protocol: normalizeProtocol(second),
+      };
+    }
+  }
+
+  return null;
+}
+
+function parseDestinationColumn(value: string) {
+  let cleaned = value.replace(/\s*\(v6\)\s*/gi, "").trim();
+  const { body: afterApp, appName: annotatedApp } = extractAppAnnotation(cleaned);
+  cleaned = afterApp;
+
+  const { body, interface: iface } = extractInterfaceSuffix(cleaned);
+  cleaned = body;
+
+  const portProto = parsePortProtocolToken(cleaned);
+  if (portProto) {
+    return {
+      toAddress: null as string | null,
+      toPort: portProto.port,
+      protocol: portProto.protocol,
+      appName: annotatedApp,
+      interface: iface,
+    };
+  }
+
+  if (cleaned.includes("/") && looksLikeNetworkAddress(cleaned)) {
     return {
       toAddress: normalizeAddress(cleaned),
       toPort: null as string | null,
       protocol: null as ReturnType<typeof normalizeProtocol>,
-      appName: null as string | null,
-      interface: null as string | null,
-    };
-  }
-
-  if (/^on\s+/i.test(cleaned)) {
-    return {
-      toAddress: null as string | null,
-      toPort: null as string | null,
-      protocol: null as ReturnType<typeof normalizeProtocol>,
-      appName: null as string | null,
-      interface: cleaned.replace(/^on\s+/i, "").trim(),
+      appName: annotatedApp,
+      interface: iface,
     };
   }
 
@@ -77,8 +198,28 @@ function parseDestinationColumn(value: string) {
       toAddress: normalizeAddress("anywhere"),
       toPort: null as string | null,
       protocol: null as ReturnType<typeof normalizeProtocol>,
-      appName: null as string | null,
-      interface: null as string | null,
+      appName: annotatedApp,
+      interface: iface,
+    };
+  }
+
+  if (isBarePortToken(cleaned)) {
+    return {
+      toAddress: null as string | null,
+      toPort: normalizePort(cleaned),
+      protocol: null as ReturnType<typeof normalizeProtocol>,
+      appName: annotatedApp,
+      interface: iface,
+    };
+  }
+
+  if (looksLikeNetworkAddress(cleaned)) {
+    return {
+      toAddress: normalizeAddress(cleaned),
+      toPort: null as string | null,
+      protocol: null as ReturnType<typeof normalizeProtocol>,
+      appName: annotatedApp,
+      interface: iface,
     };
   }
 
@@ -86,13 +227,16 @@ function parseDestinationColumn(value: string) {
     toAddress: null as string | null,
     toPort: null as string | null,
     protocol: null as ReturnType<typeof normalizeProtocol>,
-    appName: cleaned,
-    interface: null as string | null,
+    appName: annotatedApp ?? cleaned,
+    interface: iface,
   };
 }
 
 function parseSourceColumn(value: string) {
-  const cleaned = value.replace(/\s*\(v6\)\s*/gi, "").trim();
+  let cleaned = value.replace(/\s*\(v6\)\s*/gi, "").trim();
+  const { body, interface: iface } = extractInterfaceSuffix(cleaned);
+  cleaned = body;
+
   let fromAddress: string | null = null;
   let fromPort: string | null = null;
   let toAddress: string | null = null;
@@ -111,7 +255,18 @@ function parseSourceColumn(value: string) {
     fromAddress = normalizeAddress(cleaned);
   }
 
-  return { fromAddress, fromPort, toAddress, protocol };
+  return { fromAddress, fromPort, toAddress, protocol, interface: iface };
+}
+
+function resolveInterface(
+  direction: RuleDirection,
+  destinationFields: ReturnType<typeof parseDestinationColumn>,
+  sourceFields: ReturnType<typeof parseSourceColumn>,
+): string | null {
+  if (direction === "OUT" || direction === "ROUTE") {
+    return sourceFields.interface ?? destinationFields.interface;
+  }
+  return destinationFields.interface ?? sourceFields.interface;
 }
 
 function parseRuleLine(
@@ -124,16 +279,11 @@ function parseRuleLine(
   }
   if (trimmed.startsWith("--")) return null;
 
-  let content = trimmed;
-  let number = ruleNumber;
-
-  const numberedMatch = trimmed.match(NUMBERED_RULE_REGEX);
-  if (numberedMatch) {
-    number = parseInt(numberedMatch[1], 10);
-    content = `${numberedMatch[2].trim()} ${numberedMatch[3]} ${numberedMatch[4] ?? "IN"} ${numberedMatch[5].trim()}`;
-  }
+  const { number, content: numberedContent } = stripRuleNumber(trimmed);
+  const numberResolved = ruleNumber ?? number;
 
   let ruleComment: string | null = null;
+  let content = numberedContent;
   const commentMatch = content.match(/\s+#\s*(.+)$/);
   if (commentMatch) {
     ruleComment = commentMatch[1].trim();
@@ -142,38 +292,17 @@ function parseRuleLine(
 
   const ipv6 = content.toLowerCase().includes("(v6)");
 
-  // UFW table format: TO ACTION [LOG|LOG-ALL] DIRECTION FROM
-  const parts = content.split(/\s+/);
-  if (parts.length < 3) return null;
+  const split = splitToActionFrom(content);
+  if (!split) return null;
 
-  const destination = parts[0];
-  const action = normalizeAction(parts[1]);
-
-  let logMode = normalizeLogMode(null);
-  let direction: NonNullable<ReturnType<typeof normalizeDirection>> = "IN";
-  let sourceStart = 2;
-
-  if (parts[2]?.toUpperCase() === "LOG" || parts[2]?.toUpperCase() === "LOG-ALL") {
-    logMode = normalizeLogMode(parts[2]);
-    sourceStart = 3;
-  }
-
-  const maybeDirection = normalizeDirection(parts[sourceStart]);
-  if (maybeDirection) {
-    direction = maybeDirection;
-    sourceStart += 1;
-  }
-
-  if (parts.length <= sourceStart) return null;
-
-  const source = parts.slice(sourceStart).join(" ");
-  const destinationFields = parseDestinationColumn(destination);
+  const { logMode, direction, source } = parseActionTail(split.tail);
+  const destinationFields = parseDestinationColumn(split.destination);
   const sourceFields = parseSourceColumn(source);
 
   const core: RuleCore = {
-    action,
+    action: split.action,
     direction,
-    interface: destinationFields.interface,
+    interface: resolveInterface(direction, destinationFields, sourceFields),
     protocol: destinationFields.protocol ?? sourceFields.protocol,
     fromAddress: sourceFields.fromAddress ?? normalizeAddress("anywhere"),
     fromPort: sourceFields.fromPort,
@@ -189,7 +318,7 @@ function parseRuleLine(
   };
 
   return {
-    ruleNumber: number,
+    ruleNumber: numberResolved,
     rawLine: trimmed,
     core,
     fingerprint: computeFingerprint(core),
@@ -213,7 +342,6 @@ export function parseNumberedRules(rawStatus: string): ParsedRemoteRule[] {
     if (parsed) rules.push(parsed);
   }
 
-  // Fallback: parse verbose-style lines if numbered table header was not found.
   if (rules.length === 0) {
     for (const line of lines) {
       const parsed = parseRuleLine(line);

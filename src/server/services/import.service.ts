@@ -7,7 +7,7 @@ import { createAuditEvent } from "@/server/services/audit.service";
 import {
   getDraftRules,
   getOrCreateDraftSession,
-  updateDraftRules,
+  replaceDraftSessionRules,
 } from "@/server/services/draft.service";
 
 function importRowToUnified(row: ImportRuleRow, sortOrder: number): UnifiedRuleRow {
@@ -86,7 +86,7 @@ export async function importRulesToDraft(
   );
 
   const merged = [...existingRows, ...importedRows];
-  await updateDraftRules(serverId, userId, merged);
+  await replaceDraftSessionRules(serverId, userId, merged);
 
   await createAuditEvent({
     userId,

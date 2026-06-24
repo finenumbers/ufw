@@ -46,13 +46,6 @@ export async function listOperationLogs(params: {
   return { items, total, page, pageSize };
 }
 
-export async function getLatestOperationLog(serverId: string) {
-  return db.operationLog.findFirst({
-    where: { serverId },
-    orderBy: { createdAt: "desc" },
-  });
-}
-
 export async function updateOperationLog(
   id: string,
   params: {

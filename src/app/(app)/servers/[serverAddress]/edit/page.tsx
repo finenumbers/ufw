@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ServerDeleteDialog } from "@/components/servers/server-delete-dialog";
 import { ServerForm } from "@/components/servers/server-form";
 import { getServerByAddressAction } from "@/server/actions/servers";
+import { listIdentitiesAction } from "@/server/actions/identities";
 
 type PageProps = {
   params: Promise<{ serverAddress: string }>;
@@ -15,6 +16,7 @@ export default async function EditServerPage({ params }: PageProps) {
   const tDelete = await getTranslations("servers.delete");
   const { serverAddress } = await params;
   const server = await getServerByAddressAction(serverAddress);
+  const identities = await listIdentitiesAction();
 
   if (!server) {
     notFound();
@@ -36,17 +38,20 @@ export default async function EditServerPage({ params }: PageProps) {
             <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
               <p className="font-medium text-muted-foreground">{t("hostKeyFingerprint")}</p>
               <p className="mt-1 font-mono text-xs break-all">{server.sshHostKeyFingerprint}</p>
+              {!server.sshHostKeyVerified ? (
+                <p className="mt-2 text-amber-700 dark:text-amber-400">{t("hostKeyUnverified")}</p>
+              ) : null}
             </div>
           ) : null}
           <ServerForm
             mode="edit"
             serverId={server.id}
+            identities={identities}
             defaultValues={{
               name: server.name,
               host: server.host,
               port: server.port,
-              username: server.username,
-              authMethod: server.authMethod,
+              identityId: server.identityId,
             }}
           />
         </CardContent>

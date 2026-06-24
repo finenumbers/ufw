@@ -1,4 +1,4 @@
-import type { OperationI18nRef } from "@/types/operation";
+import { isOperationI18nKey, type OperationI18nRef } from "@/types/operation";
 
 export function resolveOperationText(
   translate: (key: string, values?: Record<string, string | number>) => string,
@@ -13,7 +13,7 @@ export function resolveOperationText(
     }
   }
 
-  if (legacy && !legacy.startsWith("messages.") && !legacy.startsWith("phases.") && !legacy.startsWith("steps.")) {
+  if (legacy && !isOperationI18nKey(legacy)) {
     return legacy;
   }
 

@@ -113,7 +113,12 @@ export function buildUfwAddCommand(core: RuleCore): string {
   }
 
   const ipv6 = resolveIpVersionForUfwCommand(core);
+  const isRoute = core.direction === "ROUTE";
   const parts: string[] = ["ufw"];
+
+  if (isRoute) {
+    parts.push("route");
+  }
 
   if (core.logMode === "LOG") {
     parts.push(core.action.toLowerCase(), "log");
@@ -123,7 +128,7 @@ export function buildUfwAddCommand(core: RuleCore): string {
     parts.push(core.action.toLowerCase());
   }
 
-  if (core.direction) {
+  if (!isRoute && core.direction) {
     parts.push(core.direction.toLowerCase());
   }
 
@@ -132,6 +137,11 @@ export function buildUfwAddCommand(core: RuleCore): string {
   }
 
   parts.push("from", resolveAddressForUfwCommand(core.fromAddress, ipv6));
+
+  if (core.fromPort) {
+    parts.push("port", core.fromPort);
+  }
+
   parts.push("to", resolveAddressForUfwCommand(core.toAddress, ipv6));
 
   if (core.toPort) {
@@ -168,3 +178,7 @@ export const UFW_COMMANDS = {
   enable: "ufw --force enable",
   reload: "ufw reload",
 };
+
+export function buildAllowSshCommand(port: number): string {
+  return `ufw allow ${port}/tcp`;
+}

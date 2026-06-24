@@ -1,26 +1,28 @@
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
+import { Settings } from "lucide-react";
 
+import { ServersConfigToolbar } from "@/components/servers/servers-config-toolbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getServerPath } from "@/lib/server-path";
+import { cn } from "@/lib/utils";
 import { getServersAction } from "@/server/actions/servers";
 
 export default async function ServersPage() {
   const t = await getTranslations("servers");
+  const tUfw = await getTranslations("ufw");
   const tc = await getTranslations("common");
   const servers = await getServersAction();
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h2 className="text-2xl font-semibold">{t("title")}</h2>
           <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
-        <Button asChild>
-          <Link href="/servers/new">{t("addServer")}</Link>
-        </Button>
+        <ServersConfigToolbar />
       </div>
 
       {servers.length > 0 ? (
@@ -30,16 +32,28 @@ export default async function ServersPage() {
               <CardHeader>
                 <CardTitle>{server.name}</CardTitle>
                 <CardDescription>
-                  {server.username}@{server.host}:{server.port}
+                  {server.identity.username}@{server.host}:{server.port}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                <Button asChild variant="outline">
-                  <Link href={getServerPath(server.host)}>{tc("open")}</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href={getServerPath(server.host, "/edit")}>{t("editServer")}</Link>
-                </Button>
+              <CardContent className="flex items-center justify-between gap-4">
+                <p
+                  className={cn(
+                    "text-sm font-semibold",
+                    server.ruleRecordCount > 0 ? "text-green-700" : "text-red-600",
+                  )}
+                >
+                  {tUfw("dbRules", { count: server.ruleRecordCount })}
+                </p>
+                <div className="flex shrink-0 gap-2">
+                  <Button asChild variant="outline">
+                    <Link href={getServerPath(server.host)}>{tc("open")}</Link>
+                  </Button>
+                  <Button asChild variant="outline" size="icon" aria-label={t("editServer")}>
+                    <Link href={getServerPath(server.host, "/edit")}>
+                      <Settings className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

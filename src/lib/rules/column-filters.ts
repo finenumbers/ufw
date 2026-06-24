@@ -4,13 +4,13 @@ function normalizeField(value: string | null | undefined): string {
   return value?.trim() ?? "";
 }
 
-export function rowMatchesNameFilter(row: UnifiedRuleRow, nameFilter: string): boolean {
+function rowMatchesNameFilter(row: UnifiedRuleRow, nameFilter: string): boolean {
   const query = nameFilter.trim().toLowerCase();
   if (!query) return true;
   return normalizeField(row.ui.name).toLowerCase().includes(query);
 }
 
-export function rowMatchesGroupFilter(row: UnifiedRuleRow, groupFilter: string): boolean {
+function rowMatchesGroupFilter(row: UnifiedRuleRow, groupFilter: string): boolean {
   const query = groupFilter.trim().toLowerCase();
   if (!query) return true;
   return normalizeField(row.ui.group).toLowerCase().includes(query);

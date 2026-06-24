@@ -41,6 +41,8 @@ export type UnifiedRuleRow = {
   sortOrder: number;
   rawLine?: string | null;
   isDeleted?: boolean;
+  /** UFW `status numbered` rule index, when the rule exists on the server */
+  ufwRuleNumber?: number | null;
   /** Client-only: row not yet written by Save Draft */
   isPendingSave?: boolean;
 };

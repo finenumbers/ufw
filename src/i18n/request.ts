@@ -13,30 +13,18 @@ async function loadMessages(locale: AppLocale) {
   switch (locale) {
     case "en":
       return (await import("@/i18n/messages/en.json")).default;
-    case "ru":
-      return (await import("@/i18n/messages/ru.json")).default;
     case "de":
       return (await import("@/i18n/messages/de.json")).default;
-    case "es":
-      return (await import("@/i18n/messages/es.json")).default;
     case "fr":
       return (await import("@/i18n/messages/fr.json")).default;
-    case "pt-BR":
-      return (await import("@/i18n/messages/pt-BR.json")).default;
-    case "zh-Hans":
-      return (await import("@/i18n/messages/zh-Hans.json")).default;
-    case "uk":
-      return (await import("@/i18n/messages/uk.json")).default;
-    case "pl":
-      return (await import("@/i18n/messages/pl.json")).default;
-    case "tr":
-      return (await import("@/i18n/messages/tr.json")).default;
-    case "ja":
-      return (await import("@/i18n/messages/ja.json")).default;
+    case "es":
+      return (await import("@/i18n/messages/es.json")).default;
     case "it":
       return (await import("@/i18n/messages/it.json")).default;
-    case "nl":
-      return (await import("@/i18n/messages/nl.json")).default;
+    case "pt-BR":
+      return (await import("@/i18n/messages/pt-BR.json")).default;
+    case "ru":
+      return (await import("@/i18n/messages/ru.json")).default;
     default:
       return (await import("@/i18n/messages/en.json")).default;
   }

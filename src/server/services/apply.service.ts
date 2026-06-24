@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
-import type { UnifiedRuleRow } from "@/types/rule";
+import { rowsDifferFromRuleRecords } from "@/lib/rules/persisted-diff";
+import { parseUnifiedRuleRows } from "@/lib/validations/rule";
 import type { ApplyPreviewResult } from "@/types/apply";
 import type { UfwDetectionResult } from "@/types/ufw";
 import { db } from "@/lib/db";
@@ -29,7 +30,8 @@ import {
   buildPostApplyRuleRecords,
   resolveApplyClaimError,
 } from "@/server/services/apply-sync";
-import { getLiveRemoteParsedRules } from "@/server/services/rules-view.service";
+import type { UnifiedRuleRow } from "@/types/rule";
+import { buildTableRowsFromSources, getLiveRemoteParsedRules } from "@/server/services/rules-view.service";
 import { runSshForServer } from "@/server/services/ssh.service";
 import { syncDraftOriginStates, updateDraftRules } from "@/server/services/draft.service";
 import type { ApplyPlan } from "@/types/apply";
@@ -49,7 +51,26 @@ function parseDesiredRows(value: Prisma.JsonValue | null): UnifiedRuleRow[] {
     return [];
   }
 
-  return value as UnifiedRuleRow[];
+  return parseUnifiedRuleRows(value);
+}
+
+function summaryForTracker(
+  summary: ApplyPreviewResult["plan"]["summary"],
+): Record<string, number> {
+  return {
+    addCount: summary.addCount,
+    removeCount: summary.removeCount,
+    updateCount: summary.updateCount,
+  };
+}
+
+async function hasDbChanges(serverId: string, desired: UnifiedRuleRow[]): Promise<boolean> {
+  const records = await db.ruleRecord.findMany({
+    where: { serverId },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  return rowsDifferFromRuleRecords(desired, records);
 }
 
 function findSessionItemForPlanItem(
@@ -88,33 +109,101 @@ async function buildDetectionFromClient(
   };
 }
 
+async function runDbOnlySave(
+  serverId: string,
+  userId: string,
+  desiredRows: UnifiedRuleRow[],
+  tracker: OperationTracker,
+): Promise<void> {
+  await tracker.markRunning();
+  await tracker.setPhase("sync_db", { key: "phases.sync_db" });
+  await tracker.startStep("sync_db", semanticStep("sync_db", "steps.sync_db"));
+
+  if (desiredRows.length > 0) {
+    await updateDraftRules(serverId, userId, desiredRows);
+  }
+
+  await tracker.completeStep("sync_db");
+  await tracker.setPhase("origin_states", { key: "phases.origin_states" });
+  await tracker.startStep("origin_states", semanticStep("origin_states", "steps.origin_states"));
+  await syncDraftOriginStates(serverId, userId);
+  await tracker.completeStep("origin_states");
+}
+
+export async function persistPartialApplyMetadata(
+  serverId: string,
+  userId: string,
+  detection: UfwDetectionResult,
+): Promise<void> {
+  await persistSnapshotFromDetection(serverId, userId, detection);
+
+  const snapshot = await getLatestSnapshot(serverId);
+  if (!snapshot) {
+    return;
+  }
+
+  const records = await db.ruleRecord.findMany({
+    where: { serverId },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  const rows = buildTableRowsFromSources(snapshot.rules, records);
+  const { replaceDraftSessionRules } = await import("@/server/services/draft.service");
+  await replaceDraftSessionRules(serverId, userId, rows);
+
+  await syncRuleRecordsFromDraft(
+    serverId,
+    buildPostApplyRuleRecords(snapshot.rules, rows),
+  );
+  await syncDraftOriginStates(serverId, userId);
+}
+
 export async function previewApply(
   serverId: string,
   userId: string,
   desired: UnifiedRuleRow[],
 ): Promise<ApplyPreviewResult> {
-  const validationError = validateRulesForUfwApply(desired);
+  const validatedDesired = parseUnifiedRuleRows(desired);
+  const validationError = validateRulesForUfwApply(validatedDesired);
   if (validationError) {
     throw new Error(validationError);
   }
 
   const remote = await getLiveRemoteParsedRules(serverId);
-  const diff = diffDesiredVsRemote(desired, remote);
-  const plan = buildApplyPlan(diff, desired, remote);
+  const diff = diffDesiredVsRemote(validatedDesired, remote);
+  const plan = buildApplyPlan(diff, validatedDesired, remote);
+  const dbChanges = await hasDbChanges(serverId, validatedDesired);
+  const ufwChanges = hasApplyChanges(plan);
 
-  if (!hasApplyChanges(plan)) {
+  if (!ufwChanges && !dbChanges) {
     throw new Error("No changes to apply");
   }
 
-  validatePlanCommands(plan);
+  if (ufwChanges) {
+    validatePlanCommands(plan);
+  }
+
+  await db.applySession.updateMany({
+    where: { serverId, userId, status: "PENDING" },
+    data: {
+      status: "CANCELLED",
+      completedAt: new Date(),
+      errorMessage: "Superseded by new preview",
+    },
+  });
+
+  const summary = {
+    ...plan.summary,
+    dbSync: dbChanges,
+  };
 
   const session = await db.applySession.create({
     data: {
       serverId,
       userId,
       status: "PENDING",
-      summary: plan.summary,
-      desiredJson: desired as unknown as Prisma.InputJsonValue,
+      summary,
+      desiredJson: validatedDesired as unknown as Prisma.InputJsonValue,
       items: {
         create: plan.items.map((item) => ({
           action: item.action,
@@ -134,10 +223,10 @@ export async function previewApply(
     action: "APPLY_PREVIEWED",
     entityType: "server",
     entityId: serverId,
-    metadata: { sessionId: session.id, summary: plan.summary },
+    metadata: { sessionId: session.id, summary },
   });
 
-  return { sessionId: session.id, plan };
+  return { sessionId: session.id, plan: { items: plan.items, summary } };
 }
 
 async function runPostApplySync(
@@ -201,6 +290,7 @@ export async function confirmApply(
   }
 
   const desiredRows = parseDesiredRows(session.desiredJson);
+  const summary = session.summary as ApplyPreviewResult["plan"]["summary"];
 
   await createAuditEvent({
     userId,
@@ -209,7 +299,53 @@ export async function confirmApply(
     entityId: sessionId,
   });
 
-  const summary = session.summary as ApplyPreviewResult["plan"]["summary"];
+  if (session.items.length === 0) {
+    const tracker = await startOperation({
+      serverId: session.serverId,
+      userId,
+      type: "apply.rules",
+      messageI18n: { key: "messages.apply_prepare" },
+      metadata: {
+        phase: "sync_db",
+        phaseI18n: { key: "phases.sync_db" },
+        current: 0,
+        total: 2,
+        summary: summaryForTracker(summary),
+      },
+      steps: [
+        semanticStep("sync_db", "steps.sync_db"),
+        semanticStep("origin_states", "steps.origin_states"),
+      ],
+    });
+
+    try {
+      await runDbOnlySave(session.serverId, userId, desiredRows, tracker);
+
+      await db.applySession.update({
+        where: { id: sessionId },
+        data: { status: "SUCCESS", completedAt: new Date() },
+      });
+
+      await createAuditEvent({
+        userId,
+        action: "APPLY_COMPLETED",
+        entityType: "apply_session",
+        entityId: sessionId,
+      });
+
+      await tracker.complete({ key: "messages.apply_complete" }, summaryForTracker(summary));
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Apply failed";
+      await db.applySession.update({
+        where: { id: sessionId },
+        data: { status: "FAILED", errorMessage: message, completedAt: new Date() },
+      });
+      await tracker.fail({ key: "messages.apply_failed", params: { error: message } }, [message]);
+      return { success: false, error: message };
+    }
+  }
+
   const estimatedSteps = session.items.length + 3;
   const tracker = await startOperation({
     serverId: session.serverId,
@@ -221,7 +357,7 @@ export async function confirmApply(
       phaseI18n: { key: "phases.ufw_commands" },
       current: 0,
       total: estimatedSteps,
-      summary,
+      summary: summaryForTracker(summary),
     },
     steps: [
       ...session.items.map((item) =>
@@ -239,11 +375,17 @@ export async function confirmApply(
       async (client, config) => {
         const initialDetection = await buildDetectionFromClient(client, config.password);
         const plan = rebuildApplyPlanAtConfirm(desiredRows, initialDetection.rules);
-        validatePlanCommands(plan);
+        const ufwChanges = hasApplyChanges(plan);
 
-        if (!hasApplyChanges(plan)) {
-          throw new Error("No changes to apply");
+        if (!ufwChanges) {
+          return {
+            execResult: { success: true, errors: [] as string[], partial: false },
+            detection: initialDetection,
+            dbOnly: true as const,
+          };
         }
+
+        validatePlanCommands(plan);
 
         const totalSteps = plan.items.length + 3;
         await tracker.setProgress(0, totalSteps, {
@@ -306,17 +448,50 @@ export async function confirmApply(
         });
 
         if (!execResult.success) {
-          return { execResult, detection: null };
+          const detection = execResult.partial
+            ? await buildDetectionFromClient(client, config.password)
+            : null;
+          return { execResult, detection, dbOnly: false as const };
         }
 
         const detection = await buildDetectionFromClient(client, config.password);
-        return { execResult, detection };
+        return { execResult, detection, dbOnly: false as const };
       },
       { onStart: async () => tracker.markRunning() },
     );
 
+    if (sshResult.dbOnly) {
+      if (desiredRows.length > 0) {
+        await updateDraftRules(session.serverId, userId, desiredRows);
+      }
+      await syncDraftOriginStates(session.serverId, userId);
+
+      await db.applySession.update({
+        where: { id: sessionId },
+        data: { status: "SUCCESS", completedAt: new Date() },
+      });
+
+      await createAuditEvent({
+        userId,
+        action: "APPLY_COMPLETED",
+        entityType: "apply_session",
+        entityId: sessionId,
+      });
+
+      await tracker.complete({ key: "messages.apply_complete" }, summaryForTracker(summary));
+      return { success: true };
+    }
+
     if (!sshResult.execResult.success) {
       const sessionStatus = sshResult.execResult.partial ? "PARTIAL" : "FAILED";
+
+      if (sshResult.execResult.partial && sshResult.detection) {
+        await persistPartialApplyMetadata(
+          session.serverId,
+          userId,
+          sshResult.detection,
+        );
+      }
 
       await db.applySession.update({
         where: { id: sessionId },
@@ -376,7 +551,7 @@ export async function confirmApply(
       entityId: sessionId,
     });
 
-    await tracker.complete({ key: "messages.apply_complete" }, summary);
+    await tracker.complete({ key: "messages.apply_complete" }, summaryForTracker(summary));
 
     return { success: true };
   } catch (error) {

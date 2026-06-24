@@ -16,3 +16,44 @@ export async function sweepStaleApplySessions(maxAgeMinutes = 30): Promise<numbe
 
   return result.count;
 }
+
+export async function sweepStalePendingApplySessions(maxAgeMinutes = 60): Promise<number> {
+  const staleBefore = new Date(Date.now() - maxAgeMinutes * 60_000);
+  const result = await db.applySession.updateMany({
+    where: {
+      status: "PENDING",
+      createdAt: { lt: staleBefore },
+    },
+    data: {
+      status: "CANCELLED",
+      completedAt: new Date(),
+      errorMessage: "Apply preview expired",
+    },
+  });
+
+  return result.count;
+}
+
+export async function sweepStalePendingOperationLogs(maxAgeMinutes = 60): Promise<number> {
+  const staleBefore = new Date(Date.now() - maxAgeMinutes * 60_000);
+  const result = await db.operationLog.updateMany({
+    where: {
+      status: "PENDING",
+      createdAt: { lt: staleBefore },
+    },
+    data: {
+      status: "CANCELLED",
+      message: "messages.operation_cancelled",
+    },
+  });
+
+  return result.count;
+}
+
+export async function prepareServersForMaintenanceOperation(): Promise<void> {
+  await Promise.all([
+    sweepStaleApplySessions(),
+    sweepStalePendingApplySessions(),
+    sweepStalePendingOperationLogs(),
+  ]);
+}

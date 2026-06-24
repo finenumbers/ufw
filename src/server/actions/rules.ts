@@ -5,19 +5,19 @@ import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
 import { assertRateLimit } from "@/lib/rate-limit";
-import { draftUpdateSchema } from "@/lib/validations/rule";
 import type { UnifiedRuleRow } from "@/types/rule";
 import { getServerPath } from "@/lib/server-path";
 import { getServerById } from "@/server/services/server.service";
-import { buildUnifiedRulesView } from "@/server/services/rules-view.service";
+import { buildUnifiedRulesViewPage } from "@/server/services/rules-view.service";
 import { importRulesToDraft } from "@/server/services/import.service";
-import { updateDraftRules, getTagValues } from "@/server/services/draft.service";
+import { getDistinctRuleFieldValues } from "@/server/services/draft.service";
 import { getSnapshotInterfaceOptions } from "@/server/services/snapshot.service";
 import {
   detectImportFormat,
   parseImportFile,
 } from "@/lib/imports/normalize-import";
 import { assertImportFileSize } from "@/lib/imports/import-limits";
+import { TABLE_PAGE_SIZE } from "@/lib/pagination/table-page-size";
 
 async function requireUserId(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -35,32 +35,20 @@ async function revalidateServerPaths(serverId: string) {
   revalidatePath(getServerPath(server.host, "/edit"));
 }
 
-export async function getRulesViewAction(serverId: string): Promise<UnifiedRuleRow[]> {
-  const userId = await requireUserId();
-  return buildUnifiedRulesView(serverId, userId);
-}
-
-export async function updateDraftRulesAction(
+export async function getRulesViewPageAction(
   serverId: string,
-  rows: UnifiedRuleRow[],
-): Promise<{ success: true } | { success: false; error: string }> {
+  offset = 0,
+): Promise<Awaited<ReturnType<typeof buildUnifiedRulesViewPage>>> {
   const userId = await requireUserId();
-  const parsed = draftUpdateSchema.safeParse({ serverId, rows });
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
-  }
-
-  await updateDraftRules(serverId, userId, rows);
-  await revalidateServerPaths(serverId);
-  return { success: true };
+  return buildUnifiedRulesViewPage(serverId, userId, offset, TABLE_PAGE_SIZE);
 }
 
-export async function getTagValuesAction(
+export async function getDistinctRuleFieldValuesAction(
   serverId: string,
   kind: "GROUP" | "NAME",
 ) {
   const userId = await requireUserId();
-  return getTagValues(serverId, userId, kind);
+  return getDistinctRuleFieldValues(serverId, userId, kind);
 }
 
 export async function getInterfaceOptionsAction(serverId: string): Promise<string[]> {

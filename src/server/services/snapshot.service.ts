@@ -1,5 +1,3 @@
-import type { RuleAction, RuleDirection, RuleProtocol, LogMode } from "@prisma/client";
-
 import { db } from "@/lib/db";
 import { computeFingerprint } from "@/lib/ufw/fingerprint";
 import type { RuleCore } from "@/types/rule";
@@ -35,6 +33,25 @@ function dedupeDetectionRules(rules: ParsedRemoteRule[]): ParsedRemoteRule[] {
   });
 }
 
+const SNAPSHOT_RETENTION_COUNT = 10;
+
+async function pruneOldSnapshots(serverId: string): Promise<void> {
+  const staleSnapshots = await db.serverSnapshot.findMany({
+    where: { serverId },
+    orderBy: { capturedAt: "desc" },
+    select: { id: true },
+    skip: SNAPSHOT_RETENTION_COUNT,
+  });
+
+  if (staleSnapshots.length === 0) {
+    return;
+  }
+
+  await db.serverSnapshot.deleteMany({
+    where: { id: { in: staleSnapshots.map((snapshot) => snapshot.id) } },
+  });
+}
+
 export async function persistSnapshotFromDetection(
   serverId: string,
   userId: string,
@@ -67,6 +84,8 @@ export async function persistSnapshotFromDetection(
     entityId: serverId,
     metadata: { snapshotId: snapshot.id, rulesCount: detection.rules.length },
   });
+
+  await pruneOldSnapshots(serverId);
 
   return { snapshotId: snapshot.id, rulesCount: detection.rules.length };
 }
@@ -106,50 +125,6 @@ export async function persistSnapshotInterfaceOptions(
   });
 }
 
-export function snapshotRulesToParsed(
-  rules: Array<{
-    fingerprint: string;
-    sortOrder: number;
-    rawLine: string | null;
-    action: RuleAction;
-    direction: RuleDirection | null;
-    interface: string | null;
-    protocol: RuleProtocol | null;
-    fromAddress: string | null;
-    fromPort: string | null;
-    toAddress: string | null;
-    toPort: string | null;
-    appName: string | null;
-    logMode: LogMode;
-    ruleComment: string | null;
-    ipv6: boolean;
-  }>,
-): ParsedRemoteRule[] {
-  return rules.map((rule) => {
-    const core: RuleCore = {
-      action: rule.action,
-      direction: rule.direction,
-      interface: rule.interface,
-      protocol: rule.protocol,
-      fromAddress: rule.fromAddress,
-      fromPort: rule.fromPort,
-      toAddress: rule.toAddress,
-      toPort: rule.toPort,
-      appName: rule.appName,
-      logMode: rule.logMode,
-      ruleComment: rule.ruleComment,
-      ipv6: rule.ipv6,
-    };
-
-    return {
-      ruleNumber: rule.sortOrder + 1,
-      rawLine: rule.rawLine ?? "",
-      core,
-      fingerprint: rule.fingerprint,
-    };
-  });
-}
-
 export async function syncRuleRecordsFromDraft(
   serverId: string,
   rows: Array<{
@@ -173,12 +148,4 @@ export async function syncRuleRecordsFromDraft(
       })),
     }),
   ]);
-
-  await pruneStaleTagValues(serverId);
-}
-
-async function pruneStaleTagValues(serverId: string) {
-  await db.tagValue.deleteMany({
-    where: { serverId, kind: { in: ["GROUP", "NAME"] } },
-  });
 }

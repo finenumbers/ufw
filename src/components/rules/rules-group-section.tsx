@@ -8,6 +8,10 @@ type RulesGroupSectionProps = {
   rows: UnifiedRuleRow[];
   onChange: (rows: UnifiedRuleRow[]) => void;
   optionsRefreshKey?: number;
+  total?: number;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void | Promise<void>;
 };
 
 export function RulesGroupSection({
@@ -15,6 +19,10 @@ export function RulesGroupSection({
   rows,
   onChange,
   optionsRefreshKey,
+  total,
+  hasMore,
+  loadingMore,
+  onLoadMore,
 }: RulesGroupSectionProps) {
   return (
     <RulesTable
@@ -22,6 +30,10 @@ export function RulesGroupSection({
       rows={rows}
       onChange={onChange}
       optionsRefreshKey={optionsRefreshKey}
+      total={total}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+      onLoadMore={onLoadMore}
     />
   );
 }

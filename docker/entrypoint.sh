@@ -10,6 +10,10 @@ if [ "$NODE_ENV" = "production" ]; then
     echo "APP_ENCRYPTION_KEY is required in production" >&2
     exit 1
   fi
+  if [ -z "$APP_URL" ] && [ -z "$BETTER_AUTH_URL" ]; then
+    echo "APP_URL is required in production" >&2
+    exit 1
+  fi
 fi
 
 exec node server.js

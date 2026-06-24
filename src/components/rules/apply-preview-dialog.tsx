@@ -23,7 +23,7 @@ type ApplyPreviewDialogProps = {
   onOpenChange: (open: boolean) => void;
   sessionId: string | null;
   serverId: string;
-  summary: { addCount: number; removeCount: number; updateCount: number } | null;
+  summary: { addCount: number; removeCount: number; updateCount: number; dbSync?: boolean } | null;
   onCompleted: () => Promise<void>;
 };
 
@@ -101,6 +101,7 @@ export function ApplyPreviewDialog({
             <p>{t("add", { count: summary.addCount })}</p>
             <p>{t("remove", { count: summary.removeCount })}</p>
             <p>{t("reorder", { count: summary.updateCount })}</p>
+            {summary.dbSync ? <p>{t("dbSync")}</p> : null}
           </div>
         )}
         {error && <p className="text-sm text-destructive">{error}</p>}

@@ -1,7 +1,5 @@
 import type { LogMode, RuleAction, RuleDirection, RuleProtocol } from "@prisma/client";
 
-export type { RuleCore } from "@/types/rule";
-
 export const ANYWHERE = "any";
 
 export function normalizeAddress(value?: string | null): string | null {
@@ -38,6 +36,7 @@ export function normalizeAction(value: string): RuleAction {
 export function normalizeDirection(value?: string | null): RuleDirection | null {
   if (!value) return null;
   const upper = value.trim().toUpperCase();
+  if (upper === "FWD") return "ROUTE";
   if (upper === "IN" || upper === "OUT" || upper === "ROUTE") {
     return upper;
   }
@@ -47,7 +46,8 @@ export function normalizeDirection(value?: string | null): RuleDirection | null 
 export function normalizeLogMode(value?: string | null): LogMode {
   if (!value) return "NONE";
   const upper = value.trim().toUpperCase();
-  if (upper === "LOG" || upper === "LOG_ALL") return upper;
+  if (upper === "LOG") return "LOG";
+  if (upper === "LOG_ALL" || upper === "LOG-ALL") return "LOG_ALL";
   return "NONE";
 }
 

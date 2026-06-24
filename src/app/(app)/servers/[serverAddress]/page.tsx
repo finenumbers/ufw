@@ -1,20 +1,25 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
-import { OperationBanner } from "@/components/layout/operation-banner";
-import { ServerRulesPanel } from "@/components/rules/server-rules-panel";
-import { ServerInitialSync } from "@/components/servers/server-initial-sync";
-import { UfwDashboard } from "@/components/servers/ufw-dashboard";
-import { Button } from "@/components/ui/button";
+import { ServerDetailView } from "@/components/servers/server-detail-view";
 import { getServerPath } from "@/lib/server-path";
 import { getServerByAddressAction } from "@/server/actions/servers";
-import { getRulesViewAction } from "@/server/actions/rules";
+import { getRulesViewPageAction } from "@/server/actions/rules";
+import { getRuleRecordCount } from "@/server/services/server.service";
 import { detectUfwState } from "@/server/services/ssh.service";
 import { getLatestSnapshot, persistSnapshotInterfaceOptions } from "@/server/services/snapshot.service";
 import { remoteSnapshotOutOfSync } from "@/server/services/rules-view.service";
+import type { UfwDetectionResult } from "@/types/ufw";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+
+const emptyUfwState: UfwDetectionResult = {
+  installed: false,
+  active: false,
+  status: { installed: false, active: false, rawStatus: "" },
+  rules: [],
+  interfaces: [],
+};
 
 type PageProps = {
   params: Promise<{ serverAddress: string }>;
@@ -32,7 +37,13 @@ export default async function ServerDetailPage({ params }: PageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
 
-  const ufwState = await detectUfwState(server.id);
+  let ufwState = emptyUfwState;
+  try {
+    ufwState = await detectUfwState(server.id);
+  } catch {
+    ufwState = emptyUfwState;
+  }
+
   const latestSnapshot =
     ufwState.installed && ufwState.active ? await getLatestSnapshot(server.id) : null;
 
@@ -52,31 +63,31 @@ export default async function ServerDetailPage({ params }: PageProps) {
     await persistSnapshotInterfaceOptions(server.id, ufwState.interfaces);
   }
 
-  const rules = userId ? await getRulesViewAction(server.id) : [];
+  const rulesPage = userId
+    ? await getRulesViewPageAction(server.id, 0)
+    : { rows: [], total: 0, hasMore: false, nextOffset: 0 };
+  const dbRulesCount = await getRuleRecordCount(server.id);
+  const rulesAvailable = ufwState.installed && ufwState.active;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold">{server.name}</h2>
-          <p className="text-sm text-muted-foreground">
-            {server.username}@{server.host}:{server.port}
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href={getServerPath(server.host, "/edit")}>{t("editServer")}</Link>
-        </Button>
-      </div>
-
-      <OperationBanner serverId={server.id} />
-      {needsSync && <ServerInitialSync serverId={server.id} needsSync={needsSync} />}
-      <UfwDashboard serverId={server.id} initialState={ufwState} />
-
-      {ufwState.installed && ufwState.active ? (
-        <ServerRulesPanel serverId={server.id} initialRows={rules} />
-      ) : (
-        <p className="text-sm text-muted-foreground">{t("rulesUnavailable")}</p>
-      )}
-    </div>
+    <ServerDetailView
+      server={{
+        id: server.id,
+        name: server.name,
+        host: server.host,
+        port: server.port,
+        username: server.identity.username,
+      }}
+      editHref={getServerPath(server.host, "/edit")}
+      ufwState={ufwState}
+      needsSync={needsSync}
+      dbRulesCount={dbRulesCount}
+      initialRows={rulesPage.rows}
+      initialTotal={rulesPage.total}
+      initialHasMore={rulesPage.hasMore}
+      initialNextOffset={rulesPage.nextOffset}
+      rulesAvailable={rulesAvailable}
+      rulesUnavailableMessage={t("rulesUnavailable")}
+    />
   );
 }

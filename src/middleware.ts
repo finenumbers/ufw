@@ -9,9 +9,6 @@ function isPublicApiPath(pathname: string): boolean {
   if (pathname.startsWith("/api/auth/")) {
     return true;
   }
-  if (pathname === "/api/setup/status") {
-    return true;
-  }
   if (pathname === "/api/health") {
     return true;
   }

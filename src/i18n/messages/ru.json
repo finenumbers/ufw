@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "UFW Manager",
-    "subtitle": "Удалённое управление брандмауэром",
+    "subtitle": "UFW Remote Manager",
     "metadataTitle": "UFW Remote Manager",
     "metadataDescription": "Самостоятельно размещаемое удалённое управление UFW через SSH"
   },
@@ -11,7 +10,8 @@
   "sidebar": {
     "noServers": "Серверов пока нет",
     "operationsHistory": "История операций",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "identities": "SSH-идентификации"
   },
   "common": {
     "cancel": "Отмена",
@@ -43,24 +43,41 @@
     "title": "Серверы",
     "description": "Управление удалёнными Linux-серверами и правилами UFW.",
     "addServer": "Добавить сервер",
+    "saveConfig": "Сохранить конфигурацию",
+    "loadConfig": "Загрузить конфигурацию",
+    "configExportWarning": "Файл будет содержать SSH-учётные данные в открытом виде. Храните его в безопасном месте.",
+    "configExportTitle": "Экспорт конфигурации?",
+    "configExportDescription": "Введите пароль повторно, чтобы скачать файл конфигурации с SSH-учётными данными в открытом виде.",
+    "configExportPassword": "Пароль",
+    "configExportConfirm": "Экспорт",
+    "configExportFailed": "Не удалось экспортировать конфигурацию",
+    "configImportTitle": "Загрузить конфигурацию серверов?",
+    "configImportDescription": "Серверы, которых нет в файле, будут удалены вместе со всеми их правилами и снимками.",
+    "configImportDeleteList": "Будут удалены серверы:",
+    "configImportCreate": "Создать: {count}",
+    "configImportUpdate": "Обновить: {count}",
+    "configImportConfirm": "Загрузить конфигурацию",
+    "configImportSuccess": "Конфигурация загружена.",
+    "configImportFailed": "Не удалось загрузить конфигурацию",
     "editServer": "Изменить сервер",
     "rulesUnavailable": "Редактирование правил станет доступно после установки и активации UFW.",
     "new": {
       "title": "Добавить сервер",
-      "description": "Учётные данные SSH шифруются перед сохранением. Подключение проверяется перед сохранением.",
+      "description": "Выберите сохранённую SSH-идентификацию. Подключение проверяется перед сохранением.",
       "detailsTitle": "Данные сервера",
-      "detailsDescription": "Все поля обязательны в зависимости от выбранного способа аутентификации."
+      "detailsDescription": "Обязательны хост, порт и SSH-идентификация."
     },
     "edit": {
       "title": "Изменить сервер",
       "detailsTitle": "Данные сервера",
-      "detailsDescription": "Обновление учётных данных требует успешной проверки SSH.",
-      "hostKeyFingerprint": "Отпечаток SSH-ключа хоста"
+      "detailsDescription": "Изменение хоста или идентификации требует успешной проверки SSH.",
+      "hostKeyFingerprint": "Отпечаток SSH host key",
+      "hostKeyUnverified": "Host key импортирован из конфигурации — выполните SSH test для проверки"
     },
     "delete": {
       "button": "Удалить сервер",
       "title": "Удалить сервер?",
-      "description": "Сервер «{name}» и все его локальные данные будут безвозвратно удалены: подтверждённые правила, черновики, снимки, история тегов и сессии применения. UFW на удалённом сервере не изменится.",
+      "description": "Сервер «{name}» и все его локальные данные будут безвозвратно удалены: подтверждённые правила, черновики, снимки и сессии применения. UFW на удалённом сервере не изменится.",
       "confirm": "Удалить",
       "deleting": "Удаление...",
       "dangerTitle": "Опасная зона",
@@ -71,19 +88,14 @@
     "name": "Имя",
     "host": "Хост",
     "port": "Порт",
-    "username": "Имя пользователя",
-    "authMethod": "Способ аутентификации",
-    "selectMethod": "Выберите способ",
-    "passwordAuth": "Пароль",
-    "privateKeyAuth": "Приватный ключ",
-    "privateKeyPassphraseAuth": "Приватный ключ с парольной фразой",
-    "password": "Пароль",
-    "privateKey": "Приватный ключ",
-    "passphrase": "Парольная фраза",
+    "identity": "SSH-идентификация",
+    "selectIdentity": "Выберите идентификацию",
+    "noIdentities": "Сначала создайте SSH-идентификацию.",
+    "createIdentityLink": "Создать SSH-идентификацию",
     "createServer": "Создать сервер",
-    "updateServer": "Обновить сервер",
+    "updateServer": "Сохранить сервер",
     "creating": "Создание...",
-    "updating": "Обновление...",
+    "updating": "Сохранение...",
     "missingServerId": "Отсутствует ID сервера"
   },
   "ufw": {
@@ -91,35 +103,30 @@
     "notInstalled": "UFW не установлен",
     "active": "UFW активен",
     "inactive": "UFW неактивен",
-    "remoteRules": "{count} удалённых правил",
     "testSsh": "Проверить SSH",
     "refreshStatus": "Обновить статус",
     "installUfw": "Установить UFW",
-    "activateUfw": "Активировать UFW",
     "installTitle": "Установить UFW?",
-    "installDescription": "UFW будет установлен на удалённом сервере через SSH.",
+    "installDescription": "UFW будет установлен и активирован на удалённом сервере через SSH.",
     "confirmInstall": "Подтвердить установку",
-    "activateTitle": "Активировать UFW?",
-    "activateDescription": "UFW будет включён на удалённом сервере. Убедитесь, что доступ по SSH разрешён.",
-    "confirmActivate": "Подтвердить активацию"
+    "dbRules": "{count} правил в БД"
   },
   "rules": {
     "toolbar": {
       "addRule": "Добавить правило",
-      "saveDraft": "Сохранить черновик",
       "saveRules": "Сохранить правила",
       "import": "Импорт",
-      "draftSaved": "Черновик сохранён локально. UFW на сервере не изменён.",
-      "hint": "Изменения хранятся локально до сохранения. UFW на сервере изменится только после <highlight>Save Rules</highlight> и подтверждения в диалоге.",
       "export": "Экспорт",
-      "importDuplicatesSkipped": "Пропущено дубликатов правил при импорте: {count}."
+      "importDuplicatesSkipped": "Пропущено дубликатов правил при импорте: {count}.",
+      "hint": "Несохранённые правки сбрасываются при «Обновить статус». Запись в локальную БД и UFW — только через <highlight>Сохранить правила</highlight> с подтверждением."
     },
     "applyDialog": {
       "title": "Подтвердите изменения правил UFW",
-      "description": "Изменения будут применены к брандмауэру удалённого сервера. Проверьте план ниже перед подтверждением.",
+      "description": "Правила из таблицы будут сохранены в локальную БД и при необходимости применены к UFW на удалённом сервере. Проверьте план ниже перед подтверждением.",
       "add": "Добавить: {count}",
       "remove": "Удалить: {count}",
       "reorder": "Изменить порядок: {count}",
+      "dbSync": "Сохранить в локальную БД",
       "apply": "Применить к UFW",
       "applying": "Применение...",
       "failed": "Ошибка применения",
@@ -130,10 +137,9 @@
     },
     "table": {
       "searchPlaceholder": "Поиск правил...",
-      "legendRemoteOnly": "На сервере, нет в локальной БД",
-      "legendMatched": "На сервере и в локальной БД",
-      "legendLocalOnly": "Не на сервере, есть в локальной БД",
-      "legendPendingNoHighlight": "Новые правила до Save Draft без подсветки",
+      "legendRemoteOnly": "Есть на UFW, нет в локальной БД",
+      "legendMatched": "Есть на UFW и в локальной БД",
+      "legendLocalOnly": "Нет на UFW, есть в локальной БД",
       "clearFiltersToReorder": "Сбросьте поиск и фильтры колонок для изменения порядка",
       "noRulesFound": "Правила не найдены",
       "filterAll": "Все",
@@ -143,7 +149,10 @@
       "filterShowOptions": "Показать варианты {label}",
       "filterOptions": "Варианты {label}",
       "orderColumn": "Порядок",
-      "deleteRule": "Удалить правило"
+      "deleteRule": "Удалить правило",
+      "loadingMore": "Загрузка...",
+      "scrollForMore": "Прокрутите вниз для загрузки",
+      "loadedCount": "Показано {loaded} из {total} правил"
     }
   },
   "operationsPage": {
@@ -157,14 +166,24 @@
     "message": "Сообщение",
     "action": "Действие",
     "user": "Пользователь",
-    "entity": "Объект"
+    "entity": "Объект",
+    "loadingMore": "Загрузка...",
+    "scrollForMore": "Прокрутите вниз для загрузки",
+    "clearHistory": "Очистить историю",
+    "clearHistoryTitle": "Очистить историю операций?",
+    "clearHistoryDescription": "Все записи журнала операций и события аудита будут удалены без возможности восстановления.",
+    "clearHistoryConfirm": "Очистить историю",
+    "clearHistoryClearing": "Очистка...",
+    "clearHistoryBlocked": "Нельзя очистить историю, пока выполняется операция."
   },
   "operations": {
     "status": {
       "RUNNING": "ВЫПОЛНЯЕТСЯ",
       "SUCCESS": "УСПЕХ",
       "FAILED": "ОШИБКА",
-      "PENDING": "ОЖИДАНИЕ"
+      "PENDING": "ОЖИДАНИЕ",
+      "PARTIAL": "ЧАСТИЧНО",
+      "CANCELLED": "ОТМЕНЕНО"
     },
     "types": {
       "apply_rules": "Применение правил UFW",
@@ -196,13 +215,14 @@
       "refresh_start": "Обновление статуса UFW",
       "refresh_complete": "Готово: статус UFW обновлён",
       "install_start": "Установка UFW",
-      "install_complete": "Готово: UFW установлен",
+      "install_complete": "Готово: UFW установлен и активирован",
       "enable_start": "Включение UFW",
       "enable_complete": "Готово: UFW включён и правила синхронизированы",
       "ssh_start": "Проверка SSH-подключения",
       "ssh_complete": "SSH-подключение успешно",
       "server_create_complete": "Сервер {name} создан",
-      "operation_failed": "Ошибка операции: {error}"
+      "operation_failed": "Ошибка операции: {error}",
+      "operation_cancelled": "Операция отменена"
     },
     "phases": {
       "ufw_commands": "Применение команд UFW",
@@ -221,5 +241,67 @@
       "enable": "Включение UFW на сервере",
       "ssh": "Проверка SSH-подключения"
     }
+  },
+  "identities": {
+    "title": "SSH-идентификации",
+    "description": "Переиспользуемые SSH-учётные данные для подключения к серверам. Секреты шифруются локально.",
+    "addIdentity": "Добавить идентификацию",
+    "empty": "SSH-идентификаций пока нет. Создайте одну для добавления серверов.",
+    "editAction": "Изменить",
+    "columns": {
+      "name": "Имя",
+      "username": "Пользователь",
+      "authMethod": "Метод auth",
+      "servers": "Серверы"
+    },
+    "new": {
+      "title": "Добавить SSH-идентификацию",
+      "description": "Учётные данные шифруются перед сохранением.",
+      "detailsTitle": "Данные идентификации",
+      "detailsDescription": "Все поля обязательны в зависимости от выбранного метода auth."
+    },
+    "edit": {
+      "title": "Изменить SSH-идентификацию",
+      "detailsTitle": "Данные идентификации",
+      "linkedServersTitle": "Используется на серверах",
+      "linkedServersDescription": "Серверы, добавленные в систему и подключающиеся с этой SSH-идентификацией.",
+      "linkedServersEmpty": "Эта идентификация пока не используется ни одним сервером."
+    },
+    "delete": {
+      "button": "Удалить идентификацию",
+      "title": "Удалить идентификацию?",
+      "description": "Идентификация «{name}» будет удалена безвозвратно.",
+      "blockedTitle": "Нельзя удалить идентификацию",
+      "blockedDescription": "Эта идентификация используется {count} сервером(ами). Сначала переназначьте или удалите эти серверы.",
+      "confirm": "Удалить",
+      "deleting": "Удаление...",
+      "dangerTitle": "Опасная зона",
+      "dangerDescription": "Удаление неиспользуемой идентификации удалит её зашифрованные секреты из локальной БД."
+    }
+  },
+  "identityForm": {
+    "name": "Имя",
+    "username": "Имя пользователя",
+    "authMethod": "Метод аутентификации",
+    "selectMethod": "Выберите метод",
+    "passwordAuth": "Пароль",
+    "privateKeyAuth": "Приватный ключ",
+    "privateKeyPassphraseAuth": "Приватный ключ с парольной фразой",
+    "password": "Пароль",
+    "privateKey": "Приватный ключ",
+    "passphrase": "Парольная фраза",
+    "credentialsSavedTitle": "SSH-учётные данные сохранены",
+    "credentialsSavedDescription": "Из соображений безопасности пароль и приватный ключ после сохранения больше не показываются в форме. Они остаются в локальной базе в зашифрованном виде и используются при подключении к серверам. Пустые поля ниже — это нормально: оставьте их пустыми, чтобы сохранить текущий секрет, или введите новое значение, чтобы заменить его.",
+    "secretFieldEditHint": "Пусто = оставить сохранённое значение. Заполняйте только если хотите изменить секрет.",
+    "passwordPlaceholderEdit": "Пароль скрыт — оставьте пустым, чтобы не менять",
+    "privateKeyPlaceholderEdit": "Ключ скрыт — оставьте пустым, чтобы не менять",
+    "passphrasePlaceholderEdit": "Фраза скрыта — оставьте пустым, чтобы не менять",
+    "createIdentity": "Создать идентификацию",
+    "updateIdentity": "Сохранить идентификацию",
+    "creating": "Создание...",
+    "updating": "Сохранение...",
+    "updateWarningTitle": "Обновить идентификацию для всех серверов?",
+    "updateWarningDescription": "Эта идентификация используется {count} сервером(ами). Сохранение изменит SSH-доступ для всех них.",
+    "confirmUpdate": "Сохранить изменения"
   }
 }

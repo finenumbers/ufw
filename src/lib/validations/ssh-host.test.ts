@@ -16,6 +16,16 @@ test("validateSshHost allows public hostnames and IPs", () => {
   assert.equal(validateSshHost("server.example.com"), null);
 });
 
+test("validateSshHost blocks IPv4-mapped private addresses", () => {
+  assert.equal(validateSshHost("::ffff:127.0.0.1"), "Host IP is not allowed");
+  assert.equal(validateSshHost("::ffff:10.0.0.5"), "Host IP is not allowed");
+  assert.equal(validateSshHost("::ffff:169.254.169.254"), "Host IP is not allowed");
+});
+
+test("validateSshHost allows public IPv4-mapped addresses", () => {
+  assert.equal(validateSshHost("::ffff:8.8.8.8"), null);
+});
+
 test("validateSshHost honors SSH_ALLOWED_CIDRS allowlist", () => {
   const previous = process.env.SSH_ALLOWED_CIDRS;
   process.env.SSH_ALLOWED_CIDRS = "10.0.0.0/8";

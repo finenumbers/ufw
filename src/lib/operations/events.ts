@@ -9,7 +9,7 @@ export function notifyOperationStarted(serverId?: string) {
   );
 }
 
-export function getDismissedOperationKey(operationId: string) {
+function getDismissedOperationKey(operationId: string) {
   return `ufw-operation-dismissed:${operationId}`;
 }
 

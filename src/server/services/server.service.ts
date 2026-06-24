@@ -1,38 +1,67 @@
-import type { AuthMethod, Server } from "@prisma/client";
-
-import { decryptCredential, encryptCredential } from "@/lib/crypto";
+import type { AuthMethod, Prisma, Server } from "@prisma/client";
 import { db } from "@/lib/db";
 import { clearServerQueue, isServerQueueBusy, waitForServerQueueIdle } from "@/lib/queue/queue-registry";
 import type { ServerInput } from "@/lib/validations/server";
 import { createAuditEvent } from "@/server/services/audit.service";
+import { resolveIdentitySecrets } from "@/server/services/identity.service";
 import { createOperationLog } from "@/server/services/operation-log.service";
 import { verifySshConnection } from "@/lib/ssh/verify";
 import { testSshConnection } from "@/server/services/ssh.service";
 
-export async function listServers(): Promise<Server[]> {
-  return db.server.findMany({ orderBy: { name: "asc" } });
+export async function listServers() {
+  return db.server.findMany({
+    orderBy: { name: "asc" },
+    include: {
+      identity: {
+        select: { id: true, name: true, username: true, authMethod: true },
+      },
+    },
+  });
+}
+
+export async function listServersWithRuleCounts() {
+  const servers = await listServers();
+  const counts = await db.ruleRecord.groupBy({
+    by: ["serverId"],
+    _count: { id: true },
+  });
+  const countByServerId = new Map(counts.map((entry) => [entry.serverId, entry._count.id]));
+
+  return servers.map((server) => ({
+    ...server,
+    ruleRecordCount: countByServerId.get(server.id) ?? 0,
+  }));
 }
 
 export async function getServerById(id: string): Promise<Server | null> {
   return db.server.findUnique({ where: { id } });
 }
 
-export async function getServerByHost(host: string): Promise<Server | null> {
-  return db.server.findFirst({ where: { host } });
+export async function getServerByHost(host: string) {
+  return db.server.findFirst({
+    where: { host },
+    include: {
+      identity: {
+        select: { id: true, name: true, username: true, authMethod: true },
+      },
+    },
+  });
 }
 
 export async function createServer(
   input: ServerInput,
   userId: string,
 ): Promise<{ success: true; server: Server } | { success: false; error: string }> {
+  const identity = await resolveIdentitySecrets(input.identityId);
+
   const sshResult = await verifyServerSsh({
     host: input.host,
     port: input.port,
-    username: input.username,
-    authMethod: input.authMethod,
-    password: input.password,
-    privateKey: input.privateKey,
-    passphrase: input.passphrase,
+    username: identity.username,
+    authMethod: identity.authMethod,
+    password: identity.password,
+    privateKey: identity.privateKey,
+    passphrase: identity.passphrase,
   });
 
   if (!sshResult.success) {
@@ -46,28 +75,14 @@ export async function createServer(
     return { success: false, error: sshResult.message };
   }
 
-  const encrypted = encryptCredential({
-    password: input.password,
-    privateKey: input.privateKey,
-    passphrase: input.passphrase,
-  });
-
   const server = await db.server.create({
     data: {
       name: input.name,
       host: input.host,
       port: input.port,
-      username: input.username,
-      authMethod: input.authMethod as AuthMethod,
+      identityId: input.identityId,
       sshHostKeyFingerprint: sshResult.hostKeyFingerprint ?? null,
-      credential: {
-        create: {
-          encryptedData: encrypted.encryptedData,
-          iv: encrypted.iv,
-          authTag: encrypted.authTag,
-          keyVersion: encrypted.keyVersion,
-        },
-      },
+      sshHostKeyVerified: Boolean(sshResult.hostKeyFingerprint),
     },
   });
 
@@ -112,14 +127,16 @@ export async function updateServer(
     ? null
     : existing.sshHostKeyFingerprint;
 
+  const identity = await resolveIdentitySecrets(input.identityId);
+
   const sshResult = await verifyServerSsh({
     host: input.host,
     port: input.port,
-    username: input.username,
-    authMethod: input.authMethod,
-    password: input.password,
-    privateKey: input.privateKey,
-    passphrase: input.passphrase,
+    username: identity.username,
+    authMethod: identity.authMethod,
+    password: identity.password,
+    privateKey: identity.privateKey,
+    passphrase: identity.passphrase,
     expectedHostKeyFingerprint,
   });
 
@@ -127,38 +144,18 @@ export async function updateServer(
     return { success: false, error: sshResult.message };
   }
 
-  const encrypted = encryptCredential({
-    password: input.password,
-    privateKey: input.privateKey,
-    passphrase: input.passphrase,
-  });
-
   const server = await db.server.update({
     where: { id },
     data: {
       name: input.name,
       host: input.host,
       port: input.port,
-      username: input.username,
-      authMethod: input.authMethod as AuthMethod,
+      identityId: input.identityId,
       sshHostKeyFingerprint:
         sshResult.hostKeyFingerprint ?? existing.sshHostKeyFingerprint,
-      credential: {
-        upsert: {
-          create: {
-            encryptedData: encrypted.encryptedData,
-            iv: encrypted.iv,
-            authTag: encrypted.authTag,
-            keyVersion: encrypted.keyVersion,
-          },
-          update: {
-            encryptedData: encrypted.encryptedData,
-            iv: encrypted.iv,
-            authTag: encrypted.authTag,
-            keyVersion: encrypted.keyVersion,
-          },
-        },
-      },
+      sshHostKeyVerified: hostChanged
+        ? Boolean(sshResult.hostKeyFingerprint)
+        : existing.sshHostKeyVerified || Boolean(sshResult.hostKeyFingerprint),
     },
   });
 
@@ -168,6 +165,77 @@ export async function updateServer(
     entityType: "server",
     entityId: server.id,
   });
+
+  return { success: true, server };
+}
+
+export async function upsertServerFromConfig(
+  input: {
+    name: string;
+    host: string;
+    port: number;
+    identityId: string;
+    sshHostKeyFingerprint?: string | null;
+    sshHostKeyVerified?: boolean;
+  },
+  userId: string,
+  options?: { tx?: Prisma.TransactionClient; skipAudit?: boolean },
+): Promise<{ success: true; server: Server } | { success: false; error: string }> {
+  const serverDb = options?.tx ?? db;
+  const existing = await serverDb.server.findFirst({
+    where: {
+      host: input.host,
+      port: input.port,
+      identityId: input.identityId,
+    },
+  });
+
+  if (existing) {
+    const server = await serverDb.server.update({
+      where: { id: existing.id },
+      data: {
+        name: input.name,
+        host: input.host,
+        port: input.port,
+        identityId: input.identityId,
+        sshHostKeyFingerprint: input.sshHostKeyFingerprint ?? null,
+        sshHostKeyVerified: input.sshHostKeyVerified ?? false,
+      },
+    });
+
+    if (!options?.skipAudit) {
+      await createAuditEvent({
+        userId,
+        action: "SERVER_UPDATED",
+        entityType: "server",
+        entityId: server.id,
+        metadata: { name: server.name, host: server.host, source: "config-import" },
+      });
+    }
+
+    return { success: true, server };
+  }
+
+  const server = await serverDb.server.create({
+    data: {
+      name: input.name,
+      host: input.host,
+      port: input.port,
+      identityId: input.identityId,
+      sshHostKeyFingerprint: input.sshHostKeyFingerprint ?? null,
+      sshHostKeyVerified: input.sshHostKeyVerified ?? false,
+    },
+  });
+
+  if (!options?.skipAudit) {
+    await createAuditEvent({
+      userId,
+      action: "SERVER_CREATED",
+      entityType: "server",
+      entityId: server.id,
+      metadata: { name: server.name, host: server.host, source: "config-import" },
+    });
+  }
 
   return { success: true, server };
 }
@@ -221,28 +289,23 @@ export async function deleteServer(
 export async function getServerSshConfig(serverId: string) {
   const server = await db.server.findUnique({
     where: { id: serverId },
-    include: { credential: true },
+    include: { identity: true },
   });
 
-  if (!server?.credential) {
-    throw new Error("Server or credentials not found");
+  if (!server) {
+    throw new Error("Server not found");
   }
 
-  const secrets = decryptCredential({
-    encryptedData: server.credential.encryptedData,
-    iv: server.credential.iv,
-    authTag: server.credential.authTag,
-    keyVersion: server.credential.keyVersion,
-  });
+  const identity = await resolveIdentitySecrets(server.identityId);
 
   return {
     host: server.host,
     port: server.port,
-    username: server.username,
-    authMethod: server.authMethod,
-    password: secrets.password,
-    privateKey: secrets.privateKey,
-    passphrase: secrets.passphrase,
+    username: identity.username,
+    authMethod: identity.authMethod,
+    password: identity.password,
+    privateKey: identity.privateKey,
+    passphrase: identity.passphrase,
     expectedHostKeyFingerprint: server.sshHostKeyFingerprint,
   };
 }
@@ -285,6 +348,12 @@ export async function testServerConnection(
       return result;
     }
 
+    const { db } = await import("@/lib/db");
+    await db.server.update({
+      where: { id: serverId },
+      data: { sshHostKeyVerified: true },
+    });
+
     await tracker.completeStep("ssh");
     await tracker.complete({ key: "messages.ssh_complete" });
     return result;
@@ -293,6 +362,10 @@ export async function testServerConnection(
     await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
     throw error;
   }
+}
+
+export async function getRuleRecordCount(serverId: string): Promise<number> {
+  return db.ruleRecord.count({ where: { serverId } });
 }
 
 async function verifyServerSsh(config: {

@@ -6,6 +6,7 @@ import { flexRender, type Row } from "@tanstack/react-table";
 import { GripVertical } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { getRulesTableColumnClass } from "@/lib/rules/table-column-layout";
 import type { UnifiedRuleRow } from "@/types/rule";
 
 type SortableRuleRowProps = {
@@ -66,7 +67,13 @@ export function SortableRuleRow({
         </td>
       ) : null}
       {row.getVisibleCells().map((cell) => (
-        <td key={cell.id} className="bg-transparent px-2 py-0.5 align-middle">
+        <td
+          key={cell.id}
+          className={cn(
+            "bg-transparent px-2 py-0.5 align-middle",
+            getRulesTableColumnClass(cell.column.id),
+          )}
+        >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>
       ))}

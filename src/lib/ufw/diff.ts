@@ -39,11 +39,11 @@ export function getDesiredOrderedRules(desired: UnifiedRuleRow[]): UnifiedRuleRo
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-export function getDesiredFingerprintOrder(desired: UnifiedRuleRow[]): string[] {
+function getDesiredFingerprintOrder(desired: UnifiedRuleRow[]): string[] {
   return getDesiredOrderedRules(desired).map((row) => resolveRuleFingerprint(row));
 }
 
-export function getRemoteFingerprintOrder(remote: ParsedRemoteRule[]): string[] {
+function getRemoteFingerprintOrder(remote: ParsedRemoteRule[]): string[] {
   return [...remote]
     .sort((a, b) => (a.ruleNumber ?? 0) - (b.ruleNumber ?? 0))
     .map((rule) => rule.fingerprint);
@@ -117,49 +117,4 @@ export function diffDesiredVsRemote(
       updateCount,
     },
   };
-}
-
-export function mergeRulesByFingerprint(
-  remote: UnifiedRuleRow[],
-  local: UnifiedRuleRow[],
-): UnifiedRuleRow[] {
-  const map = new Map<string, UnifiedRuleRow>();
-
-  for (const row of remote) {
-    map.set(row.fingerprint, row);
-  }
-
-  for (const row of local) {
-    const existing = map.get(row.fingerprint);
-    if (existing) {
-      map.set(row.fingerprint, {
-        ...existing,
-        ui: {
-          group: row.ui.group ?? existing.ui.group,
-          name: row.ui.name ?? existing.ui.name,
-          notes: row.ui.notes ?? existing.ui.notes,
-        },
-        originState: "MATCHED",
-        sources: { remote: true, local: true, draft: false },
-      });
-    } else {
-      map.set(row.fingerprint, {
-        ...row,
-        originState: "LOCAL_ONLY",
-        sources: { remote: false, local: true, draft: false },
-      });
-    }
-  }
-
-  for (const [fp, row] of map) {
-    if (row.sources.remote && !row.sources.local) {
-      map.set(fp, {
-        ...row,
-        originState: "REMOTE_ONLY",
-        sources: { remote: true, local: false, draft: false },
-      });
-    }
-  }
-
-  return Array.from(map.values()).sort((a, b) => a.sortOrder - b.sortOrder);
 }

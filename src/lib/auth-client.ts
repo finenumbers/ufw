@@ -1,19 +1,17 @@
 import { createAuthClient } from "better-auth/react";
 
+import { getPublicAppUrl } from "@/lib/app-url";
+
 function getAuthBaseURL(): string {
   if (typeof window !== "undefined") {
     return window.location.origin;
   }
 
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.BETTER_AUTH_URL ??
-    "http://localhost:3000"
-  );
+  return getPublicAppUrl();
 }
 
-export const authClient = createAuthClient({
+const authClient = createAuthClient({
   baseURL: getAuthBaseURL(),
 });
 
-export const { signIn, signOut, useSession } = authClient;
+export const { signIn, signOut } = authClient;

@@ -2,9 +2,11 @@ import { getTranslations } from "next-intl/server";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServerForm } from "@/components/servers/server-form";
+import { listIdentitiesAction } from "@/server/actions/identities";
 
 export default async function NewServerPage() {
   const t = await getTranslations("servers.new");
+  const identities = await listIdentitiesAction();
 
   return (
     <div className="space-y-6">
@@ -18,7 +20,7 @@ export default async function NewServerPage() {
           <CardDescription>{t("detailsDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <ServerForm mode="create" />
+          <ServerForm mode="create" identities={identities} />
         </CardContent>
       </Card>
     </div>

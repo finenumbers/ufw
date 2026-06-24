@@ -22,7 +22,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -35,16 +35,18 @@ import {
   collectDistinctNames,
   filterRowsByColumnHeaders,
 } from "@/lib/rules/column-filters";
+import { getRulesTableColumnClass } from "@/lib/rules/table-column-layout";
 import type { RuleCore, UnifiedRuleRow } from "@/types/rule";
 import { syncIpv6FlagWithAddresses } from "@/lib/ufw/commands";
-import { getInterfaceOptionsAction, getTagValuesAction } from "@/server/actions/rules";
+import { getDistinctRuleFieldValuesAction, getInterfaceOptionsAction } from "@/server/actions/rules";
+import { useInfiniteScroll } from "@/lib/hooks/use-infinite-scroll";
 
 const tableFontClass = "text-[10px] leading-tight";
 
 const tableInputClassName = `${tableFontClass} h-6 min-h-6 px-1.5 py-0`;
 
 const selectClassName =
-  `flex h-6 min-h-6 w-full min-w-[4.5rem] rounded-md border border-input bg-transparent px-1.5 py-0 ${tableFontClass} ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`;
+  `flex h-6 min-h-6 w-full min-w-0 rounded-md border border-input bg-transparent px-1 py-0 ${tableFontClass} ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`;
 
 function getRuleRowClassName(row: UnifiedRuleRow): string {
   if (row.isPendingSave) {
@@ -53,12 +55,12 @@ function getRuleRowClassName(row: UnifiedRuleRow): string {
 
   switch (row.originState) {
     case "REMOTE_ONLY":
-      return "bg-yellow-100 hover:bg-yellow-100/90";
+      return "bg-yellow-300 hover:bg-yellow-300/90";
     case "MATCHED":
-      return "bg-green-100 hover:bg-green-100/90";
+      return "bg-green-300 hover:bg-green-300/90";
     case "LOCAL_ONLY":
     case "DRAFT_ONLY":
-      return "bg-red-100 hover:bg-red-100/90";
+      return "bg-red-300 hover:bg-red-300/90";
     case "CONFLICT":
       return "bg-orange-100 hover:bg-orange-100/90";
     default:
@@ -72,6 +74,10 @@ type RulesTableProps = {
   onChange: (rows: UnifiedRuleRow[]) => void;
   readOnly?: boolean;
   optionsRefreshKey?: number;
+  total?: number;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void | Promise<void>;
 };
 
 function updateRow(
@@ -142,6 +148,10 @@ export function RulesTable({
   onChange,
   readOnly = false,
   optionsRefreshKey = 0,
+  total,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
 }: RulesTableProps) {
   const t = useTranslations("rules.table");
   const [globalFilter, setGlobalFilter] = useState("");
@@ -174,6 +184,22 @@ export function RulesTable({
     [groupHeaderFilter, rows],
   );
 
+  const groupSuggestions = useMemo(() => {
+    const options = new Set(groups);
+    for (const value of collectDistinctGroups(rows, "")) {
+      options.add(value);
+    }
+    return [...options].sort((a, b) => a.localeCompare(b));
+  }, [groups, rows]);
+
+  const nameSuggestions = useMemo(() => {
+    const options = new Set(names);
+    for (const value of collectDistinctNames(rows, "")) {
+      options.add(value);
+    }
+    return [...options].sort((a, b) => a.localeCompare(b));
+  }, [names, rows]);
+
   const columnFilteredRows = useMemo(
     () => filterRowsByColumnHeaders(rows, groupHeaderFilter, nameHeaderFilter),
     [groupHeaderFilter, nameHeaderFilter, rows],
@@ -193,8 +219,8 @@ export function RulesTable({
   useEffect(() => {
     async function loadOptions() {
       const [groupTags, nameTags, interfaceOptions] = await Promise.all([
-        getTagValuesAction(serverId, "GROUP"),
-        getTagValuesAction(serverId, "NAME"),
+        getDistinctRuleFieldValuesAction(serverId, "GROUP"),
+        getDistinctRuleFieldValuesAction(serverId, "NAME"),
         getInterfaceOptionsAction(serverId),
       ]);
       setGroups(groupTags.map((tag) => tag.value));
@@ -219,6 +245,12 @@ export function RulesTable({
 
   const columns = useMemo<ColumnDef<UnifiedRuleRow>[]>(
     () => [
+      {
+        id: "ufwNumber",
+        header: "#",
+        cell: ({ row }) =>
+          row.original.ufwRuleNumber != null ? row.original.ufwRuleNumber : "—",
+      },
       {
         id: "group",
         accessorFn: (row) => row.ui.group || "Ungrouped",
@@ -479,7 +511,7 @@ export function RulesTable({
             row.original.core.ipv6 ? "yes" : "no"
           ) : (
             <select
-              className={cn(selectClassName, "min-w-[4.5rem]")}
+              className={selectClassName}
               value={row.original.core.ipv6 ? "true" : "false"}
               onChange={(e) =>
                 onChangeRef.current(
@@ -543,17 +575,26 @@ export function RulesTable({
     },
   });
 
+  const loadMoreStable = useCallback(async () => {
+    if (onLoadMore) {
+      await onLoadMore();
+    }
+  }, [onLoadMore]);
+
+  const sentinelRef = useInfiniteScroll(loadMoreStable, hasMore, loadingMore);
+  const columnCount = columns.length + (showDragHandle ? 1 : 0);
+
   return (
     <div className="space-y-4">
       {!readOnly ? (
         <>
           <datalist id={`groups-${serverId}`}>
-            {groups.map((value) => (
+            {groupSuggestions.map((value) => (
               <option key={value} value={value} />
             ))}
           </datalist>
           <datalist id={`names-${serverId}`}>
-            {names.map((value) => (
+            {nameSuggestions.map((value) => (
               <option key={value} value={value} />
             ))}
           </datalist>
@@ -563,28 +604,28 @@ export function RulesTable({
         placeholder={t("searchPlaceholder")}
         value={globalFilter}
         onChange={(e) => setGlobalFilter(e.target.value)}
-        className="max-w-sm"
+        className="w-full"
       />
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-2">
-          <span className="h-3 w-8 rounded border bg-yellow-100" />
-          {t("legendRemoteOnly")}
-        </span>
-        <span className="inline-flex items-center gap-2">
-          <span className="h-3 w-8 rounded border bg-green-100" />
+          <span className="h-3 w-8 rounded border bg-green-300" />
           {t("legendMatched")}
         </span>
         <span className="inline-flex items-center gap-2">
-          <span className="h-3 w-8 rounded border bg-red-100" />
-          {t("legendLocalOnly")}
+          <span className="h-3 w-8 rounded border bg-yellow-300" />
+          {t("legendRemoteOnly")}
         </span>
-        <span className="text-muted-foreground/80">
-          {t("legendPendingNoHighlight")}
+        <span className="inline-flex items-center gap-2">
+          <span className="h-3 w-8 rounded border bg-red-300" />
+          {t("legendLocalOnly")}
         </span>
         {showDragHandle && dragDisabled ? (
           <span className="text-muted-foreground/80">
             {t("clearFiltersToReorder")}
           </span>
+        ) : null}
+        {total != null && total > rows.length ? (
+          <span>{t("loadedCount", { loaded: rows.length, total })}</span>
         ) : null}
       </div>
       <div className="overflow-x-auto rounded-md border">
@@ -594,12 +635,15 @@ export function RulesTable({
               <tr key={headerGroup.id}>
                 {showDragHandle ? (
                   <th
-                    className="w-6 px-1 py-1 text-left font-medium"
+                    className="w-6 px-1 py-1 text-center align-middle font-medium"
                     aria-label={t("orderColumn")}
                   />
                 ) : null}
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} className="whitespace-nowrap px-2 py-1 text-left font-medium align-top">
+                  <th key={header.id} className={cn(
+                    "whitespace-nowrap px-2 py-1 text-center align-middle font-medium",
+                    getRulesTableColumnClass(header.column.id),
+                  )}>
                     {header.column.id === "group" ? (
                       <RulesColumnHeaderFilter
                         label="Group"
@@ -651,7 +695,13 @@ export function RulesTable({
                   className={cn("border-t", getRuleRowClassName(row.original))}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="bg-transparent px-2 py-0.5 align-middle">
+                    <td
+                      key={cell.id}
+                      className={cn(
+                        "bg-transparent px-2 py-0.5 align-middle",
+                        getRulesTableColumnClass(cell.column.id),
+                      )}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -679,6 +729,16 @@ export function RulesTable({
                 </SortableContext>
               </DndContext>
             )}
+            {hasMore ? (
+              <tr ref={sentinelRef}>
+                <td
+                  colSpan={columnCount}
+                  className="border-t px-3 py-3 text-center text-muted-foreground"
+                >
+                  {loadingMore ? t("loadingMore") : t("scrollForMore")}
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

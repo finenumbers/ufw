@@ -36,14 +36,13 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runner
-      args:
-        NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
     container_name: ufw-app
     restart: unless-stopped
     ports:
       - "${APP_BIND:-127.0.0.1}:${APP_PORT:-3000}:3000"
     environment:
       DATABASE_URL: postgresql://ufw:${POSTGRES_PASSWORD:-ufw}@postgres:5432/ufw?schema=public
+      APP_URL: ${APP_URL:-http://localhost:3000}
       BETTER_AUTH_URL: ${APP_URL:-http://localhost:3000}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY is required}

@@ -7,10 +7,6 @@ export async function isSetupRequired(): Promise<boolean> {
   return count === 0;
 }
 
-export async function getUserCount(): Promise<number> {
-  return db.user.count();
-}
-
 export async function acquireSetupLock(): Promise<boolean> {
   const result = await db.$queryRaw<Array<{ acquired: boolean }>>`
     SELECT pg_try_advisory_lock(${SETUP_ADVISORY_LOCK_KEY}) AS acquired

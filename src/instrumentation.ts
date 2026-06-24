@@ -1,3 +1,5 @@
+import { validateProductionEnv } from "@/lib/env-validation";
+
 export async function register() {
   if (process.env.NEXT_RUNTIME === "edge") {
     return;
@@ -7,25 +9,16 @@ export async function register() {
     return;
   }
 
-  if (!process.env.BETTER_AUTH_SECRET) {
-    throw new Error(
-      "BETTER_AUTH_SECRET is required in production. Generate with: openssl rand -base64 32",
-    );
-  }
+  validateProductionEnv();
 
-  if (!process.env.APP_ENCRYPTION_KEY) {
-    throw new Error(
-      "APP_ENCRYPTION_KEY is required in production. Generate with: openssl rand -base64 32",
-    );
-  }
-
-  const key = Buffer.from(process.env.APP_ENCRYPTION_KEY, "base64");
-  if (key.length !== 32) {
-    throw new Error("APP_ENCRYPTION_KEY must be a 32-byte base64-encoded key");
-  }
-
-  const { sweepStaleApplySessions } = await import("@/server/services/apply-maintenance");
-  const swept = await sweepStaleApplySessions();
+  const { sweepStaleApplySessions, sweepStalePendingApplySessions, sweepStalePendingOperationLogs } =
+    await import("@/server/services/apply-maintenance");
+  const [runningSwept, pendingApplySwept, pendingLogSwept] = await Promise.all([
+    sweepStaleApplySessions(),
+    sweepStalePendingApplySessions(),
+    sweepStalePendingOperationLogs(),
+  ]);
+  const swept = runningSwept + pendingApplySwept + pendingLogSwept;
   if (swept > 0) {
     const { createChildLogger } = await import("@/lib/logger");
     createChildLogger("startup").warn({ swept }, "Marked stale apply sessions as failed");

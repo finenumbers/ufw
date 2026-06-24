@@ -1,14 +1,9 @@
 import { createHash } from "crypto";
 
+import { isProductionRuntime } from "@/lib/env-runtime";
+
 const DEV_ENCRYPTION_SEED = "ufw-remote-manager-local-dev";
 const DEV_AUTH_SEED = "ufw-remote-manager-local-dev";
-
-function isProductionRuntime(): boolean {
-  return (
-    process.env.NODE_ENV === "production" &&
-    process.env.NEXT_PHASE !== "phase-production-build"
-  );
-}
 
 function decodeBase64Key(name: string, value: string): Buffer {
   const key = Buffer.from(value, "base64");
@@ -48,13 +43,4 @@ export function getEncryptionKey(): Buffer {
 
   const seed = process.env.DATABASE_URL ?? DEV_ENCRYPTION_SEED;
   return createHash("sha256").update(seed).digest();
-}
-
-export function validateProductionEnv(): void {
-  if (!isProductionRuntime()) {
-    return;
-  }
-
-  getAuthSecret();
-  getEncryptionKey();
 }

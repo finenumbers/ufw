@@ -47,6 +47,24 @@ function isIpv6(ip: string): boolean {
   return ip.includes(":") && /^[0-9a-f:.]+$/i.test(ip);
 }
 
+function extractIpv4FromMappedIpv6(ip: string): string | null {
+  const normalized = ip.toLowerCase();
+
+  if (normalized.startsWith("::ffff:")) {
+    const suffix = normalized.slice("::ffff:".length);
+    if (isIpv4(suffix)) {
+      return suffix;
+    }
+  }
+
+  const mappedMatch = normalized.match(/^0:0:0:0:0:ffff:([0-9.]+)$/);
+  if (mappedMatch?.[1] && isIpv4(mappedMatch[1])) {
+    return mappedMatch[1];
+  }
+
+  return null;
+}
+
 function isIpv4InCidr(ip: string, cidr: string): boolean {
   const [network, prefixRaw] = cidr.split("/");
   const prefix = prefixRaw ? Number(prefixRaw) : 32;
@@ -142,6 +160,20 @@ export function validateSshHost(host: string): string | null {
   }
 
   if (isIpv6(trimmed)) {
+    const mappedIpv4 = extractIpv4FromMappedIpv6(trimmed);
+    if (mappedIpv4) {
+      const allowedCidrs = parseAllowedCidrs();
+      if (isAllowedByCidr(mappedIpv4, allowedCidrs)) {
+        return null;
+      }
+
+      if (isBlockedIpv4(mappedIpv4)) {
+        return "Host IP is not allowed";
+      }
+
+      return null;
+    }
+
     if (isBlockedIpv6(trimmed)) {
       return "Host IP is not allowed";
     }

@@ -28,6 +28,9 @@ jobs:
       - name: i18n check
         run: npm run i18n:check
 
+      - name: Dead code check
+        run: npm run deadcode:check
+
       - name: Lint
         run: npm run lint
 
@@ -56,3 +59,21 @@ jobs:
       - name: Stop Docker stack
         if: always()
         run: docker compose down -v
+
+      - name: Validate GHCR compose config
+        run: |
+          cat > .env.ghcr-test <<'EOF'
+          APP_URL=https://ufw.example.com
+          NPM_NETWORK=ci_npm_network
+          GHCR_APP_IMAGE=ghcr.io/example/ufw-remote-manager:v0.0.0-ci
+          GHCR_MIGRATE_IMAGE=ghcr.io/example/ufw-remote-manager-migrate:v0.0.0-ci
+          POSTGRES_PASSWORD=ci-postgres-password-12345
+          BETTER_AUTH_SECRET=ci-test-auth-secret-32bytes-long!!
+          APP_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          EOF
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.prod.yml \
+            -f docker-compose.ghcr.yml \
+            --env-file .env.ghcr-test \
+            config >/dev/null

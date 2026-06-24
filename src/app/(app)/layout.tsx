@@ -15,7 +15,7 @@ export default async function AppLayout({
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar servers={servers} />
-      <main className="ml-64 min-h-screen p-6">{children}</main>
+      <main className="ml-60 min-h-screen p-6">{children}</main>
     </div>
   );
 }

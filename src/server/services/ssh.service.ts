@@ -7,11 +7,9 @@ import { verifySshConnection } from "@/lib/ssh/verify";
 import {
   enableUfw,
   installUfw,
-  loadUfwRules,
   loadUfwStatusAndRules,
 } from "@/lib/ufw/apply";
 import { collectInterfaceOptions, loadNetworkInterfaces } from "@/lib/ssh/interfaces";
-import { parseNumberedRules } from "@/lib/ufw/parser";
 import type { UfwDetectionResult } from "@/types/ufw";
 import { getServerSshConfig } from "@/server/services/server.service";
 
@@ -44,7 +42,10 @@ export async function runSshForServer<T>(
         const { db } = await import("@/lib/db");
         await db.server.update({
           where: { id: serverId },
-          data: { sshHostKeyFingerprint: hostKeyFingerprint },
+          data: {
+            sshHostKeyFingerprint: hostKeyFingerprint,
+            sshHostKeyVerified: true,
+          },
         });
       }
 
@@ -122,21 +123,7 @@ export async function remoteEnableUfw(
 ) {
   return runSshForServer(
     serverId,
-    async (client, config) => enableUfw(client, config.password),
-    options,
-  );
-}
-
-export async function remoteLoadUfwRules(
-  serverId: string,
-  options?: RunForServerOptions,
-) {
-  return runSshForServer(
-    serverId,
-    async (client, config) => {
-      const raw = await loadUfwRules(client, config.password);
-      return parseNumberedRules(raw);
-    },
+    async (client, config) => enableUfw(client, config.password, config.port),
     options,
   );
 }

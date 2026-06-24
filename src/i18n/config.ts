@@ -1,20 +1,6 @@
 export const LOCALE_COOKIE = "ufw_locale";
 
-export const locales = [
-  "en",
-  "ru",
-  "de",
-  "es",
-  "fr",
-  "pt-BR",
-  "zh-Hans",
-  "uk",
-  "pl",
-  "tr",
-  "ja",
-  "it",
-  "nl",
-] as const;
+export const locales = ["en", "de", "fr", "es", "it", "pt-BR", "ru"] as const;
 
 export type AppLocale = (typeof locales)[number];
 
@@ -22,18 +8,12 @@ export const defaultLocale: AppLocale = "en";
 
 export const localeLabels: Record<AppLocale, string> = {
   en: "English",
-  ru: "Русский",
   de: "Deutsch",
-  es: "Español",
   fr: "Français",
-  "pt-BR": "Português (Brasil)",
-  "zh-Hans": "简体中文",
-  uk: "Українська",
-  pl: "Polski",
-  tr: "Türkçe",
-  ja: "日本語",
+  es: "Español",
   it: "Italiano",
-  nl: "Nederlands",
+  "pt-BR": "Português (Brasil)",
+  ru: "Русский",
 };
 
 export function isAppLocale(value: string | undefined | null): value is AppLocale {
@@ -52,7 +32,6 @@ export function detectLocaleFromAcceptLanguage(header: string | null): AppLocale
     if (isAppLocale(tag)) return tag;
 
     if (tag.startsWith("pt") && locales.includes("pt-BR")) return "pt-BR";
-    if (tag.startsWith("zh") && locales.includes("zh-Hans")) return "zh-Hans";
 
     const base = tag.split("-")[0];
     const match = locales.find((locale) => locale.toLowerCase().startsWith(base));

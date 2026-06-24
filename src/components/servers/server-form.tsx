@@ -1,11 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { formatIdentityOptionLabel } from "@/components/identities/identity-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,18 +19,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { serverSchema, type ServerInput } from "@/lib/validations/server";
+import type { IdentityListItem } from "@/lib/validations/identity";
 import { getServerPath } from "@/lib/server-path";
 import { createServerAction, updateServerAction } from "@/server/actions/servers";
 
 type ServerFormProps = {
   mode: "create" | "edit";
   serverId?: string;
+  identities: IdentityListItem[];
   defaultValues?: Partial<ServerInput>;
 };
 
-export function ServerForm({ mode, serverId, defaultValues }: ServerFormProps) {
+export function ServerForm({ mode, serverId, identities, defaultValues }: ServerFormProps) {
   const router = useRouter();
   const t = useTranslations("serverForm");
+  const tf = useTranslations("identityForm");
   const tc = useTranslations("common");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -39,16 +44,12 @@ export function ServerForm({ mode, serverId, defaultValues }: ServerFormProps) {
       name: "",
       host: "",
       port: 22,
-      username: "root",
-      authMethod: "PASSWORD",
-      password: "",
-      privateKey: "",
-      passphrase: "",
+      identityId: identities[0]?.id ?? "",
       ...defaultValues,
     },
   });
 
-  const authMethod = form.watch("authMethod");
+  const identityId = form.watch("identityId");
 
   async function onSubmit(values: ServerInput) {
     setLoading(true);
@@ -68,9 +69,7 @@ export function ServerForm({ mode, serverId, defaultValues }: ServerFormProps) {
       return;
     }
 
-    if (mode === "create" && "serverAddress" in result) {
-      router.push(getServerPath(result.serverAddress));
-    } else if ("serverAddress" in result) {
+    if ("serverAddress" in result) {
       router.push(getServerPath(result.serverAddress));
     } else {
       router.push("/servers");
@@ -78,76 +77,57 @@ export function ServerForm({ mode, serverId, defaultValues }: ServerFormProps) {
     router.refresh();
   }
 
+  if (identities.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed p-6">
+        <p className="text-sm text-muted-foreground">{t("noIdentities")}</p>
+        <Button asChild className="mt-4">
+          <Link href="/identities/new">{t("createIdentityLink")}</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-2xl space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-4">
+      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="name">{t("name")}</Label>
-          <Input id="name" {...form.register("name")} />
+          <Input id="name" className="w-full" {...form.register("name")} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="host">{t("host")}</Label>
-          <Input id="host" {...form.register("host")} />
+          <Input id="host" className="w-full" {...form.register("host")} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="port">{t("port")}</Label>
-          <Input id="port" type="number" {...form.register("port")} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="username">{t("username")}</Label>
-          <Input id="username" {...form.register("username")} />
+          <Input id="port" type="number" className="w-full" {...form.register("port")} />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>{t("authMethod")}</Label>
+      <div className="w-full space-y-2">
+        <Label>{t("identity")}</Label>
         <Select
-          value={authMethod}
-          onValueChange={(value) =>
-            form.setValue("authMethod", value as ServerInput["authMethod"])
-          }
+          value={identityId}
+          onValueChange={(value) => form.setValue("identityId", value)}
         >
-          <SelectTrigger>
-            <SelectValue placeholder={t("selectMethod")} />
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={t("selectIdentity")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="PASSWORD">{t("passwordAuth")}</SelectItem>
-            <SelectItem value="PRIVATE_KEY">{t("privateKeyAuth")}</SelectItem>
-            <SelectItem value="PRIVATE_KEY_WITH_PASSPHRASE">{t("privateKeyPassphraseAuth")}</SelectItem>
+            {identities.map((identity) => (
+              <SelectItem key={identity.id} value={identity.id}>
+                {formatIdentityOptionLabel(identity, tf)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
-      {authMethod === "PASSWORD" && (
-        <div className="space-y-2">
-          <Label htmlFor="password">{t("password")}</Label>
-          <Input id="password" type="password" {...form.register("password")} />
-        </div>
-      )}
-
-      {(authMethod === "PRIVATE_KEY" || authMethod === "PRIVATE_KEY_WITH_PASSPHRASE") && (
-        <>
-          <div className="space-y-2">
-            <Label htmlFor="privateKey">{t("privateKey")}</Label>
-            <textarea
-              id="privateKey"
-              className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              {...form.register("privateKey")}
-            />
-          </div>
-          {authMethod === "PRIVATE_KEY_WITH_PASSPHRASE" && (
-            <div className="space-y-2">
-              <Label htmlFor="passphrase">{t("passphrase")}</Label>
-              <Input id="passphrase" type="password" {...form.register("passphrase")} />
-            </div>
-          )}
-        </>
-      )}
-
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex gap-2">
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading || !identityId}>
           {loading
             ? mode === "create"
               ? t("creating")

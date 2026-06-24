@@ -60,6 +60,33 @@ describe("buildUfwAddCommand injection rejection", () => {
     );
   });
 
+  it("rejects invalid action enum injection", () => {
+    assert.throws(
+      () =>
+        buildWith({ action: "ALLOW; id" as RuleCore["action"] }),
+      (error: unknown) =>
+        error instanceof UfwRuleValidationError && error.message.includes("action"),
+    );
+  });
+
+  it("rejects invalid protocol enum injection", () => {
+    assert.throws(
+      () =>
+        buildWith({ protocol: "TCP; rm -rf /" as RuleCore["protocol"] }),
+      (error: unknown) =>
+        error instanceof UfwRuleValidationError && error.message.includes("protocol"),
+    );
+  });
+
+  it("rejects invalid logMode enum injection", () => {
+    assert.throws(
+      () =>
+        buildWith({ logMode: "LOG; id" as RuleCore["logMode"] }),
+      (error: unknown) =>
+        error instanceof UfwRuleValidationError && error.message.includes("logMode"),
+    );
+  });
+
   it("allows safe rule values", () => {
     const command = buildWith({
       fromAddress: "192.168.1.0/24",

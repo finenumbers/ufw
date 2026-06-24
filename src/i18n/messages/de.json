@@ -1,7 +1,6 @@
 {
   "app": {
-    "title": "UFW Manager",
-    "subtitle": "Remote-Firewall-Steuerung",
+    "subtitle": "UFW Remote Manager",
     "metadataTitle": "UFW Remote Manager",
     "metadataDescription": "Selbst gehostete Remote-UFW-Verwaltung über SSH"
   },
@@ -11,6 +10,7 @@
   "sidebar": {
     "noServers": "Noch keine Server",
     "operationsHistory": "Vorgangsverlauf",
+    "identities": "SSH-Identitäten",
     "logout": "Abmelden"
   },
   "common": {
@@ -43,24 +43,41 @@
     "title": "Server",
     "description": "Verwalten Sie Remote-Linux-Server und deren UFW-Regeln.",
     "addServer": "Server hinzufügen",
+    "saveConfig": "Konfiguration speichern",
+    "loadConfig": "Konfiguration laden",
+    "configExportWarning": "Die Datei enthält SSH-Zugangsdaten im Klartext. Bewahren Sie sie sicher auf.",
+    "configExportTitle": "Konfiguration exportieren?",
+    "configExportDescription": "Geben Sie Ihr Passwort erneut ein, um eine Konfigurationsdatei mit SSH-Zugangsdaten im Klartext herunterzuladen.",
+    "configExportPassword": "Passwort",
+    "configExportConfirm": "Exportieren",
+    "configExportFailed": "Konfiguration konnte nicht exportiert werden",
+    "configImportTitle": "Serverkonfiguration laden?",
+    "configImportDescription": "Server, die in der Datei fehlen, werden zusammen mit allen Regeln und Snapshots gelöscht.",
+    "configImportDeleteList": "Zu löschende Server:",
+    "configImportCreate": "Erstellen: {count}",
+    "configImportUpdate": "Aktualisieren: {count}",
+    "configImportConfirm": "Konfiguration laden",
+    "configImportSuccess": "Konfiguration geladen.",
+    "configImportFailed": "Konfiguration konnte nicht geladen werden",
     "editServer": "Server bearbeiten",
     "rulesUnavailable": "Die Regelbearbeitung ist verfügbar, sobald UFW installiert und aktiv ist.",
     "new": {
       "title": "Server hinzufügen",
-      "description": "SSH-Anmeldedaten werden vor der Speicherung verschlüsselt. Die Verbindung wird vor dem Speichern geprüft.",
+      "description": "Wählen Sie eine gespeicherte SSH-Identität. Die Verbindung wird vor dem Speichern geprüft.",
       "detailsTitle": "Serverdetails",
-      "detailsDescription": "Alle Felder sind je nach gewählter Authentifizierungsmethode erforderlich."
+      "detailsDescription": "Host, Port und SSH-Identität sind erforderlich."
     },
     "edit": {
       "title": "Server bearbeiten",
       "detailsTitle": "Serverdetails",
-      "detailsDescription": "Das Aktualisieren der Anmeldedaten erfordert einen erfolgreichen SSH-Test.",
-      "hostKeyFingerprint": "SSH-Hostschlüssel-Fingerabdruck"
+      "detailsDescription": "Eine Änderung von Host oder Identität erfordert einen erfolgreichen SSH-Test.",
+      "hostKeyFingerprint": "SSH-Host-Key-Fingerabdruck",
+      "hostKeyUnverified": "Host-Key aus Konfiguration importiert — SSH-Test ausführen, um zu verifizieren"
     },
     "delete": {
       "button": "Server löschen",
       "title": "Server löschen?",
-      "description": "Server \"{name}\" und alle lokalen Daten werden dauerhaft entfernt: bestätigte Regeln, Entwürfe, Snapshots, Tag-Verlauf und Apply-Sitzungen. UFW auf dem Remote-Server wird nicht geändert.",
+      "description": "Server \"{name}\" und alle lokalen Daten werden dauerhaft entfernt: bestätigte Regeln, Entwürfe, Snapshots und Apply-Sitzungen. UFW auf dem Remote-Server wird nicht geändert.",
       "confirm": "Löschen",
       "deleting": "Wird gelöscht...",
       "dangerTitle": "Gefahrenbereich",
@@ -71,6 +88,55 @@
     "name": "Name",
     "host": "Host",
     "port": "Port",
+    "identity": "SSH-Identität",
+    "selectIdentity": "Identität auswählen",
+    "noIdentities": "Erstellen Sie zuerst eine SSH-Identität.",
+    "createIdentityLink": "SSH-Identität erstellen",
+    "createServer": "Server erstellen",
+    "updateServer": "Server aktualisieren",
+    "creating": "Wird erstellt...",
+    "updating": "Wird aktualisiert...",
+    "missingServerId": "Server-ID fehlt"
+  },
+  "identities": {
+    "title": "SSH-Identitäten",
+    "description": "Wiederverwendbare SSH-Zugangsdaten für Serververbindungen. Geheimnisse werden lokal verschlüsselt.",
+    "addIdentity": "Identität hinzufügen",
+    "empty": "Noch keine SSH-Identitäten. Erstellen Sie eine für neue Server.",
+    "editAction": "Bearbeiten",
+    "columns": {
+      "name": "Name",
+      "username": "Benutzername",
+      "authMethod": "Auth-Methode",
+      "servers": "Server"
+    },
+    "new": {
+      "title": "SSH-Identität hinzufügen",
+      "description": "Zugangsdaten werden vor der Speicherung verschlüsselt.",
+      "detailsTitle": "Identitätsdetails",
+      "detailsDescription": "Alle Felder sind je nach gewählter Auth-Methode erforderlich."
+    },
+    "edit": {
+      "title": "SSH-Identität bearbeiten",
+      "detailsTitle": "Identitätsdetails",
+      "linkedServersTitle": "Verwendet von Servern",
+      "linkedServersDescription": "In der Anwendung hinzugefügte Server, die diese SSH-Identität nutzen.",
+      "linkedServersEmpty": "Diese Identität wird noch von keinem Server verwendet."
+    },
+    "delete": {
+      "button": "Identität löschen",
+      "title": "Identität löschen?",
+      "description": "Identität \"{name}\" wird dauerhaft entfernt.",
+      "blockedTitle": "Identität kann nicht gelöscht werden",
+      "blockedDescription": "Diese Identität wird von {count} Server(n) verwendet. Weisen Sie sie zuerst neu zu oder löschen Sie diese Server.",
+      "confirm": "Löschen",
+      "deleting": "Wird gelöscht...",
+      "dangerTitle": "Gefahrenbereich",
+      "dangerDescription": "Das Löschen einer ungenutzten Identität entfernt ihre verschlüsselten Zugangsdaten aus der lokalen Datenbank."
+    }
+  },
+  "identityForm": {
+    "name": "Name",
     "username": "Benutzername",
     "authMethod": "Authentifizierungsmethode",
     "selectMethod": "Methode auswählen",
@@ -80,60 +146,62 @@
     "password": "Passwort",
     "privateKey": "Privater Schlüssel",
     "passphrase": "Passphrase",
-    "createServer": "Server erstellen",
-    "updateServer": "Server aktualisieren",
+    "credentialsSavedTitle": "Ihre SSH-Zugangsdaten sind gespeichert",
+    "credentialsSavedDescription": "Aus Sicherheitsgründen werden Passwörter und private Schlüssel nach dem Speichern nicht mehr angezeigt. Sie bleiben verschlüsselt in der lokalen Datenbank und werden beim Verbinden mit Servern verwendet. Leere Felder bedeuten nicht, dass Daten verloren gingen — lassen Sie sie leer, um das aktuelle Geheimnis zu behalten, oder geben Sie einen neuen Wert ein, um es zu ersetzen.",
+    "secretFieldEditHint": "Leer = gespeicherten Wert behalten. Nur ausfüllen, wenn Sie ihn ändern möchten.",
+    "passwordPlaceholderEdit": "Gespeichertes Passwort ist ausgeblendet — leer lassen, um es zu behalten",
+    "privateKeyPlaceholderEdit": "Gespeicherter privater Schlüssel ist ausgeblendet — leer lassen, um ihn zu behalten",
+    "passphrasePlaceholderEdit": "Gespeicherte Passphrase ist ausgeblendet — leer lassen, um sie zu behalten",
+    "createIdentity": "Identität erstellen",
+    "updateIdentity": "Identität aktualisieren",
     "creating": "Wird erstellt...",
     "updating": "Wird aktualisiert...",
-    "missingServerId": "Server-ID fehlt"
+    "updateWarningTitle": "Identität für alle Server aktualisieren?",
+    "updateWarningDescription": "Diese Identität wird von {count} Server(n) verwendet. Das Speichern ändert den SSH-Zugang für alle.",
+    "confirmUpdate": "Änderungen speichern"
   },
   "ufw": {
     "installed": "UFW installiert",
     "notInstalled": "UFW nicht installiert",
     "active": "UFW aktiv",
     "inactive": "UFW inaktiv",
-    "remoteRules": "{count} Remote-Regeln",
+    "dbRules": "{count} Regeln in der DB",
     "testSsh": "SSH testen",
     "refreshStatus": "Status aktualisieren",
     "installUfw": "UFW installieren",
-    "activateUfw": "UFW aktivieren",
     "installTitle": "UFW installieren?",
-    "installDescription": "UFW wird über SSH auf dem Remote-Server installiert.",
-    "confirmInstall": "Installation bestätigen",
-    "activateTitle": "UFW aktivieren?",
-    "activateDescription": "UFW wird auf dem Remote-Server aktiviert. Stellen Sie sicher, dass SSH-Zugriff erlaubt ist.",
-    "confirmActivate": "Aktivierung bestätigen"
+    "installDescription": "UFW wird über SSH auf dem Remote-Server installiert und aktiviert.",
+    "confirmInstall": "Installation bestätigen"
   },
   "rules": {
     "toolbar": {
       "addRule": "Regel hinzufügen",
-      "saveDraft": "Entwurf speichern",
       "saveRules": "Regeln speichern",
       "import": "Importieren",
-      "draftSaved": "Entwurf lokal gespeichert. UFW auf dem Server ist unverändert.",
-      "hint": "Änderungen werden lokal gespeichert, bis Sie speichern. UFW auf dem Server ändert sich erst nach <highlight>Save Rules</highlight> und Bestätigung im Dialog.",
-      "export": "Export",
-      "importDuplicatesSkipped": "{count} doppelte Regel(n) beim Import übersprungen."
+      "export": "Exportieren",
+      "importDuplicatesSkipped": "{count} doppelte Regel(n) beim Import übersprungen.",
+      "hint": "Nicht gespeicherte Änderungen gehen bei «Status aktualisieren» verloren. Schreiben in die lokale Datenbank und UFW nur über <highlight>Regeln speichern</highlight> mit Bestätigung."
     },
     "applyDialog": {
       "title": "UFW-Regeländerungen bestätigen",
-      "description": "Änderungen werden auf der Firewall des Remote-Servers angewendet. Prüfen Sie den Plan unten vor der Bestätigung.",
+      "description": "Regeln aus der Tabelle werden in der lokalen Datenbank gespeichert und bei Bedarf auf der Remote-Firewall angewendet. Prüfen Sie den Plan unten vor der Bestätigung.",
       "add": "Hinzufügen: {count}",
       "remove": "Entfernen: {count}",
       "reorder": "Neu ordnen: {count}",
+      "dbSync": "In lokale Datenbank speichern",
       "apply": "Auf UFW anwenden",
       "applying": "Wird angewendet...",
       "failed": "Anwendung fehlgeschlagen",
-      "partialResync": "Some rules were applied before the error. Use Force resync to align local state with UFW.",
-      "forceResync": "Force resync from server",
-      "forceResyncing": "Resyncing...",
-      "forceResyncFailed": "Resync failed"
+      "partialResync": "Einige Regeln wurden vor dem Fehler angewendet. Verwenden Sie «Erzwungene Synchronisation», um den lokalen Zustand mit UFW abzugleichen.",
+      "forceResync": "Erzwungene Synchronisation vom Server",
+      "forceResyncing": "Synchronisiere...",
+      "forceResyncFailed": "Synchronisation fehlgeschlagen"
     },
     "table": {
       "searchPlaceholder": "Regeln suchen...",
-      "legendRemoteOnly": "Auf dem Server, nicht in der lokalen DB",
-      "legendMatched": "Auf dem Server und in der lokalen DB",
-      "legendLocalOnly": "Nicht auf dem Server, in der lokalen DB",
-      "legendPendingNoHighlight": "Neue Regeln vor Save Draft ohne Hervorhebung",
+      "legendRemoteOnly": "Auf UFW, nicht in der lokalen DB",
+      "legendMatched": "Auf UFW und in der lokalen DB",
+      "legendLocalOnly": "Nicht auf UFW, in der lokalen DB",
       "clearFiltersToReorder": "Suche und Spaltenfilter löschen, um Regeln neu anzuordnen",
       "noRulesFound": "Keine Regeln gefunden",
       "filterAll": "Alle",
@@ -143,7 +211,10 @@
       "filterShowOptions": "Optionen für {label} anzeigen",
       "filterOptions": "Optionen für {label}",
       "orderColumn": "Reihenfolge",
-      "deleteRule": "Regel löschen"
+      "deleteRule": "Regel löschen",
+      "loadingMore": "Wird geladen...",
+      "scrollForMore": "Nach unten scrollen für mehr",
+      "loadedCount": "{loaded} von {total} Regeln angezeigt"
     }
   },
   "operationsPage": {
@@ -157,14 +228,24 @@
     "message": "Nachricht",
     "action": "Aktion",
     "user": "Benutzer",
-    "entity": "Entität"
+    "entity": "Entität",
+    "loadingMore": "Wird geladen...",
+    "scrollForMore": "Nach unten scrollen für mehr",
+    "clearHistory": "Verlauf löschen",
+    "clearHistoryTitle": "Vorgangsverlauf löschen?",
+    "clearHistoryDescription": "Alle Vorgangsprotokolle und Audit-Ereignisse werden dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",
+    "clearHistoryConfirm": "Verlauf löschen",
+    "clearHistoryClearing": "Wird gelöscht...",
+    "clearHistoryBlocked": "Verlauf kann nicht gelöscht werden, solange ein Vorgang läuft."
   },
   "operations": {
     "status": {
       "RUNNING": "LÄUFT",
       "SUCCESS": "ERFOLG",
       "FAILED": "FEHLER",
-      "PENDING": "AUSSTEHEND"
+      "PENDING": "AUSSTEHEND",
+      "PARTIAL": "TEILWEISE",
+      "CANCELLED": "ABGEBROCHEN"
     },
     "types": {
       "apply_rules": "UFW-Regeln anwenden",
@@ -196,13 +277,14 @@
       "refresh_start": "UFW-Status wird aktualisiert",
       "refresh_complete": "Fertig: UFW-Status aktualisiert",
       "install_start": "UFW wird installiert",
-      "install_complete": "Fertig: UFW installiert",
+      "install_complete": "Fertig: UFW installiert und aktiviert",
       "enable_start": "UFW wird aktiviert",
       "enable_complete": "Fertig: UFW aktiviert und Regeln synchronisiert",
       "ssh_start": "SSH-Verbindung wird getestet",
       "ssh_complete": "SSH-Verbindung erfolgreich",
       "server_create_complete": "Server {name} erstellt",
-      "operation_failed": "Vorgang fehlgeschlagen: {error}"
+      "operation_failed": "Vorgang fehlgeschlagen: {error}",
+      "operation_cancelled": "Vorgang abgebrochen"
     },
     "phases": {
       "ufw_commands": "UFW-Befehle anwenden",

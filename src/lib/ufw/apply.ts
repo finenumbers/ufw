@@ -1,6 +1,6 @@
 import { execSudo, combineExecOutput } from "@/lib/ssh/exec";
 import type { SshClient } from "@/lib/ssh/client";
-import { UFW_COMMANDS } from "@/lib/ufw/commands";
+import { UFW_COMMANDS, buildAllowSshCommand } from "@/lib/ufw/commands";
 import { parseUfwStatusAndRules, parseVerboseStatus } from "@/lib/ufw/parser";
 import type { ApplyPlan } from "@/types/apply";
 import { createChildLogger } from "@/lib/logger";
@@ -114,7 +114,17 @@ export async function installUfw(
 export async function enableUfw(
   client: SshClient,
   sudoPassword?: string,
+  sshPort = 22,
 ): Promise<{ success: boolean; message: string }> {
+  const allowResult = await execSudo(
+    client,
+    buildAllowSshCommand(sshPort),
+    sudoPassword,
+  );
+  if (allowResult.code !== 0) {
+    return { success: false, message: allowResult.stderr || allowResult.stdout };
+  }
+
   const result = await execSudo(client, UFW_COMMANDS.enable, sudoPassword);
   if (result.code !== 0) {
     return { success: false, message: result.stderr || result.stdout };

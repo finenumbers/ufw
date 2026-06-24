@@ -1,9 +1,8 @@
 {
   "app": {
-    "title": "UFW Manager",
-    "subtitle": "Controllo firewall remoto",
+    "subtitle": "UFW Remote Manager",
     "metadataTitle": "UFW Remote Manager",
-    "metadataDescription": "Gestione UFW remota self-hosted tramite SSH"
+    "metadataDescription": "Gestione UFW remoto self-hosted tramite SSH"
   },
   "language": {
     "label": "Lingua"
@@ -11,6 +10,7 @@
   "sidebar": {
     "noServers": "Nessun server ancora",
     "operationsHistory": "Cronologia operazioni",
+    "identities": "Identità SSH",
     "logout": "Esci"
   },
   "common": {
@@ -43,34 +43,100 @@
     "title": "Server",
     "description": "Gestisci server Linux remoti e le loro regole UFW.",
     "addServer": "Aggiungi server",
+    "saveConfig": "Salva configurazione",
+    "loadConfig": "Carica configurazione",
+    "configExportWarning": "Il file conterrà credenziali SSH in testo chiaro. Conservalo in modo sicuro.",
+    "configExportTitle": "Esportare la configurazione?",
+    "configExportDescription": "Reinserisci la password per scaricare un file di configurazione con credenziali SSH in testo chiaro.",
+    "configExportPassword": "Password",
+    "configExportConfirm": "Esporta",
+    "configExportFailed": "Esportazione configurazione non riuscita",
+    "configImportTitle": "Caricare la configurazione dei server?",
+    "configImportDescription": "I server assenti dal file verranno eliminati insieme a tutte le regole e gli snapshot.",
+    "configImportDeleteList": "Server da eliminare:",
+    "configImportCreate": "Crea: {count}",
+    "configImportUpdate": "Aggiorna: {count}",
+    "configImportConfirm": "Carica configurazione",
+    "configImportSuccess": "Configurazione caricata.",
+    "configImportFailed": "Impossibile caricare la configurazione",
     "editServer": "Modifica server",
     "rulesUnavailable": "La modifica delle regole sarà disponibile dopo l'installazione e l'attivazione di UFW.",
     "new": {
       "title": "Aggiungi server",
-      "description": "Le credenziali SSH vengono crittografate prima del salvataggio. La connessione viene verificata prima del salvataggio.",
+      "description": "Scegli un'identità SSH salvata. La connessione viene verificata prima del salvataggio.",
       "detailsTitle": "Dettagli server",
-      "detailsDescription": "Tutti i campi sono obbligatori in base al metodo di autenticazione selezionato."
+      "detailsDescription": "Host, porta e identità SSH sono obbligatori."
     },
     "edit": {
       "title": "Modifica server",
       "detailsTitle": "Dettagli server",
-      "detailsDescription": "L'aggiornamento delle credenziali richiede un test SSH riuscito.",
-      "hostKeyFingerprint": "Impronta della chiave SSH dell'host"
+      "detailsDescription": "La modifica di host o identità richiede un test SSH riuscito.",
+      "hostKeyFingerprint": "Impronta della chiave host SSH",
+      "hostKeyUnverified": "Chiave host importata dalla configurazione — esegui un test SSH per verificare"
     },
     "delete": {
       "button": "Elimina server",
       "title": "Eliminare il server?",
-      "description": "Il server \"{name}\" e tutti i dati locali verranno rimossi permanentemente: regole confermate, bozze, snapshot, cronologia tag e sessioni di apply. UFW sul server remoto non verrà modificato.",
+      "description": "Il server \"{name}\" e tutti i dati locali verranno rimossi definitivamente: regole confermate, bozze, snapshot e sessioni di apply. UFW sul server remoto non verrà modificato.",
       "confirm": "Elimina",
       "deleting": "Eliminazione...",
       "dangerTitle": "Zona pericolosa",
-      "dangerDescription": "Eliminare un server rimuove tutti i record correlati dal database locale."
+      "dangerDescription": "L'eliminazione di un server rimuove tutti i record correlati dal database locale."
     }
   },
   "serverForm": {
     "name": "Nome",
     "host": "Host",
     "port": "Porta",
+    "identity": "Identità SSH",
+    "selectIdentity": "Seleziona identità",
+    "noIdentities": "Crea prima un'identità SSH.",
+    "createIdentityLink": "Crea identità SSH",
+    "createServer": "Crea server",
+    "updateServer": "Aggiorna server",
+    "creating": "Creazione...",
+    "updating": "Aggiornamento...",
+    "missingServerId": "ID server mancante"
+  },
+  "identities": {
+    "title": "Identità SSH",
+    "description": "Credenziali SSH riutilizzabili per connettersi ai server. I segreti sono crittografati localmente.",
+    "addIdentity": "Aggiungi identità",
+    "empty": "Nessuna identità SSH. Creane una per aggiungere server.",
+    "editAction": "Modifica",
+    "columns": {
+      "name": "Nome",
+      "username": "Utente",
+      "authMethod": "Metodo auth",
+      "servers": "Server"
+    },
+    "new": {
+      "title": "Aggiungi identità SSH",
+      "description": "Le credenziali vengono crittografate prima del salvataggio.",
+      "detailsTitle": "Dettagli identità",
+      "detailsDescription": "Tutti i campi sono obbligatori in base al metodo di autenticazione selezionato."
+    },
+    "edit": {
+      "title": "Modifica identità SSH",
+      "detailsTitle": "Dettagli identità",
+      "linkedServersTitle": "Usata dai server",
+      "linkedServersDescription": "Server aggiunti al sistema che si connettono con questa identità SSH.",
+      "linkedServersEmpty": "Questa identità non è ancora usata da nessun server."
+    },
+    "delete": {
+      "button": "Elimina identità",
+      "title": "Eliminare l'identità?",
+      "description": "L'identità \"{name}\" verrà rimossa definitivamente.",
+      "blockedTitle": "Impossibile eliminare l'identità",
+      "blockedDescription": "Questa identità è usata da {count} server. Riassegna o elimina prima quei server.",
+      "confirm": "Elimina",
+      "deleting": "Eliminazione...",
+      "dangerTitle": "Zona pericolosa",
+      "dangerDescription": "L'eliminazione di un'identità non usata rimuove le credenziali crittografate dal database locale."
+    }
+  },
+  "identityForm": {
+    "name": "Nome",
     "username": "Nome utente",
     "authMethod": "Metodo di autenticazione",
     "selectMethod": "Seleziona metodo",
@@ -80,61 +146,63 @@
     "password": "Password",
     "privateKey": "Chiave privata",
     "passphrase": "Passphrase",
-    "createServer": "Crea server",
-    "updateServer": "Aggiorna server",
+    "credentialsSavedTitle": "Le credenziali SSH sono salvate",
+    "credentialsSavedDescription": "Per sicurezza, password e chiavi private non vengono più mostrate dopo il salvataggio. Restano crittografate nel database locale e vengono usate per connettersi ai server. Campi vuoti non significano perdita di dati — lasciali vuoti per mantenere il segreto attuale o inserisci un nuovo valore per sostituirlo.",
+    "secretFieldEditHint": "Vuoto = mantieni il valore salvato. Compila solo se vuoi modificarlo.",
+    "passwordPlaceholderEdit": "Password nascosta — lascia vuoto per mantenerla",
+    "privateKeyPlaceholderEdit": "Chiave privata nascosta — lascia vuoto per mantenerla",
+    "passphrasePlaceholderEdit": "Passphrase nascosta — lascia vuoto per mantenerla",
+    "createIdentity": "Crea identità",
+    "updateIdentity": "Aggiorna identità",
     "creating": "Creazione...",
     "updating": "Aggiornamento...",
-    "missingServerId": "ID server mancante"
+    "updateWarningTitle": "Aggiornare l'identità per tutti i server?",
+    "updateWarningDescription": "Questa identità è usata da {count} server. Il salvataggio modificherà l'accesso SSH per tutti.",
+    "confirmUpdate": "Salva modifiche"
   },
   "ufw": {
     "installed": "UFW installato",
     "notInstalled": "UFW non installato",
     "active": "UFW attivo",
     "inactive": "UFW inattivo",
-    "remoteRules": "{count} regole remote",
-    "testSsh": "Testa SSH",
+    "dbRules": "{count} regole nel DB",
+    "testSsh": "Test SSH",
     "refreshStatus": "Aggiorna stato",
     "installUfw": "Installa UFW",
-    "activateUfw": "Attiva UFW",
     "installTitle": "Installare UFW?",
-    "installDescription": "UFW verrà installato sul server remoto tramite SSH.",
-    "confirmInstall": "Conferma installazione",
-    "activateTitle": "Attivare UFW?",
-    "activateDescription": "UFW verrà abilitato sul server remoto. Assicurati che l'accesso SSH sia consentito.",
-    "confirmActivate": "Conferma attivazione"
+    "installDescription": "UFW verrà installato e attivato sul server remoto tramite SSH.",
+    "confirmInstall": "Conferma installazione"
   },
   "rules": {
     "toolbar": {
       "addRule": "Aggiungi regola",
-      "saveDraft": "Salva bozza",
       "saveRules": "Salva regole",
       "import": "Importa",
-      "draftSaved": "Bozza salvata localmente. UFW sul server è invariato.",
-      "hint": "Le modifiche restano locali finché non salvi. UFW sul server cambia solo dopo <highlight>Save Rules</highlight> e conferma nella finestra di dialogo.",
       "export": "Esporta",
-      "importDuplicatesSkipped": "Ignorate {count} regola/e duplicata/e durante l'importazione."
+      "importDuplicatesSkipped": "Saltate {count} regola/e duplicata/e durante l'importazione.",
+      "hint": "Le modifiche non salvate vengono scartate con «Aggiorna stato». Scrittura nel database locale e UFW solo tramite <highlight>Salva regole</highlight> con conferma."
     },
     "applyDialog": {
       "title": "Conferma modifiche regole UFW",
-      "description": "Le modifiche verranno applicate al firewall del server remoto. Rivedi il piano qui sotto prima di confermare.",
+      "description": "Le regole della tabella verranno salvate nel database locale e applicate al firewall remoto se necessario. Rivedi il piano qui sotto prima di confermare.",
       "add": "Aggiungi: {count}",
       "remove": "Rimuovi: {count}",
       "reorder": "Riordina: {count}",
+      "dbSync": "Salva nel database locale",
       "apply": "Applica a UFW",
       "applying": "Applicazione...",
       "failed": "Applicazione non riuscita",
-      "partialResync": "Some rules were applied before the error. Use Force resync to align local state with UFW.",
-      "forceResync": "Force resync from server",
-      "forceResyncing": "Resyncing...",
-      "forceResyncFailed": "Resync failed"
+      "partialResync": "Alcune regole sono state applicate prima dell'errore. Usa «Risincronizzazione forzata» per allineare lo stato locale con UFW.",
+      "forceResync": "Risincronizzazione forzata dal server",
+      "forceResyncing": "Risincronizzazione...",
+      "forceResyncFailed": "Risincronizzazione non riuscita"
     },
     "table": {
       "searchPlaceholder": "Cerca regole...",
-      "legendRemoteOnly": "Sul server, non nel DB locale",
-      "legendMatched": "Sul server e nel DB locale",
-      "legendLocalOnly": "Non sul server, nel DB locale",
-      "legendPendingNoHighlight": "Le nuove regole prima di Save Draft non sono evidenziate",
-      "clearFiltersToReorder": "Cancella ricerca e filtri colonna per riordinare le regole",
+      "legendRemoteOnly": "Presente su UFW, non nel DB locale",
+      "legendMatched": "Presente su UFW e nel DB locale",
+      "legendLocalOnly": "Non su UFW, presente nel DB locale",
+      "clearFiltersToReorder": "Cancella ricerca e filtri colonna per riordinare",
       "noRulesFound": "Nessuna regola trovata",
       "filterAll": "Tutti",
       "filterNoMatches": "Nessuna corrispondenza",
@@ -143,12 +211,15 @@
       "filterShowOptions": "Mostra opzioni {label}",
       "filterOptions": "Opzioni {label}",
       "orderColumn": "Ordine",
-      "deleteRule": "Elimina regola"
+      "deleteRule": "Elimina regola",
+      "loadingMore": "Caricamento...",
+      "scrollForMore": "Scorri verso il basso per altro",
+      "loadedCount": "Mostrate {loaded} di {total} regole"
     }
   },
   "operationsPage": {
     "title": "Cronologia operazioni",
-    "description": "Log operativi recenti ed eventi di audit su tutti i server.",
+    "description": "Log operazioni recenti ed eventi di audit su tutti i server.",
     "logsTitle": "Log operazioni",
     "auditTitle": "Eventi di audit",
     "time": "Ora",
@@ -157,26 +228,36 @@
     "message": "Messaggio",
     "action": "Azione",
     "user": "Utente",
-    "entity": "Entità"
+    "entity": "Entità",
+    "loadingMore": "Caricamento...",
+    "scrollForMore": "Scorri verso il basso per altro",
+    "clearHistory": "Cancella cronologia",
+    "clearHistoryTitle": "Cancellare la cronologia operazioni?",
+    "clearHistoryDescription": "Tutti i log operazioni e gli eventi di audit verranno eliminati definitivamente. Questa azione è irreversibile.",
+    "clearHistoryConfirm": "Cancella cronologia",
+    "clearHistoryClearing": "Cancellazione...",
+    "clearHistoryBlocked": "Impossibile cancellare la cronologia mentre un'operazione è in corso."
   },
   "operations": {
     "status": {
       "RUNNING": "IN CORSO",
       "SUCCESS": "SUCCESSO",
-      "FAILED": "FALLITO",
-      "PENDING": "IN ATTESA"
+      "FAILED": "ERRORE",
+      "PENDING": "IN ATTESA",
+      "PARTIAL": "PARZIALE",
+      "CANCELLED": "ANNULLATO"
     },
     "types": {
       "apply_rules": "Applicazione regole UFW",
       "ufw_sync": "Sincronizzazione con il server",
       "ufw_refresh": "Aggiornamento stato UFW",
       "ufw_install": "Installazione UFW",
-      "ufw_enable": "Abilitazione UFW",
+      "ufw_enable": "Attivazione UFW",
       "ssh_test": "Test SSH",
       "server_create": "Creazione server"
     },
     "banner": {
-      "success": "Completato: tutte le operazioni completate con successo",
+      "success": "Fatto: tutte le operazioni completate con successo",
       "errors": "Errori:",
       "details": "Dettagli ({count} passaggi)",
       "dismiss": "Chiudi"
@@ -189,20 +270,21 @@
     "messages": {
       "apply_prepare": "Preparazione applicazione regole UFW",
       "apply_progress": "Applicazione comando {current} di {total}: {command}",
-      "apply_complete": "Completato: tutte le modifiche alle regole applicate con successo",
+      "apply_complete": "Fatto: tutte le modifiche alle regole applicate con successo",
       "apply_failed": "Errore applicazione regole: {error}",
       "sync_start": "Sincronizzazione regole con il server",
-      "sync_complete": "Completato: regole sincronizzate con il server",
+      "sync_complete": "Fatto: regole sincronizzate con il server",
       "refresh_start": "Aggiornamento stato UFW",
-      "refresh_complete": "Completato: stato UFW aggiornato",
+      "refresh_complete": "Fatto: stato UFW aggiornato",
       "install_start": "Installazione UFW",
-      "install_complete": "Completato: UFW installato",
-      "enable_start": "Abilitazione UFW",
-      "enable_complete": "Completato: UFW abilitato e regole sincronizzate",
+      "install_complete": "Fatto: UFW installato e attivato",
+      "enable_start": "Attivazione UFW",
+      "enable_complete": "Fatto: UFW attivato e regole sincronizzate",
       "ssh_start": "Test connessione SSH",
       "ssh_complete": "Connessione SSH riuscita",
       "server_create_complete": "Server {name} creato",
-      "operation_failed": "Operazione non riuscita: {error}"
+      "operation_failed": "Operazione non riuscita: {error}",
+      "operation_cancelled": "Operazione annullata"
     },
     "phases": {
       "ufw_commands": "Applicazione comandi UFW",
@@ -218,7 +300,7 @@
       "load_ufw": "Caricamento stato UFW",
       "draft_sync": "Sincronizzazione bozza",
       "install": "Installazione UFW sul server",
-      "enable": "Abilitazione UFW sul server",
+      "enable": "Attivazione UFW sul server",
       "ssh": "Test connessione SSH"
     }
   }

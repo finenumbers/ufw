@@ -10,6 +10,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t("metadataTitle"),
     description: t("metadataDescription"),
+    icons: {
+      icon: "/favicon.png",
+      shortcut: "/favicon.png",
+      apple: "/favicon.png",
+    },
   };
 }
 

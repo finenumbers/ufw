@@ -131,6 +131,9 @@ enum AuditAction {
   SERVER_CREATED
   SERVER_UPDATED
   SERVER_DELETED
+  IDENTITY_CREATED
+  IDENTITY_UPDATED
+  IDENTITY_DELETED
   SSH_TEST
   UFW_INSTALL
   UFW_ENABLE
@@ -141,50 +144,60 @@ enum AuditAction {
   APPLY_CONFIRMED
   APPLY_COMPLETED
   APPLY_FAILED
+  CONFIG_EXPORT
+  OPERATIONS_CLEARED
   LOGIN
   LOGOUT
 }
 
-enum TagKind {
-  GROUP
-  NAME
+model SshIdentity {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  username   String
+  authMethod AuthMethod
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  credential SshIdentityCredential?
+  servers    Server[]
+
+  @@map("ssh_identity")
+}
+
+model SshIdentityCredential {
+  id            String      @id @default(cuid())
+  identityId    String      @unique
+  identity      SshIdentity @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  encryptedData String
+  iv            String
+  authTag       String
+  keyVersion    Int         @default(1)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("ssh_identity_credential")
 }
 
 model Server {
-  id                    String     @id @default(cuid())
+  id                    String      @id @default(cuid())
   name                  String
   host                  String
-  port                  Int        @default(22)
-  username              String
-  authMethod            AuthMethod
+  port                  Int         @default(22)
+  identityId            String
+  identity              SshIdentity @relation(fields: [identityId], references: [id], onDelete: Restrict)
   sshHostKeyFingerprint String?
-  createdAt             DateTime   @default(now())
-  updatedAt             DateTime   @updatedAt
+  sshHostKeyVerified    Boolean     @default(false)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
 
-  credential    ServerCredential?
   snapshots     ServerSnapshot[]
   ruleRecords   RuleRecord[]
   draftSessions DraftSession[]
   applySessions ApplySession[]
   operationLogs OperationLog[]
-  tagValues     TagValue[]
 
-  @@unique([host, port, username])
+  @@unique([host, port, identityId])
   @@map("server")
-}
-
-model ServerCredential {
-  id            String   @id @default(cuid())
-  serverId      String   @unique
-  server        Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
-  encryptedData String
-  iv            String
-  authTag       String
-  keyVersion    Int      @default(1)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@map("server_credential")
 }
 
 model ServerSnapshot {
@@ -358,6 +371,7 @@ model OperationLog {
   metadata  Json?
   createdAt DateTime        @default(now())
 
+  @@index([status])
   @@index([serverId, createdAt(sort: Desc)])
   @@map("operation_log")
 }
@@ -374,16 +388,4 @@ model AuditEvent {
 
   @@index([createdAt(sort: Desc)])
   @@map("audit_event")
-}
-
-model TagValue {
-  id       String  @id @default(cuid())
-  serverId String
-  server   Server  @relation(fields: [serverId], references: [id], onDelete: Cascade)
-  kind     TagKind
-  value    String
-  useCount Int     @default(1)
-
-  @@unique([serverId, kind, value])
-  @@map("tag_value")
 }
