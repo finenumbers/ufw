@@ -163,6 +163,25 @@ export async function previewApply(
   userId: string,
   desired: UnifiedRuleRow[],
 ): Promise<ApplyPreviewResult> {
+  // #region agent log
+  fetch("http://127.0.0.1:7609/ingest/14ecf3d2-f6bd-4c83-93e8-e6fa310f4508", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "e30bc9" },
+    body: JSON.stringify({
+      sessionId: "e30bc9",
+      runId: "post-fix",
+      hypothesisId: "A",
+      location: "apply.service.ts:previewApply",
+      message: "previewApply entry",
+      data: {
+        serverId,
+        rowCount: desired.length,
+        emptyFingerprintCount: desired.filter((row) => !row.fingerprint?.trim()).length,
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
   const validatedDesired = parseUnifiedRuleRows(desired);
   const validationError = validateRulesForUfwApply(validatedDesired);
   if (validationError) {

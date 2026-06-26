@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { computeFingerprint } from "@/lib/ufw/fingerprint";
 import { parseUnifiedRuleRows } from "@/lib/validations/rule";
 
 const validRow = {
@@ -30,6 +31,22 @@ test("parseUnifiedRuleRows accepts valid rows", () => {
   const rows = parseUnifiedRuleRows([validRow]);
   assert.equal(rows.length, 1);
   assert.equal(rows[0]?.core.action, "ALLOW");
+});
+
+test("parseUnifiedRuleRows computes fingerprint for new draft rows", () => {
+  const rows = parseUnifiedRuleRows([
+    {
+      ...validRow,
+      clientRowId: "row-new",
+      fingerprint: "",
+      originState: "DRAFT_ONLY",
+      sources: { remote: false, local: false, draft: true },
+      isPendingSave: true,
+    },
+  ]);
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0]?.fingerprint, computeFingerprint(validRow.core));
 });
 
 test("parseUnifiedRuleRows rejects invalid action enum", () => {

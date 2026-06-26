@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { computeFingerprint } from "@/lib/ufw/fingerprint";
 import type { UnifiedRuleRow } from "@/types/rule";
 
 export const ruleActionSchema = z.enum(["ALLOW", "DENY", "REJECT", "LIMIT"]);
@@ -53,8 +54,28 @@ export const unifiedRuleRowSchema = z.object({
 
 export const unifiedRuleRowsSchema = z.array(unifiedRuleRowSchema);
 
+function withComputedFingerprints(value: unknown): unknown {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  return value.map((row) => {
+    if (!row || typeof row !== "object" || !("core" in row)) {
+      return row;
+    }
+
+    const candidate = row as UnifiedRuleRow;
+    const fingerprint =
+      typeof candidate.fingerprint === "string" && candidate.fingerprint.trim().length > 0
+        ? candidate.fingerprint
+        : computeFingerprint(candidate.core);
+
+    return { ...candidate, fingerprint };
+  });
+}
+
 export function parseUnifiedRuleRows(value: unknown): UnifiedRuleRow[] {
-  const parsed = unifiedRuleRowsSchema.safeParse(value);
+  const parsed = unifiedRuleRowsSchema.safeParse(withComputedFingerprints(value));
   if (!parsed.success) {
     const issue = parsed.error.errors[0];
     const path = issue?.path.join(".") || "rows";
