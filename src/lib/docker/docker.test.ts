@@ -31,7 +31,7 @@ test("parseDockerStatsOutput parses cpu and memory", () => {
   const rows = parseDockerStatsOutput(output);
   assert.equal(rows.length, 1);
   assert.equal(rows[0]?.cpuPercent, 1.25);
-  assert.ok(rows[0]?.memUsageBytes && rows[0].memUsageBytes > 0n);
+  assert.ok(rows[0]?.memUsageBytes && rows[0].memUsageBytes > BigInt(0));
 });
 
 test("mergePsAndStats joins by container id", () => {

@@ -21,12 +21,14 @@ type DockerContainersTableProps = {
   onCancelConfirm: () => void;
 };
 
+const KIB = BigInt(1024);
+
 function formatMemory(bytes: string | null): string {
   if (!bytes) return "—";
   const value = BigInt(bytes);
-  if (value < 1024n) return `${value} B`;
-  if (value < 1024n ** 2n) return `${Number(value) / 1024} KiB`;
-  if (value < 1024n ** 3n) return `${(Number(value) / 1024 ** 2).toFixed(1)} MiB`;
+  if (value < KIB) return `${value} B`;
+  if (value < KIB * KIB) return `${Number(value) / 1024} KiB`;
+  if (value < KIB * KIB * KIB) return `${(Number(value) / 1024 ** 2).toFixed(1)} MiB`;
   return `${(Number(value) / 1024 ** 3).toFixed(1)} GiB`;
 }
 

@@ -8,14 +8,14 @@ export type DockerStatsRow = {
 };
 
 const BYTE_UNITS: Record<string, bigint> = {
-  b: 1n,
-  kib: 1024n,
-  mib: 1024n ** 2n,
-  gib: 1024n ** 3n,
-  tib: 1024n ** 4n,
-  kb: 1000n,
-  mb: 1000n ** 2n,
-  gb: 1000n ** 3n,
+  b: BigInt(1),
+  kib: BigInt(1024),
+  mib: BigInt(1024) ** BigInt(2),
+  gib: BigInt(1024) ** BigInt(3),
+  tib: BigInt(1024) ** BigInt(4),
+  kb: BigInt(1000),
+  mb: BigInt(1000) ** BigInt(2),
+  gb: BigInt(1000) ** BigInt(3),
 };
 
 function parseByteSize(raw: string): bigint | null {
