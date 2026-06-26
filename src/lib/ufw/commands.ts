@@ -36,7 +36,34 @@ export function resolveIpVersionForUfwCommand(core: RuleCore): boolean {
   return core.ipv6;
 }
 
+function validatePortField(value: string | null | undefined, fieldLabel: string): string | null {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  const trimmed = value.trim().toLowerCase();
+  if (trimmed === "any" || trimmed === "anywhere" || trimmed === "all") {
+    return `${fieldLabel}: leave empty for any port — do not type "${value.trim()}".`;
+  }
+
+  if (!/^\d+(:\d+)?(?:,\d+(?::\d+)?)*$/.test(trimmed)) {
+    return `${fieldLabel}: must be a port or port range (e.g. 80 or 8000:8010).`;
+  }
+
+  return null;
+}
+
 export function validateRuleCoreForUfw(core: RuleCore): string | null {
+  const fromPortError = validatePortField(core.fromPort, "From Port");
+  if (fromPortError) {
+    return fromPortError;
+  }
+
+  const toPortError = validatePortField(core.toPort, "To Port");
+  if (toPortError) {
+    return toPortError;
+  }
+
   const from = getSpecificAddress(core.fromAddress);
   const to = getSpecificAddress(core.toAddress);
 

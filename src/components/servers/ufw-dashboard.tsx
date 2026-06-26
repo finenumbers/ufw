@@ -93,16 +93,22 @@ export function UfwDashboard({
   async function handlePreviewApply() {
     setLoading(true);
     setSaveError(null);
-    const allRows = await resolveAllRows();
-    const result = await previewApplyAction(serverId, allRows);
-    setLoading(false);
-    if (!result.success) {
-      setSaveError(result.error);
-      return;
+    try {
+      const allRows = await resolveAllRows();
+      const result = await previewApplyAction(serverId, allRows);
+      if (!result.success) {
+        setSaveError(result.error);
+        return;
+      }
+      setPreviewSessionId(result.data.sessionId);
+      setPreviewSummary(result.data.plan.summary);
+      setPreviewOpen(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Save failed";
+      setSaveError(message);
+    } finally {
+      setLoading(false);
     }
-    setPreviewSessionId(result.data.sessionId);
-    setPreviewSummary(result.data.plan.summary);
-    setPreviewOpen(true);
   }
 
   function handleAddRule() {

@@ -65,6 +65,10 @@ function withComputedFingerprints(value: unknown): unknown {
     }
 
     const candidate = row as UnifiedRuleRow;
+    if (!candidate.core || typeof candidate.core !== "object") {
+      return row;
+    }
+
     const fingerprint =
       typeof candidate.fingerprint === "string" && candidate.fingerprint.trim().length > 0
         ? candidate.fingerprint

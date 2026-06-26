@@ -23,11 +23,55 @@ export async function previewApplyAction(
   serverId: string,
   desired: import("@/types/rule").UnifiedRuleRow[],
 ): Promise<{ success: true; data: ApplyPreviewResult } | { success: false; error: string }> {
-  const userId = await requireUserId();
+  let userId: string;
+  try {
+    userId = await requireUserId();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unauthorized";
+    // #region agent log
+    fetch("http://127.0.0.1:7609/ingest/14ecf3d2-f6bd-4c83-93e8-e6fa310f4508", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "e30bc9" },
+      body: JSON.stringify({
+        sessionId: "e30bc9",
+        runId: "500-debug",
+        hypothesisId: "B",
+        location: "apply.ts:previewApplyAction:auth",
+        message: "previewApplyAction auth failed",
+        data: { serverId, errorMessage: message },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+    return { success: false, error: "Session expired. Please sign in again." };
+  }
+
   try {
     const data = await previewApply(serverId, userId, desired);
     return { success: true, data };
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Preview failed";
+    // #region agent log
+    fetch("http://127.0.0.1:7609/ingest/14ecf3d2-f6bd-4c83-93e8-e6fa310f4508", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "e30bc9" },
+      body: JSON.stringify({
+        sessionId: "e30bc9",
+        runId: "500-debug",
+        hypothesisId: "A",
+        location: "apply.ts:previewApplyAction",
+        message: "previewApplyAction failed",
+        data: {
+          serverId,
+          rowCount: desired.length,
+          emptyFingerprintCount: desired.filter((row) => !row.fingerprint?.trim()).length,
+          errorMessage: message,
+          errorName: error instanceof Error ? error.name : "unknown",
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     return {
       success: false,
       error: sanitizeGenericClientError(error, "Preview failed"),

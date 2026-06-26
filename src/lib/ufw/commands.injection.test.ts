@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { buildUfwAddCommand, UfwRuleValidationError } from "@/lib/ufw/commands";
+import { buildUfwAddCommand, UfwRuleValidationError, validateRuleCoreForUfw } from "@/lib/ufw/commands";
 import type { RuleCore } from "@/types/rule";
 
 const baseCore: RuleCore = {
@@ -95,5 +95,12 @@ describe("buildUfwAddCommand injection rejection", () => {
     });
 
     assert.match(command, /^ufw allow in on eth0 from 192\.168\.1\.0\/24 to 0\.0\.0\.0\/0 port 8080:8090 proto tcp comment/);
+  });
+});
+
+describe("validateRuleCoreForUfw port fields", () => {
+  it("rejects literal any in To Port", () => {
+    const error = validateRuleCoreForUfw({ ...baseCore, toPort: "any" });
+    assert.match(error ?? "", /To Port: leave empty for any port/);
   });
 });

@@ -46,6 +46,23 @@ export function sanitizeGenericClientError(
 ): string {
   const message = error instanceof Error ? error.message : fallback;
   log.warn({ err: message }, "Client-facing error sanitized");
+
+  if (error instanceof Error) {
+    if (
+      error.name === "UfwRuleValidationError" ||
+      message.startsWith("Invalid rule data") ||
+      message.startsWith('Rule "') ||
+      message.startsWith("No changes") ||
+      message.startsWith("Apply session") ||
+      message.startsWith("From Port:") ||
+      message.startsWith("To Port:") ||
+      message.includes(": must be a port") ||
+      message.includes(": leave empty for any port")
+    ) {
+      return message;
+    }
+  }
+
   return fallback;
 }
 
