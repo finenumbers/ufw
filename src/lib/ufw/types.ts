@@ -25,6 +25,16 @@ export function normalizeProtocol(value?: string | null): RuleProtocol | null {
   return null;
 }
 
+/** UFW has no `proto any`; ANY means omit protocol and match all protocols on the port/rule. */
+export function resolveProtocolForUfw(
+  protocol: RuleProtocol | null | undefined,
+): Exclude<RuleProtocol, "ANY"> | null {
+  if (!protocol || protocol === "ANY") {
+    return null;
+  }
+  return protocol;
+}
+
 export function normalizeAction(value: string): RuleAction {
   const upper = value.trim().toUpperCase();
   if (upper === "ALLOW" || upper === "DENY" || upper === "REJECT" || upper === "LIMIT") {
@@ -73,7 +83,7 @@ export function toCanonicalCore(
     action: core.action,
     direction: core.direction ?? null,
     interface: core.interface?.trim().toLowerCase() ?? null,
-    protocol: core.protocol ?? null,
+    protocol: resolveProtocolForUfw(core.protocol),
     fromAddress: normalizeAddress(core.fromAddress),
     fromPort: normalizePort(core.fromPort),
     toAddress: normalizeAddress(core.toAddress),

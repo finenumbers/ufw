@@ -1,5 +1,5 @@
 import { sanitizeRuleCoreForUfwCommand } from "@/lib/ufw/sanitize";
-import { ANYWHERE, normalizeAddress } from "@/lib/ufw/types";
+import { ANYWHERE, normalizeAddress, resolveProtocolForUfw } from "@/lib/ufw/types";
 import type { RuleCore, UnifiedRuleRow } from "@/types/rule";
 
 export class UfwRuleValidationError extends Error {
@@ -141,6 +141,7 @@ export function buildUfwAddCommand(core: RuleCore): string {
 
   const ipv6 = resolveIpVersionForUfwCommand(core);
   const isRoute = core.direction === "ROUTE";
+  const protocol = resolveProtocolForUfw(core.protocol);
   const parts: string[] = ["ufw"];
 
   if (isRoute) {
@@ -172,15 +173,15 @@ export function buildUfwAddCommand(core: RuleCore): string {
   parts.push("to", resolveAddressForUfwCommand(core.toAddress, ipv6));
 
   if (core.toPort) {
-    if (core.protocol) {
-      parts.push("port", core.toPort, "proto", core.protocol.toLowerCase());
+    if (protocol) {
+      parts.push("port", core.toPort, "proto", protocol.toLowerCase());
     } else {
       parts.push("port", core.toPort);
     }
   } else if (core.appName) {
     parts.push("app", `"${core.appName}"`);
-  } else if (core.protocol && !core.toPort) {
-    parts.push("proto", core.protocol.toLowerCase());
+  } else if (protocol && !core.toPort) {
+    parts.push("proto", protocol.toLowerCase());
   }
 
   if (core.ruleComment) {

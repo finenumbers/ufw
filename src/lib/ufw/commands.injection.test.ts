@@ -104,3 +104,20 @@ describe("validateRuleCoreForUfw port fields", () => {
     assert.match(error ?? "", /To Port: leave empty for any port/);
   });
 });
+
+describe("buildUfwAddCommand protocol ANY", () => {
+  it("omits proto any and allows all protocols on the port", () => {
+    const command = buildUfwAddCommand({
+      ...baseCore,
+      protocol: "ANY",
+      interface: null,
+      toPort: "7373",
+    });
+
+    assert.equal(
+      command,
+      "ufw allow in from 0.0.0.0/0 to 0.0.0.0/0 port 7373",
+    );
+    assert.doesNotMatch(command, /proto any/);
+  });
+});
