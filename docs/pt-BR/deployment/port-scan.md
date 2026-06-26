@@ -2,7 +2,7 @@
 
 UFW Remote Manager can run an **external port scan** from the `ufw-app` container toward each registered server's `host` address. The pipeline uses:
 
-1. **Naabu** — fast TCP discovery (`host/port/protocol/open`)
+1. **Naabu** — TCP discovery on ports 1–65535 (`host/port/protocol/open`)
 2. **Nmap** — service detection only on discovered ports (`-sV`, XML output)
 
 Results appear in a table **below the UFW rules** on the server page.
@@ -19,9 +19,8 @@ Optional tuning:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `PORT_SCAN_TOP_PORTS` | `1000` | Naabu top-ports profile |
 | `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Max ports sent to Nmap enrichment |
-| `PORT_SCAN_NAABU_TIMEOUT_MS` | `300000` | Discovery timeout |
+| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Full-port discovery timeout (30 min) |
 | `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Enrichment timeout |
 | `PORT_SCAN_RATE_LIMIT_WINDOW_MS` | `900000` | Min interval between scans per server |
 | `PORT_SCAN_HISTORY_LIMIT` | `10` | Stored scan runs per server |
@@ -34,14 +33,16 @@ This feature scans **only hosts already registered in UFW Remote Manager** — a
 
 ## UFW coverage column
 
-Each open port is compared with the latest UFW snapshot:
+Each open port is compared with the latest UFW snapshot using **external-scan semantics**:
 
 | Value | Meaning |
 |-------|---------|
-| **Allowed** | An ALLOW rule covers this port/protocol |
-| **Not in UFW** | Port is open externally but not covered by ALLOW — review |
-| **Denied** | Explicit DENY/REJECT may apply |
+| **Allowed** | Inbound ALLOW/LIMIT from **any** source (`From = any`) covers this port |
+| **Not in UFW** | Port is open externally but not covered by a public inbound ALLOW — review |
+| **Denied** | Inbound DENY/REJECT from **any** source targets this port |
 | **Unknown** | UFW inactive or no snapshot |
+
+Whitelist-only rules (`From = specific IP/CIDR`, `To Port = any`) do **not** count as allowed for external scan. Only rules that explicitly allow traffic from anywhere are treated as public exposure.
 
 ## Security notes
 

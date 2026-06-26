@@ -1,4 +1,4 @@
-import type { PortScanProfile, Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { getPortScanHistoryLimit } from "@/lib/port-scan/config";
@@ -143,7 +143,6 @@ export async function getPortScanById(scanId: string): Promise<PortScanView | nu
 export async function createPortScanJob(params: {
   serverId: string;
   userId: string;
-  profile: PortScanProfile;
   targetHost: string;
   operationLogId: string;
 }): Promise<{ scanId: string }> {
@@ -151,7 +150,7 @@ export async function createPortScanJob(params: {
     data: {
       serverId: params.serverId,
       userId: params.userId,
-      profile: params.profile,
+      profile: "FULL",
       targetHost: params.targetHost,
       perspective: "EXTERNAL",
       status: "PENDING",
@@ -195,7 +194,7 @@ export async function runPortScanPipeline(scanId: string, tracker: OperationTrac
       await tracker.startStep("discovery", semanticStep("discovery", "steps.port_scan_discovery"));
       await tracker.setProgress(1, 4, { key: "messages.port_scan_discovery" });
 
-      const discovery = await runNaabuDiscovery(resolved.host, scan.profile);
+      const discovery = await runNaabuDiscovery(resolved.host);
 
       await tracker.completeStep("discovery");
       await tracker.startStep("enrichment", semanticStep("enrichment", "steps.port_scan_enrichment"));
@@ -211,7 +210,9 @@ export async function runPortScanPipeline(scanId: string, tracker: OperationTrac
       const coverageRules =
         snapshot?.rules.map((rule) => ({
           action: rule.action,
+          direction: rule.direction,
           protocol: rule.protocol,
+          fromAddress: rule.fromAddress,
           toPort: rule.toPort,
           fromPort: rule.fromPort,
         })) ?? [];
@@ -283,14 +284,11 @@ export async function runPortScanPipeline(scanId: string, tracker: OperationTrac
 export async function startPortScan(params: {
   serverId: string;
   userId: string;
-  profile?: PortScanProfile;
 }): Promise<{ scanId: string; operationId: string }> {
   const server = await db.server.findUnique({ where: { id: params.serverId } });
   if (!server) {
     throw new Error("Server not found");
   }
-
-  const profile = params.profile ?? "TOP1000";
 
   const tracker = await startOperation({
     serverId: server.id,
@@ -308,7 +306,6 @@ export async function startPortScan(params: {
   const { scanId } = await createPortScanJob({
     serverId: server.id,
     userId: params.userId,
-    profile,
     targetHost: server.host,
     operationLogId: tracker.operationId,
   });
@@ -318,7 +315,7 @@ export async function startPortScan(params: {
     action: "PORT_SCAN_STARTED",
     entityType: "server",
     entityId: server.id,
-    metadata: { scanId, profile, targetHost: server.host },
+    metadata: { scanId, profile: "FULL", targetHost: server.host },
   });
 
   void runPortScanPipeline(scanId, tracker).catch(() => {});

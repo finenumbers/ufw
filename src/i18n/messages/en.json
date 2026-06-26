@@ -321,12 +321,10 @@
   },
   "portScan": {
     "title": "Open ports (external scan)",
-    "description": "Fast discovery with Naabu, then Nmap service detection from the UFW app container toward this server's address.",
+    "description": "Full TCP port scan (1–65535) with Naabu, then Nmap service detection from the UFW app container toward this server's address.",
     "scanButton": "Scan ports",
     "scanning": "Scanning...",
     "disabled": "Port scanning is disabled. Set PORT_SCAN_ENABLED=true in the app environment.",
-    "profileTop1000": "Top 1000 ports",
-    "profileFull": "All ports",
     "lastScanAt": "Last scan: {date} · target {target}",
     "empty": "No scan results yet. Run a port scan to discover externally reachable services.",
     "summary": "Open: {open} · enriched: {enriched} · not in UFW: {notInUfw}",

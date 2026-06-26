@@ -4,13 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { notifyOperationStarted } from "@/lib/operations/events";
 import type { PortScanView } from "@/types/port-scan";
 import {
@@ -29,7 +22,6 @@ type PortScanPanelProps = {
 export function PortScanPanel({ serverId, initialScan, enabled }: PortScanPanelProps) {
   const t = useTranslations("portScan");
   const [scan, setScan] = useState<PortScanView | null>(initialScan);
-  const [profile, setProfile] = useState<"TOP1000" | "FULL">("TOP1000");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,7 +58,7 @@ export function PortScanPanel({ serverId, initialScan, enabled }: PortScanPanelP
     setLoading(true);
     setError(null);
 
-    const result = await startPortScanAction(serverId, profile);
+    const result = await startPortScanAction(serverId);
     setLoading(false);
 
     if (!result.success) {
@@ -93,20 +85,9 @@ export function PortScanPanel({ serverId, initialScan, enabled }: PortScanPanelP
           <h3 className="text-lg font-semibold">{t("title")}</h3>
           <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Select value={profile} onValueChange={(value) => setProfile(value as "TOP1000" | "FULL")}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="TOP1000">{t("profileTop1000")}</SelectItem>
-              <SelectItem value="FULL">{t("profileFull")}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={() => void handleScan()} disabled={loading}>
-            {loading ? t("scanning") : t("scanButton")}
-          </Button>
-        </div>
+        <Button onClick={() => void handleScan()} disabled={loading}>
+          {loading ? t("scanning") : t("scanButton")}
+        </Button>
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}

@@ -1,5 +1,3 @@
-import type { PortScanProfile } from "@prisma/client";
-
 import {
   getPortScanMaxNmapPorts,
   getPortScanNaabuTimeoutMs,
@@ -13,12 +11,11 @@ import type { NaabuDiscoveryRow, NmapEnrichmentRow } from "@/types/port-scan";
 
 export async function runNaabuDiscovery(
   target: string,
-  profile: PortScanProfile,
 ): Promise<{ rows: NaabuDiscoveryRow[]; stderr: string }> {
   const args = [
     "-host",
     target,
-    ...resolveNaabuPortArg(profile),
+    ...resolveNaabuPortArg(),
     "-json",
     "-silent",
     "-scan-type",

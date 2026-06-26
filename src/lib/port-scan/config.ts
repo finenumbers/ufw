@@ -1,5 +1,3 @@
-import type { PortScanProfile } from "@prisma/client";
-
 function readInt(name: string, fallback: number): number {
   const raw = process.env[name]?.trim();
   if (!raw) return fallback;
@@ -12,16 +10,12 @@ export function isPortScanEnabled(): boolean {
   return raw === "1" || raw === "true" || raw === "yes";
 }
 
-export function getPortScanTopPorts(): number {
-  return readInt("PORT_SCAN_TOP_PORTS", 1000);
-}
-
 export function getPortScanMaxNmapPorts(): number {
   return readInt("PORT_SCAN_MAX_NMAP_PORTS", 500);
 }
 
 export function getPortScanNaabuTimeoutMs(): number {
-  return readInt("PORT_SCAN_NAABU_TIMEOUT_MS", 300_000);
+  return readInt("PORT_SCAN_NAABU_TIMEOUT_MS", 1_800_000);
 }
 
 export function getPortScanNmapTimeoutMs(): number {
@@ -36,9 +30,6 @@ export function getPortScanRateLimitWindowMs(): number {
   return readInt("PORT_SCAN_RATE_LIMIT_WINDOW_MS", 900_000);
 }
 
-export function resolveNaabuPortArg(profile: PortScanProfile): string[] {
-  if (profile === "FULL") {
-    return ["-p", "-"];
-  }
-  return ["-top-ports", String(getPortScanTopPorts())];
+export function resolveNaabuPortArg(): string[] {
+  return ["-p", "-"];
 }

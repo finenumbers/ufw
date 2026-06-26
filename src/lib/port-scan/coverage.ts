@@ -1,8 +1,12 @@
-import type { RuleAction, RuleProtocol, UfwCoverage } from "@prisma/client";
+import type { RuleAction, RuleDirection, RuleProtocol, UfwCoverage } from "@prisma/client";
+
+import { ANYWHERE, normalizeAddress } from "@/lib/ufw/types";
 
 type CoverageRule = {
   action: RuleAction;
+  direction?: RuleDirection | null;
   protocol: RuleProtocol | null;
+  fromAddress?: string | null;
   toPort: string | null;
   fromPort: string | null;
 };
@@ -41,8 +45,29 @@ function portInField(field: string | null, port: number): boolean {
   return Number.isInteger(exact) && exact === port;
 }
 
-function ruleCoversPort(rule: CoverageRule, port: number, protocol: string): boolean {
-  if (rule.action !== "ALLOW") {
+function isPublicSource(fromAddress: string | null | undefined): boolean {
+  return normalizeAddress(fromAddress) === ANYWHERE;
+}
+
+function isInboundDirection(direction: RuleDirection | null | undefined): boolean {
+  return direction === "IN" || direction == null;
+}
+
+function isPermissiveAction(action: RuleAction): boolean {
+  return action === "ALLOW" || action === "LIMIT";
+}
+
+/** External scan: port is covered only by inbound ALLOW/LIMIT from any source. */
+function ruleCoversPortForExternal(rule: CoverageRule, port: number, protocol: string): boolean {
+  if (!isPermissiveAction(rule.action)) {
+    return false;
+  }
+
+  if (!isInboundDirection(rule.direction)) {
+    return false;
+  }
+
+  if (!isPublicSource(rule.fromAddress)) {
     return false;
   }
 
@@ -50,22 +75,23 @@ function ruleCoversPort(rule: CoverageRule, port: number, protocol: string): boo
     return false;
   }
 
-  const toMatches = portInField(rule.toPort, port);
-  const fromMatches = portInField(rule.fromPort, port);
-
   if (rule.toPort?.trim()) {
-    return toMatches;
-  }
-
-  if (rule.fromPort?.trim()) {
-    return fromMatches;
+    return portInField(rule.toPort, port);
   }
 
   return true;
 }
 
-function ruleDeniesPort(rule: CoverageRule, port: number, protocol: string): boolean {
+function ruleDeniesPortForExternal(rule: CoverageRule, port: number, protocol: string): boolean {
   if (rule.action !== "DENY" && rule.action !== "REJECT") {
+    return false;
+  }
+
+  if (!isInboundDirection(rule.direction)) {
+    return false;
+  }
+
+  if (!isPublicSource(rule.fromAddress)) {
     return false;
   }
 
@@ -73,7 +99,11 @@ function ruleDeniesPort(rule: CoverageRule, port: number, protocol: string): boo
     return false;
   }
 
-  return portInField(rule.toPort, port) || portInField(rule.fromPort, port);
+  if (rule.toPort?.trim()) {
+    return portInField(rule.toPort, port);
+  }
+
+  return true;
 }
 
 export function computeUfwCoverage(
@@ -90,12 +120,12 @@ export function computeUfwCoverage(
     return "UNKNOWN";
   }
 
-  const allows = rules.some((rule) => ruleCoversPort(rule, port, protocol));
+  const allows = rules.some((rule) => ruleCoversPortForExternal(rule, port, protocol));
   if (allows) {
     return "ALLOWED";
   }
 
-  const denies = rules.some((rule) => ruleDeniesPort(rule, port, protocol));
+  const denies = rules.some((rule) => ruleDeniesPortForExternal(rule, port, protocol));
   if (denies) {
     return "DENIED";
   }

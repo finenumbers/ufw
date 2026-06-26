@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import type { PortScanProfile } from "@prisma/client";
 
 import { auth } from "@/lib/auth";
 import { isPortScanEnabled } from "@/lib/port-scan/config";
@@ -25,7 +24,6 @@ async function requireUserId(): Promise<string> {
 
 export async function startPortScanAction(
   serverId: string,
-  profile: PortScanProfile = "TOP1000",
 ): Promise<
   | { success: true; scanId: string; operationId: string }
   | { success: false; error: string }
@@ -48,7 +46,7 @@ export async function startPortScanAction(
   }
 
   try {
-    const result = await startPortScan({ serverId, userId, profile });
+    const result = await startPortScan({ serverId, userId });
     const server = await getServerById(serverId);
     if (server) {
       revalidatePath(getServerPath(server.host));

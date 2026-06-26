@@ -2,7 +2,7 @@
 
 UFW Remote Manager может выполнять **внешнее сканирование портов** из контейнера `ufw-app` по адресу `host` каждого зарегистрированного сервера. Pipeline:
 
-1. **Naabu** — быстрый TCP discovery (`host/port/protocol/open`)
+1. **Naabu** — TCP discovery портов 1–65535 (`host/port/protocol/open`)
 2. **Nmap** — определение сервисов только по найденным портам (`-sV`, XML)
 
 Результаты отображаются в таблице **под правилами UFW** на странице сервера.
@@ -19,9 +19,8 @@ PORT_SCAN_ENABLED=true
 
 | Переменная | По умолчанию | Назначение |
 |------------|--------------|------------|
-| `PORT_SCAN_TOP_PORTS` | `1000` | Профиль Naabu top-ports |
 | `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Лимит портов для Nmap |
-| `PORT_SCAN_NAABU_TIMEOUT_MS` | `300000` | Таймаут discovery |
+| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Таймаут full-port discovery (30 мин) |
 | `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Таймаут enrichment |
 | `PORT_SCAN_RATE_LIMIT_WINDOW_MS` | `900000` | Интервал между сканами на сервер |
 | `PORT_SCAN_HISTORY_LIMIT` | `10` | История сканов на сервер |
@@ -34,14 +33,16 @@ PORT_SCAN_ENABLED=true
 
 ## Колонка UFW
 
-Каждый открытый порт сравнивается с последним snapshot UFW:
+Каждый открытый порт сравнивается с последним snapshot UFW по правилам **внешнего сканирования**:
 
 | Значение | Смысл |
 |----------|-------|
-| **Разрешено** | Порт покрыт правилом ALLOW |
-| **Нет в UFW** | Порт открыт снаружи, но не покрыт ALLOW |
-| **Запрещено** | Явный DENY/REJECT |
+| **Разрешено** | Есть inbound ALLOW/LIMIT **с From = any**, покрывающий этот порт |
+| **Нет в UFW** | Порт открыт снаружи, но нет публичного inbound ALLOW — проверьте |
+| **Запрещено** | Inbound DENY/REJECT **с From = any** на этот порт |
 | **Неизвестно** | UFW неактивен или нет snapshot |
+
+Правила только для whitelist (`From = конкретный IP/CIDR`, `To Port = any`) **не** считаются «Разрешено» для external scan. Публичным считается только явное разрешение **from any**.
 
 ## Безопасность
 
