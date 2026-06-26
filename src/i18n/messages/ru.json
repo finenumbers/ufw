@@ -194,7 +194,9 @@
       "ufw_enable": "Включение UFW",
       "ssh_test": "Проверка SSH",
       "server_create": "Создание сервера",
-      "port_scan": "Сканирование открытых портов"
+      "port_scan": "Сканирование открытых портов",
+      "docker_inventory": "Обновление Docker inventory",
+      "docker_control": "Управление Docker-контейнером"
     },
     "banner": {
       "success": "Готово: все операции успешно завершены",
@@ -208,7 +210,9 @@
       "reordered": "изменён порядок: {count}",
       "openPorts": "открыто: {count}",
       "enriched": "идентифицировано: {count}",
-      "notInUfw": "нет в UFW: {count}"
+      "notInUfw": "нет в UFW: {count}",
+      "containers": "контейнеров: {count}",
+      "running": "запущено: {count}"
     },
     "messages": {
       "apply_prepare": "Подготовка к применению правил UFW",
@@ -233,7 +237,17 @@
       "port_scan_enrichment": "Идентификация сервисов через Nmap",
       "port_scan_normalize": "Нормализация результатов",
       "port_scan_complete": "Готово: найдено открытых портов — {count}",
-      "port_scan_failed": "Ошибка сканирования: {error}"
+      "port_scan_failed": "Ошибка сканирования: {error}",
+      "docker_inventory_start": "Обновление inventory Docker-контейнеров",
+      "docker_preflight": "Проверка доступности Docker",
+      "docker_list": "Получение списка контейнеров",
+      "docker_stats": "Сбор метрик контейнеров",
+      "docker_persist": "Сохранение snapshot",
+      "docker_inventory_complete": "Готово: контейнеров — {total}, запущено — {running}",
+      "docker_inventory_failed": "Ошибка обновления Docker inventory: {error}",
+      "docker_control_start": "Docker {action} для {name}",
+      "docker_control_complete": "Готово: {action} выполнен для {name}",
+      "docker_control_failed": "Ошибка управления Docker: {error}"
     },
     "phases": {
       "ufw_commands": "Применение команд UFW",
@@ -254,7 +268,12 @@
       "port_scan_resolve": "Определение цели сканирования",
       "port_scan_discovery": "Discovery через Naabu",
       "port_scan_enrichment": "Enrichment через Nmap",
-      "port_scan_normalize": "Сопоставление с правилами UFW"
+      "port_scan_normalize": "Сопоставление с правилами UFW",
+      "docker_preflight": "Проверка Docker на сервере",
+      "docker_list": "Список контейнеров",
+      "docker_stats": "Сбор метрик",
+      "docker_persist": "Сохранение snapshot",
+      "docker_control": "Команда управления контейнером"
     }
   },
   "identities": {
@@ -341,6 +360,56 @@
       "NOT_IN_UFW": "Нет в UFW",
       "DENIED": "Запрещено",
       "UNKNOWN": "Неизвестно"
+    }
+  },
+  "dockerMonitor": {
+    "title": "Docker-контейнеры",
+    "description": "Inventory и управление Docker-контейнерами на сервере через SSH.",
+    "refreshButton": "Обновить inventory",
+    "refreshing": "Обновление...",
+    "disabled": "Мониторинг Docker отключён. Установите DOCKER_MONITOR_ENABLED=true в окружении приложения.",
+    "lastRefreshAt": "Последнее обновление: {date}",
+    "meta": "Docker {version} · Compose {compose}",
+    "summary": "Всего: {total} · запущено: {running} · остановлено: {stopped}",
+    "empty": "Контейнеры не найдены. Обновите inventory, чтобы загрузить состояние Docker с сервера.",
+    "ungrouped": "Прочие контейнеры",
+    "details": "Подробнее",
+    "close": "Закрыть",
+    "loadingDetails": "Загрузка деталей контейнера...",
+    "detailsFailed": "Не удалось загрузить детали контейнера.",
+    "drawerTitle": "Детали контейнера",
+    "acting": "Выполнение...",
+    "cancel": "Отмена",
+    "confirmStopTitle": "Остановить контейнер?",
+    "confirmRestartTitle": "Перезапустить контейнер?",
+    "confirmStopDescription": "Остановить контейнер {name} ({id})? Сервисы внутри будут прерваны.",
+    "confirmRestartDescription": "Перезапустить контейнер {name} ({id})? Контейнер будет остановлен и запущен снова.",
+    "columns": {
+      "name": "Имя",
+      "image": "Образ",
+      "status": "Статус",
+      "health": "Health",
+      "ports": "Порты",
+      "cpu": "CPU",
+      "memory": "Память",
+      "compose": "Compose service",
+      "actions": "Действия"
+    },
+    "actions": {
+      "start": "Start",
+      "stop": "Stop",
+      "restart": "Restart"
+    },
+    "drawer": {
+      "image": "Образ",
+      "status": "Статус",
+      "health": "Health",
+      "ports": "Опубликованные порты",
+      "command": "Команда",
+      "mounts": "Mounts",
+      "networks": "Сети",
+      "labels": "Labels",
+      "env": "Environment"
     }
   }
 }

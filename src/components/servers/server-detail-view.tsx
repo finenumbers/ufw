@@ -12,7 +12,9 @@ import { RulesToolbar } from "@/components/rules/rules-toolbar";
 import { ServerInitialSync } from "@/components/servers/server-initial-sync";
 import { UfwDashboard } from "@/components/servers/ufw-dashboard";
 import { PortScanPanel } from "@/components/servers/port-scan-panel";
+import { DockerMonitorPanel } from "@/components/servers/docker-monitor-panel";
 import { Button } from "@/components/ui/button";
+import type { DockerInventoryView } from "@/types/docker-monitor";
 import type { PortScanView } from "@/types/port-scan";
 import type { UnifiedRuleRow } from "@/types/rule";
 import type { UfwDetectionResult } from "@/types/ufw";
@@ -38,6 +40,8 @@ type ServerDetailViewProps = {
   rulesUnavailableMessage: string;
   portScanEnabled: boolean;
   initialPortScan: PortScanView | null;
+  dockerMonitorEnabled: boolean;
+  initialDockerInventory: DockerInventoryView | null;
 };
 
 function sortRows(rows: UnifiedRuleRow[]): UnifiedRuleRow[] {
@@ -58,6 +62,8 @@ export function ServerDetailView({
   rulesUnavailableMessage,
   portScanEnabled,
   initialPortScan,
+  dockerMonitorEnabled,
+  initialDockerInventory,
 }: ServerDetailViewProps) {
   const tServers = useTranslations("servers");
   const [rows, setRows] = useState(() => sortRows(initialRows));
@@ -204,6 +210,12 @@ export function ServerDetailView({
         serverId={server.id}
         initialScan={initialPortScan}
         enabled={portScanEnabled}
+      />
+
+      <DockerMonitorPanel
+        serverId={server.id}
+        initialInventory={initialDockerInventory}
+        enabled={dockerMonitorEnabled}
       />
     </div>
   );

@@ -3,7 +3,9 @@ import { getTranslations } from "next-intl/server";
 
 import { ServerDetailView } from "@/components/servers/server-detail-view";
 import { isPortScanEnabled } from "@/lib/port-scan/config";
+import { isDockerMonitorEnabled } from "@/lib/docker/config";
 import { getServerPath } from "@/lib/server-path";
+import { getLatestDockerInventoryAction } from "@/server/actions/docker-monitor";
 import { getLatestPortScanAction } from "@/server/actions/port-scan";
 import { getServerByAddressAction } from "@/server/actions/servers";
 import { getRulesViewPageAction } from "@/server/actions/rules";
@@ -72,6 +74,10 @@ export default async function ServerDetailPage({ params }: PageProps) {
   const rulesAvailable = ufwState.installed && ufwState.active;
   const portScanEnabled = isPortScanEnabled();
   const initialPortScan = portScanEnabled ? await getLatestPortScanAction(server.id) : null;
+  const dockerMonitorEnabled = isDockerMonitorEnabled();
+  const initialDockerInventory = dockerMonitorEnabled
+    ? await getLatestDockerInventoryAction(server.id)
+    : null;
 
   return (
     <ServerDetailView
@@ -94,6 +100,8 @@ export default async function ServerDetailPage({ params }: PageProps) {
       rulesUnavailableMessage={t("rulesUnavailable")}
       portScanEnabled={portScanEnabled}
       initialPortScan={initialPortScan}
+      dockerMonitorEnabled={dockerMonitorEnabled}
+      initialDockerInventory={initialDockerInventory}
     />
   );
 }

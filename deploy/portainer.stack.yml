@@ -56,6 +56,7 @@ services:
       NODE_ENV: production
       LOG_LEVEL: info
       PORT_SCAN_ENABLED: ${PORT_SCAN_ENABLED:-false}
+      DOCKER_MONITOR_ENABLED: ${DOCKER_MONITOR_ENABLED:-false}
     healthcheck:
       test:
         [

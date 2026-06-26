@@ -256,7 +256,9 @@
       "ufw_enable": "Activation de UFW",
       "ssh_test": "Test SSH",
       "server_create": "Création du serveur",
-      "port_scan": "Scanning open ports"
+      "port_scan": "Scanning open ports",
+      "docker_inventory": "Refreshing Docker inventory",
+      "docker_control": "Docker container control"
     },
     "banner": {
       "success": "Terminé : toutes les opérations ont réussi",
@@ -270,7 +272,9 @@
       "reordered": "reordered: {count}",
       "openPorts": "open: {count}",
       "enriched": "enriched: {count}",
-      "notInUfw": "not in UFW: {count}"
+      "notInUfw": "not in UFW: {count}",
+      "containers": "containers: {count}",
+      "running": "running: {count}"
     },
     "messages": {
       "apply_prepare": "Préparation de l'application des règles UFW",
@@ -295,7 +299,17 @@
       "port_scan_enrichment": "Identifying services with Nmap",
       "port_scan_normalize": "Normalizing scan results",
       "port_scan_complete": "Done: found {count} open port(s)",
-      "port_scan_failed": "Port scan failed: {error}"
+      "port_scan_failed": "Port scan failed: {error}",
+      "docker_inventory_start": "Refreshing Docker container inventory",
+      "docker_preflight": "Checking Docker availability",
+      "docker_list": "Listing containers",
+      "docker_stats": "Collecting container stats",
+      "docker_persist": "Saving inventory snapshot",
+      "docker_inventory_complete": "Done: {total} container(s), {running} running",
+      "docker_inventory_failed": "Docker inventory refresh failed: {error}",
+      "docker_control_start": "Running Docker {action} on {name}",
+      "docker_control_complete": "Done: {action} completed for {name}",
+      "docker_control_failed": "Docker control failed: {error}"
     },
     "phases": {
       "ufw_commands": "Application des commandes UFW",
@@ -316,7 +330,12 @@
       "port_scan_resolve": "Resolving scan target",
       "port_scan_discovery": "Running Naabu discovery",
       "port_scan_enrichment": "Running Nmap enrichment",
-      "port_scan_normalize": "Matching results with UFW rules"
+      "port_scan_normalize": "Matching results with UFW rules",
+      "docker_preflight": "Checking Docker on server",
+      "docker_list": "Listing containers",
+      "docker_stats": "Collecting stats",
+      "docker_persist": "Saving snapshot",
+      "docker_control": "Running container command"
     }
   },
   "portScan": {
@@ -341,6 +360,56 @@
       "NOT_IN_UFW": "Not in UFW",
       "DENIED": "Denied",
       "UNKNOWN": "Unknown"
+    }
+  },
+  "dockerMonitor": {
+    "title": "Docker containers",
+    "description": "Inventory and control of Docker containers on this server via SSH.",
+    "refreshButton": "Refresh inventory",
+    "refreshing": "Refreshing...",
+    "disabled": "Docker monitoring is disabled. Set DOCKER_MONITOR_ENABLED=true in the app environment.",
+    "lastRefreshAt": "Last refresh: {date}",
+    "meta": "Docker {version} · Compose {compose}",
+    "summary": "Total: {total} · running: {running} · stopped: {stopped}",
+    "empty": "No containers found. Refresh inventory to load Docker state from the server.",
+    "ungrouped": "Other containers",
+    "details": "Details",
+    "close": "Close",
+    "loadingDetails": "Loading container details...",
+    "detailsFailed": "Failed to load container details.",
+    "drawerTitle": "Container details",
+    "acting": "Working...",
+    "cancel": "Cancel",
+    "confirmStopTitle": "Stop container?",
+    "confirmRestartTitle": "Restart container?",
+    "confirmStopDescription": "Stop container {name} ({id})? Running services inside it will be interrupted.",
+    "confirmRestartDescription": "Restart container {name} ({id})? It will be stopped and started again.",
+    "columns": {
+      "name": "Name",
+      "image": "Image",
+      "status": "Status",
+      "health": "Health",
+      "ports": "Ports",
+      "cpu": "CPU",
+      "memory": "Memory",
+      "compose": "Compose service",
+      "actions": "Actions"
+    },
+    "actions": {
+      "start": "Start",
+      "stop": "Stop",
+      "restart": "Restart"
+    },
+    "drawer": {
+      "image": "Image",
+      "status": "Status",
+      "health": "Health",
+      "ports": "Published ports",
+      "command": "Command",
+      "mounts": "Mounts",
+      "networks": "Networks",
+      "labels": "Labels",
+      "env": "Environment"
     }
   }
 }
