@@ -1,4 +1,5 @@
 import type { AuthMethod, Prisma, Server } from "@prisma/client";
+import { Prisma as PrismaClient } from "@prisma/client";
 import { db } from "@/lib/db";
 import { clearServerQueue, isServerQueueBusy, waitForServerQueueIdle } from "@/lib/queue/queue-registry";
 import type { ServerInput } from "@/lib/validations/server";
@@ -7,6 +8,24 @@ import { resolveIdentitySecrets } from "@/server/services/identity.service";
 import { createOperationLog } from "@/server/services/operation-log.service";
 import { verifySshConnection } from "@/lib/ssh/verify";
 import { testSshConnection } from "@/server/services/ssh.service";
+
+export const SERVER_DUPLICATE_ERROR = "SERVER_DUPLICATE";
+
+async function findServerByConnection(
+  host: string,
+  port: number,
+  identityId: string,
+  excludeId?: string,
+): Promise<Server | null> {
+  return db.server.findFirst({
+    where: {
+      host,
+      port,
+      identityId,
+      ...(excludeId ? { NOT: { id: excludeId } } : {}),
+    },
+  });
+}
 
 export async function listServers() {
   return db.server.findMany({
@@ -52,6 +71,15 @@ export async function createServer(
   input: ServerInput,
   userId: string,
 ): Promise<{ success: true; server: Server } | { success: false; error: string }> {
+  const duplicate = await findServerByConnection(
+    input.host,
+    input.port,
+    input.identityId,
+  );
+  if (duplicate) {
+    return { success: false, error: SERVER_DUPLICATE_ERROR };
+  }
+
   const identity = await resolveIdentitySecrets(input.identityId);
 
   const sshResult = await verifyServerSsh({
@@ -75,16 +103,27 @@ export async function createServer(
     return { success: false, error: sshResult.message };
   }
 
-  const server = await db.server.create({
-    data: {
-      name: input.name,
-      host: input.host,
-      port: input.port,
-      identityId: input.identityId,
-      sshHostKeyFingerprint: sshResult.hostKeyFingerprint ?? null,
-      sshHostKeyVerified: Boolean(sshResult.hostKeyFingerprint),
-    },
-  });
+  let server: Server;
+  try {
+    server = await db.server.create({
+      data: {
+        name: input.name,
+        host: input.host,
+        port: input.port,
+        identityId: input.identityId,
+        sshHostKeyFingerprint: sshResult.hostKeyFingerprint ?? null,
+        sshHostKeyVerified: Boolean(sshResult.hostKeyFingerprint),
+      },
+    });
+  } catch (error) {
+    if (
+      error instanceof PrismaClient.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return { success: false, error: SERVER_DUPLICATE_ERROR };
+    }
+    throw error;
+  }
 
   await createAuditEvent({
     userId,
@@ -119,6 +158,16 @@ export async function updateServer(
   const existing = await db.server.findUnique({ where: { id } });
   if (!existing) {
     return { success: false, error: "Server not found" };
+  }
+
+  const duplicate = await findServerByConnection(
+    input.host,
+    input.port,
+    input.identityId,
+    id,
+  );
+  if (duplicate) {
+    return { success: false, error: SERVER_DUPLICATE_ERROR };
   }
 
   const hostChanged =

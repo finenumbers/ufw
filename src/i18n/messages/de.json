@@ -1,11 +1,7 @@
 {
   "app": {
-    "subtitle": "UFW Remote Manager",
     "metadataTitle": "UFW Remote Manager",
     "metadataDescription": "Selbst gehostete Remote-UFW-Verwaltung über SSH"
-  },
-  "language": {
-    "label": "Sprache"
   },
   "sidebar": {
     "noServers": "Noch keine Server",
@@ -14,9 +10,7 @@
     "logout": "Abmelden"
   },
   "footer": {
-    "documentation": "Dokumentation",
-    "support": "Support",
-    "aboutVendor": "Finenumbers"
+    "documentation": "Dokumentation"
   },
   "common": {
     "cancel": "Abbrechen",
@@ -101,7 +95,9 @@
     "updateServer": "Server aktualisieren",
     "creating": "Wird erstellt...",
     "updating": "Wird aktualisiert...",
-    "missingServerId": "Server-ID fehlt"
+    "missingServerId": "Server-ID fehlt",
+    "duplicateServer": "Server {host}:{port} mit dieser SSH-Identität ist bereits registriert.",
+    "unexpectedError": "Server konnte nicht gespeichert werden. Bitte erneut versuchen."
   },
   "identities": {
     "title": "SSH-Identitäten",

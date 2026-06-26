@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
-import { getDocsUrl, getSupportMailtoUrl } from "@/lib/docs-url";
+import { getDocsUrl } from "@/lib/docs-url";
 import type { AppLocale } from "@/i18n/config";
 import { getServerPath, isServerPathActive } from "@/lib/server-path";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,6 @@ export function AppSidebar({ servers }: AppSidebarProps) {
             className="h-10 w-auto"
           />
         </Link>
-        <p className="mt-2 text-xs text-muted-foreground">{t("app.subtitle")}</p>
         <LanguageSwitcher className="mt-3" />
       </div>
 
@@ -87,13 +86,6 @@ export function AppSidebar({ servers }: AppSidebarProps) {
           >
             {t("footer.documentation")}
           </a>
-          <a
-            href={getSupportMailtoUrl()}
-            className="block underline-offset-4 hover:underline"
-          >
-            {t("footer.support")}
-          </a>
-          <p className="pt-1">{t("footer.aboutVendor")}</p>
         </div>
       </div>
     </aside>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { getTranslations } from "next-intl/server";
 
 import { verifyUserPassword } from "@/lib/auth/password-verify";
 import { auth } from "@/lib/auth";
@@ -24,6 +25,7 @@ import {
   getServerByHost,
   getServerById,
   listServersWithRuleCounts,
+  SERVER_DUPLICATE_ERROR,
   testServerConnection,
   updateServer,
 } from "@/server/services/server.service";
@@ -78,6 +80,18 @@ export async function getServerByAddressAction(serverAddress: string) {
   return getServerByHost(host);
 }
 
+async function mapServerSaveError(
+  error: string,
+  input: ServerInput,
+): Promise<string> {
+  if (error !== SERVER_DUPLICATE_ERROR) {
+    return error;
+  }
+
+  const t = await getTranslations("serverForm");
+  return t("duplicateServer", { host: input.host, port: input.port });
+}
+
 export async function createServerAction(
   input: ServerInput,
 ): Promise<{ success: true; serverAddress: string } | { success: false; error: string }> {
@@ -89,7 +103,10 @@ export async function createServerAction(
 
   const result = await createServer(parsed.data, userId);
   if (!result.success) {
-    return result;
+    return {
+      success: false,
+      error: await mapServerSaveError(result.error, parsed.data),
+    };
   }
 
   revalidatePath("/servers");
@@ -108,7 +125,12 @@ export async function updateServerAction(
 
   const existing = await getServerById(id);
   const result = await updateServer(id, parsed.data, userId);
-  if (!result.success) return result;
+  if (!result.success) {
+    return {
+      success: false,
+      error: await mapServerSaveError(result.error, parsed.data),
+    };
+  }
 
   if (existing) {
     revalidatePath(getServerPath(existing.host));

@@ -6,9 +6,3 @@ const DOCS_REPO_BASE =
 export function getDocsUrl(locale: AppLocale): string {
   return `${DOCS_REPO_BASE}/${locale}/README.md`;
 }
-
-export const SUPPORT_EMAIL = "apps@finenumbers.com";
-
-export function getSupportMailtoUrl(): string {
-  return `mailto:${SUPPORT_EMAIL}`;
-}

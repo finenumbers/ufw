@@ -1,11 +1,7 @@
 {
   "app": {
-    "subtitle": "UFW Remote Manager",
     "metadataTitle": "UFW Remote Manager",
     "metadataDescription": "Самостоятельно размещаемое удалённое управление UFW через SSH"
-  },
-  "language": {
-    "label": "Язык"
   },
   "sidebar": {
     "noServers": "Серверов пока нет",
@@ -14,9 +10,7 @@
     "identities": "SSH-идентификации"
   },
   "footer": {
-    "documentation": "Документация",
-    "support": "Поддержка",
-    "aboutVendor": "Finenumbers"
+    "documentation": "Документация"
   },
   "common": {
     "cancel": "Отмена",
@@ -101,7 +95,9 @@
     "updateServer": "Сохранить сервер",
     "creating": "Создание...",
     "updating": "Сохранение...",
-    "missingServerId": "Отсутствует ID сервера"
+    "missingServerId": "Отсутствует ID сервера",
+    "duplicateServer": "Сервер {host}:{port} с этой SSH-идентификацией уже добавлен.",
+    "unexpectedError": "Не удалось сохранить сервер. Попробуйте снова."
   },
   "ufw": {
     "installed": "UFW установлен",

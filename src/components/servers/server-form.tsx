@@ -55,26 +55,30 @@ export function ServerForm({ mode, serverId, identities, defaultValues }: Server
     setLoading(true);
     setError(null);
 
-    const result =
-      mode === "create"
-        ? await createServerAction(values)
-        : serverId
-          ? await updateServerAction(serverId, values)
-          : { success: false as const, error: t("missingServerId") };
+    try {
+      const result =
+        mode === "create"
+          ? await createServerAction(values)
+          : serverId
+            ? await updateServerAction(serverId, values)
+            : { success: false as const, error: t("missingServerId") };
 
-    setLoading(false);
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
 
-    if (!result.success) {
-      setError(result.error);
-      return;
+      if ("serverAddress" in result) {
+        router.push(getServerPath(result.serverAddress));
+      } else {
+        router.push("/servers");
+      }
+      router.refresh();
+    } catch {
+      setError(t("unexpectedError"));
+    } finally {
+      setLoading(false);
     }
-
-    if ("serverAddress" in result) {
-      router.push(getServerPath(result.serverAddress));
-    } else {
-      router.push("/servers");
-    }
-    router.refresh();
   }
 
   if (identities.length === 0) {
