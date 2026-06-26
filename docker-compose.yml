@@ -49,6 +49,7 @@ services:
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY is required}
       NODE_ENV: production
       LOG_LEVEL: info
+      PORT_SCAN_ENABLED: ${PORT_SCAN_ENABLED:-false}
     healthcheck:
       test:
         [

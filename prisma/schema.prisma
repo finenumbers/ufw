@@ -148,6 +148,35 @@ enum AuditAction {
   OPERATIONS_CLEARED
   LOGIN
   LOGOUT
+  PORT_SCAN_STARTED
+  PORT_SCAN_COMPLETED
+}
+
+enum PortScanPerspective {
+  EXTERNAL
+}
+
+enum PortScanProfile {
+  TOP1000
+  FULL
+}
+
+enum PortScanFindingSource {
+  NAABU
+  NMAP
+}
+
+enum PortScanEnrichmentStatus {
+  PENDING
+  ENRICHED
+  SKIPPED
+}
+
+enum UfwCoverage {
+  ALLOWED
+  NOT_IN_UFW
+  DENIED
+  UNKNOWN
 }
 
 model SshIdentity {
@@ -195,6 +224,7 @@ model Server {
   draftSessions DraftSession[]
   applySessions ApplySession[]
   operationLogs OperationLog[]
+  portScans     PortScan[]
 
   @@unique([host, port, identityId])
   @@map("server")
@@ -388,4 +418,48 @@ model AuditEvent {
 
   @@index([createdAt(sort: Desc)])
   @@map("audit_event")
+}
+
+model PortScan {
+  id           String              @id @default(cuid())
+  serverId     String
+  server       Server              @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  userId       String
+  status       OperationStatus     @default(PENDING)
+  perspective  PortScanPerspective @default(EXTERNAL)
+  targetHost   String
+  targetIp     String?
+  profile      PortScanProfile     @default(TOP1000)
+  summaryJson  Json?
+  errorMessage String?
+  operationLogId String?
+  startedAt    DateTime            @default(now())
+  completedAt  DateTime?
+
+  findings PortScanFinding[]
+
+  @@index([serverId, startedAt(sort: Desc)])
+  @@map("port_scan")
+}
+
+model PortScanFinding {
+  id               String                   @id @default(cuid())
+  scanId           String
+  scan             PortScan                 @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  port             Int
+  protocol         String
+  state            String
+  serviceName      String?
+  product          String?
+  version          String?
+  banner           String?
+  cpe              String?
+  source           PortScanFindingSource
+  enrichmentStatus PortScanEnrichmentStatus @default(PENDING)
+  ufwCoverage      UfwCoverage?
+  rawJson          Json?
+
+  @@unique([scanId, port, protocol])
+  @@index([scanId, port])
+  @@map("port_scan_finding")
 }

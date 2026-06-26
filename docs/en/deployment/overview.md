@@ -20,7 +20,7 @@ Nginx Proxy Manager is **always external** — not included in this repository.
 |-----------|---------|
 | `ufw-postgres` | Database |
 | `ufw-migrate` | Runs DB migrations once per deploy |
-| `ufw-app` | Web application |
+| `ufw-app` | Web application (includes Naabu/Nmap when port scan enabled) |
 
 ## Recommended production path
 
@@ -30,6 +30,7 @@ Nginx Proxy Manager is **always external** — not included in this repository.
 4. Configure NPM Proxy Host → `ufw-app:8088`
 5. Open `APP_URL/setup`, create admin
 6. Run `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
+7. Optional: enable [external port scanning](./port-scan.md) with `PORT_SCAN_ENABLED=true`
 
 ## Universal images
 

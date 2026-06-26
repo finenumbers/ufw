@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { ServerDetailView } from "@/components/servers/server-detail-view";
+import { isPortScanEnabled } from "@/lib/port-scan/config";
 import { getServerPath } from "@/lib/server-path";
+import { getLatestPortScanAction } from "@/server/actions/port-scan";
 import { getServerByAddressAction } from "@/server/actions/servers";
 import { getRulesViewPageAction } from "@/server/actions/rules";
 import { getRuleRecordCount } from "@/server/services/server.service";
@@ -68,6 +70,8 @@ export default async function ServerDetailPage({ params }: PageProps) {
     : { rows: [], total: 0, hasMore: false, nextOffset: 0 };
   const dbRulesCount = await getRuleRecordCount(server.id);
   const rulesAvailable = ufwState.installed && ufwState.active;
+  const portScanEnabled = isPortScanEnabled();
+  const initialPortScan = portScanEnabled ? await getLatestPortScanAction(server.id) : null;
 
   return (
     <ServerDetailView
@@ -88,6 +92,8 @@ export default async function ServerDetailPage({ params }: PageProps) {
       initialNextOffset={rulesPage.nextOffset}
       rulesAvailable={rulesAvailable}
       rulesUnavailableMessage={t("rulesUnavailable")}
+      portScanEnabled={portScanEnabled}
+      initialPortScan={initialPortScan}
     />
   );
 }

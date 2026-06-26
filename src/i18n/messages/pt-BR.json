@@ -255,7 +255,8 @@
       "ufw_install": "Instalando UFW",
       "ufw_enable": "Ativando UFW",
       "ssh_test": "Testando SSH",
-      "server_create": "Criando servidor"
+      "server_create": "Criando servidor",
+      "port_scan": "Scanning open ports"
     },
     "banner": {
       "success": "Concluído: todas as operações finalizadas com sucesso",
@@ -264,9 +265,12 @@
       "dismiss": "Fechar"
     },
     "summary": {
-      "added": "adicionadas: {count}",
-      "removed": "removidas: {count}",
-      "reordered": "reordenadas: {count}"
+      "added": "added: {count}",
+      "removed": "removed: {count}",
+      "reordered": "reordered: {count}",
+      "openPorts": "open: {count}",
+      "enriched": "enriched: {count}",
+      "notInUfw": "not in UFW: {count}"
     },
     "messages": {
       "apply_prepare": "Preparando aplicação de regras UFW",
@@ -285,7 +289,13 @@
       "ssh_complete": "Conexão SSH bem-sucedida",
       "server_create_complete": "Servidor {name} criado",
       "operation_failed": "Operação falhou: {error}",
-      "operation_cancelled": "Operação cancelada"
+      "operation_cancelled": "Operação cancelada",
+      "port_scan_start": "Starting external port scan",
+      "port_scan_discovery": "Discovering open ports",
+      "port_scan_enrichment": "Identifying services with Nmap",
+      "port_scan_normalize": "Normalizing scan results",
+      "port_scan_complete": "Done: found {count} open port(s)",
+      "port_scan_failed": "Port scan failed: {error}"
     },
     "phases": {
       "ufw_commands": "Aplicando comandos UFW",
@@ -302,7 +312,37 @@
       "draft_sync": "Sincronizando rascunho",
       "install": "Instalando UFW no servidor",
       "enable": "Ativando UFW no servidor",
-      "ssh": "Testando conexão SSH"
+      "ssh": "Testando conexão SSH",
+      "port_scan_resolve": "Resolving scan target",
+      "port_scan_discovery": "Running Naabu discovery",
+      "port_scan_enrichment": "Running Nmap enrichment",
+      "port_scan_normalize": "Matching results with UFW rules"
+    }
+  },
+  "portScan": {
+    "title": "Open ports (external scan)",
+    "description": "Fast discovery with Naabu, then Nmap service detection from the UFW app container toward this server's address.",
+    "scanButton": "Scan ports",
+    "scanning": "Scanning...",
+    "disabled": "Port scanning is disabled. Set PORT_SCAN_ENABLED=true in the app environment.",
+    "profileTop1000": "Top 1000 ports",
+    "profileFull": "All ports",
+    "lastScanAt": "Last scan: {date} · target {target}",
+    "empty": "No scan results yet. Run a port scan to discover externally reachable services.",
+    "summary": "Open: {open} · enriched: {enriched} · not in UFW: {notInUfw}",
+    "columns": {
+      "port": "Port",
+      "protocol": "Proto",
+      "state": "State",
+      "service": "Service",
+      "product": "Product / Version",
+      "ufw": "UFW"
+    },
+    "coverage": {
+      "ALLOWED": "Allowed",
+      "NOT_IN_UFW": "Not in UFW",
+      "DENIED": "Denied",
+      "UNKNOWN": "Unknown"
     }
   }
 }

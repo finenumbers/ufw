@@ -55,6 +55,7 @@ services:
       PORT: 8088
       NODE_ENV: production
       LOG_LEVEL: info
+      PORT_SCAN_ENABLED: ${PORT_SCAN_ENABLED:-false}
     healthcheck:
       test:
         [

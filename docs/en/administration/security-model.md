@@ -30,6 +30,15 @@ SSH passwords and private keys are encrypted with **AES-256-GCM** before storage
 - Imported keys marked unverified until SSH test succeeds
 - Command injection prevented via allowlisted enums and sanitized UFW command building
 
+## External port scanning (optional)
+
+When `PORT_SCAN_ENABLED=true`:
+
+- Scans run **only** toward `Server.host` records already in the database
+- Naabu + Nmap execute inside `ufw-app` (connect scans, no arbitrary targets)
+- Rate-limited per server; audit events recorded
+- Requires **network egress** from the app container to managed hosts on scanned ports — see [Port scanning](../deployment/port-scan.md)
+
 ## Apply and export safeguards
 
 - UFW changes require **preview + explicit confirm**

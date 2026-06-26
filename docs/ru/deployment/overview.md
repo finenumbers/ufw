@@ -20,7 +20,7 @@ Nginx Proxy Manager **всегда внешний** — не включён в �
 |-----------|------------|
 | `ufw-postgres` | База данных |
 | `ufw-migrate` | Выполняет миграции БД один раз при каждом развёртывании |
-| `ufw-app` | Веб-приложение |
+| `ufw-app` | Веб-приложение (Naabu/Nmap при включённом port scan) |
 
 ## Рекомендуемый путь для продакшена
 
@@ -30,6 +30,7 @@ Nginx Proxy Manager **всегда внешний** — не включён в �
 4. Настройте NPM Proxy Host → `ufw-app:8088`
 5. Откройте `APP_URL/setup`, создайте администратора
 6. Выполните `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
+7. Опционально: [внешнее сканирование портов](./port-scan.md) — `PORT_SCAN_ENABLED=true`
 
 ## Универсальные образы
 

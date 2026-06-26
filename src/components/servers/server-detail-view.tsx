@@ -11,7 +11,9 @@ import { RulesImportExport } from "@/components/rules/rules-import-export";
 import { RulesToolbar } from "@/components/rules/rules-toolbar";
 import { ServerInitialSync } from "@/components/servers/server-initial-sync";
 import { UfwDashboard } from "@/components/servers/ufw-dashboard";
+import { PortScanPanel } from "@/components/servers/port-scan-panel";
 import { Button } from "@/components/ui/button";
+import type { PortScanView } from "@/types/port-scan";
 import type { UnifiedRuleRow } from "@/types/rule";
 import type { UfwDetectionResult } from "@/types/ufw";
 import { getRulesViewPageAction } from "@/server/actions/rules";
@@ -34,6 +36,8 @@ type ServerDetailViewProps = {
   initialNextOffset: number;
   rulesAvailable: boolean;
   rulesUnavailableMessage: string;
+  portScanEnabled: boolean;
+  initialPortScan: PortScanView | null;
 };
 
 function sortRows(rows: UnifiedRuleRow[]): UnifiedRuleRow[] {
@@ -52,6 +56,8 @@ export function ServerDetailView({
   initialNextOffset,
   rulesAvailable,
   rulesUnavailableMessage,
+  portScanEnabled,
+  initialPortScan,
 }: ServerDetailViewProps) {
   const tServers = useTranslations("servers");
   const [rows, setRows] = useState(() => sortRows(initialRows));
@@ -193,6 +199,12 @@ export function ServerDetailView({
       ) : (
         <p className="text-sm text-muted-foreground">{rulesUnavailableMessage}</p>
       )}
+
+      <PortScanPanel
+        serverId={server.id}
+        initialScan={initialPortScan}
+        enabled={portScanEnabled}
+      />
     </div>
   );
 }

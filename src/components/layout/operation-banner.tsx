@@ -56,6 +56,9 @@ export function OperationBanner({ serverId }: OperationBannerProps) {
     (summary?: Record<string, number>) => {
       if (!summary) return null;
       const parts: string[] = [];
+      if (summary.openCount) parts.push(t("summary.openPorts", { count: summary.openCount }));
+      if (summary.enrichedCount) parts.push(t("summary.enriched", { count: summary.enrichedCount }));
+      if (summary.notInUfwCount) parts.push(t("summary.notInUfw", { count: summary.notInUfwCount }));
       if (summary.addCount) parts.push(t("summary.added", { count: summary.addCount }));
       if (summary.removeCount) parts.push(t("summary.removed", { count: summary.removeCount }));
       if (summary.updateCount) parts.push(t("summary.reordered", { count: summary.updateCount }));

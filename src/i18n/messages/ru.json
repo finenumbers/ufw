@@ -193,7 +193,8 @@
       "ufw_install": "Установка UFW",
       "ufw_enable": "Включение UFW",
       "ssh_test": "Проверка SSH",
-      "server_create": "Создание сервера"
+      "server_create": "Создание сервера",
+      "port_scan": "Сканирование открытых портов"
     },
     "banner": {
       "success": "Готово: все операции успешно завершены",
@@ -204,7 +205,10 @@
     "summary": {
       "added": "добавлено: {count}",
       "removed": "удалено: {count}",
-      "reordered": "изменён порядок: {count}"
+      "reordered": "изменён порядок: {count}",
+      "openPorts": "открыто: {count}",
+      "enriched": "идентифицировано: {count}",
+      "notInUfw": "нет в UFW: {count}"
     },
     "messages": {
       "apply_prepare": "Подготовка к применению правил UFW",
@@ -223,7 +227,13 @@
       "ssh_complete": "SSH-подключение успешно",
       "server_create_complete": "Сервер {name} создан",
       "operation_failed": "Ошибка операции: {error}",
-      "operation_cancelled": "Операция отменена"
+      "operation_cancelled": "Операция отменена",
+      "port_scan_start": "Запуск внешнего сканирования портов",
+      "port_scan_discovery": "Поиск открытых портов",
+      "port_scan_enrichment": "Идентификация сервисов через Nmap",
+      "port_scan_normalize": "Нормализация результатов",
+      "port_scan_complete": "Готово: найдено открытых портов — {count}",
+      "port_scan_failed": "Ошибка сканирования: {error}"
     },
     "phases": {
       "ufw_commands": "Применение команд UFW",
@@ -240,7 +250,11 @@
       "draft_sync": "Синхронизация черновика",
       "install": "Установка UFW на сервере",
       "enable": "Включение UFW на сервере",
-      "ssh": "Проверка SSH-подключения"
+      "ssh": "Проверка SSH-подключения",
+      "port_scan_resolve": "Определение цели сканирования",
+      "port_scan_discovery": "Discovery через Naabu",
+      "port_scan_enrichment": "Enrichment через Nmap",
+      "port_scan_normalize": "Сопоставление с правилами UFW"
     }
   },
   "identities": {
@@ -304,5 +318,31 @@
     "updateWarningTitle": "Обновить идентификацию для всех серверов?",
     "updateWarningDescription": "Эта идентификация используется {count} сервером(ами). Сохранение изменит SSH-доступ для всех них.",
     "confirmUpdate": "Сохранить изменения"
+  },
+  "portScan": {
+    "title": "Открытые порты (внешнее сканирование)",
+    "description": "Быстрый discovery через Naabu и точная идентификация сервисов через Nmap из контейнера UFW-app по адресу сервера.",
+    "scanButton": "Сканировать порты",
+    "scanning": "Сканирование...",
+    "disabled": "Сканирование портов отключено. Установите PORT_SCAN_ENABLED=true в окружении приложения.",
+    "profileTop1000": "Топ-1000 портов",
+    "profileFull": "Все порты",
+    "lastScanAt": "Последнее сканирование: {date} · цель {target}",
+    "empty": "Результатов пока нет. Запустите сканирование, чтобы увидеть доступные снаружи сервисы.",
+    "summary": "Открыто: {open} · идентифицировано: {enriched} · нет в UFW: {notInUfw}",
+    "columns": {
+      "port": "Порт",
+      "protocol": "Прото",
+      "state": "Состояние",
+      "service": "Сервис",
+      "product": "Продукт / версия",
+      "ufw": "UFW"
+    },
+    "coverage": {
+      "ALLOWED": "Разрешено",
+      "NOT_IN_UFW": "Нет в UFW",
+      "DENIED": "Запрещено",
+      "UNKNOWN": "Неизвестно"
+    }
   }
 }
