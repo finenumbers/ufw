@@ -34,9 +34,19 @@ export function resolveRuleFingerprint(row: UnifiedRuleRow): string {
 }
 
 export function getDesiredOrderedRules(desired: UnifiedRuleRow[]): UnifiedRuleRow[] {
-  return desired
+  const ordered = desired
     .filter((row) => !row.isDeleted)
     .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const seen = new Set<string>();
+  return ordered.filter((row) => {
+    const fingerprint = resolveRuleFingerprint(row);
+    if (seen.has(fingerprint)) {
+      return false;
+    }
+    seen.add(fingerprint);
+    return true;
+  });
 }
 
 function getDesiredFingerprintOrder(desired: UnifiedRuleRow[]): string[] {

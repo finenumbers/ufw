@@ -1,3 +1,4 @@
+import { alignImportCoreWithRemote } from "@/lib/imports/align-import-core";
 import { computeFingerprint } from "@/lib/ufw/fingerprint";
 import type { ImportRuleRow } from "@/lib/validations/import";
 
@@ -7,20 +8,7 @@ export type DedupeImportResult = {
 };
 
 function importRowFingerprint(row: ImportRuleRow): string {
-  return computeFingerprint({
-    action: row.action,
-    direction: row.direction ?? null,
-    interface: row.interface ?? null,
-    protocol: row.protocol ?? null,
-    fromAddress: row.fromAddress ?? null,
-    fromPort: row.fromPort ?? null,
-    toAddress: row.toAddress ?? null,
-    toPort: row.toPort ?? null,
-    appName: row.appName ?? null,
-    logMode: row.logMode ?? "NONE",
-    ruleComment: row.ruleComment ?? null,
-    ipv6: row.ipv6 ?? false,
-  });
+  return computeFingerprint(alignImportCoreWithRemote(row));
 }
 
 export function dedupeImportRows(rows: ImportRuleRow[]): DedupeImportResult {
