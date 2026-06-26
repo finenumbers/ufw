@@ -12,14 +12,14 @@ La configuration d'exécution est fournie via `.env` (Compose) ou l'interface d'
 | `APP_ENCRYPTION_KEY` | Clé AES pour identifiants SSH (32 octets décodés) | `openssl rand -base64 32` |
 | `NPM_NETWORK` | Nom du réseau Docker partagé avec NPM | `docker network ls` |
 
-## Déploiement GHCR
+## Déploiement GHCR (optionnel)
 
-| Variable | Description |
-|----------|-------------|
-| `GHCR_APP_IMAGE` | ex. `ghcr.io/finenumbers/ufw-remote-manager:v0.1.0` |
-| `GHCR_MIGRATE_IMAGE` | ex. `ghcr.io/finenumbers/ufw-remote-manager-migrate:v0.1.0` |
-| `IMAGE_TAG` | Tag de référence dans docs/scripts |
-| `GHCR_OWNER` | Propriétaire GitHub (minuscules), ex. `finenumbers` |
+Compose et le stack Portainer utilisent par défaut `ghcr.io/finenumbers/ufw-remote-manager:latest`. Chaque release GitHub met à jour le tag `latest`.
+
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `GHCR_OWNER` | Propriétaire GitHub (minuscules) | `finenumbers` |
+| `GHCR_IMAGE_TAG` | Tag image (`latest` ou ex. `v0.2.1`) | `latest` |
 
 ## Optionnelles
 

@@ -1,57 +1,52 @@
-# Actualización y reversión
+# Upgrade and rollback
 
-Stack: `ufw-postgres`, `ufw-migrate` (una sola ejecución), `ufw-app`. Las imágenes son universales — configure `APP_URL` en `.env` en tiempo de ejecución.
+Stack: `ufw-postgres`, `ufw-migrate` (one-shot), `ufw-app`. Images are universal — set `APP_URL` in `.env` at runtime.
 
-## Antes de cada actualización
+Default image tag is **`latest`** (updated on every GitHub release). You do not need to edit compose/stack files to upgrade.
 
-1. [Copia de seguridad](./backup-restore.md) de Postgres y `.env`
-2. Anote la etiqueta de imagen actual: `grep IMAGE_TAG .env`
-3. Lea las [notas de la versión](https://github.com/finenumbers/ufw/releases)
+## Before every upgrade
 
-## Actualización (GHCR + Compose)
+1. [Backup](./backup-restore.md) Postgres and `.env`
+2. Read [release notes](https://github.com/finenumbers/ufw/releases)
 
-1. Actualice `.env`:
+## Upgrade (Portainer) — recommended
 
-```bash
-IMAGE_TAG=v0.2.0
-GHCR_APP_IMAGE=ghcr.io/finenumbers/ufw-remote-manager:v0.2.0
-GHCR_MIGRATE_IMAGE=ghcr.io/finenumbers/ufw-remote-manager-migrate:v0.2.0
-```
+1. Portainer → **Stacks** → `ufw-remote-manager` → **Update the stack**
+2. Enable **Pull latest image**
+3. Deploy (no env changes if `GHCR_IMAGE_TAG` is unset or `latest`)
+4. Verify: `ufw-migrate` exited 0, `ufw-app` healthy, smoke test
 
-2. Descargue y redespliegue:
+## Upgrade (GHCR + Compose)
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env pull
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env up -d
 ```
 
-3. Verifique: `docker logs ufw-migrate` (exit 0) y `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
+Migrations run automatically via `ufw-migrate`.
 
-Las migraciones se ejecutan automáticamente mediante `ufw-migrate`.
+## Pin or rollback to a specific version
 
-## Actualización (Portainer)
+Set in `.env` or Portainer stack environment:
 
-Actualice `GHCR_*_IMAGE` en el entorno del stack → **Update the stack** (Pull & redeploy).
+```bash
+GHCR_IMAGE_TAG=v0.2.1
+```
 
-## Reversión
+Then pull and redeploy. Omit `GHCR_IMAGE_TAG` (or set `latest`) to track the newest release again.
 
-Las migraciones Prisma son solo hacia adelante. Si una versión nueva aplicó cambios de esquema irreversibles, **restaure Postgres desde la copia de seguridad previa a la actualización** — no revierta solo la etiqueta de imagen.
+Prisma migrations are forward-only. If a new version applied irreversible schema changes, **restore Postgres from pre-upgrade backup** — do not only revert the image tag.
 
-Reversión segura solo de imagen (sin migración destructiva):
+## Change APP_URL (domain move)
 
-1. Revierta las etiquetas de imagen en `.env` a la versión anterior
-2. `docker compose ... pull && docker compose ... up -d`
-3. Prueba de humo
+1. Update NPM Proxy Host
+2. Change `APP_URL` in `.env`
+3. Redeploy or `docker compose ... up -d app`
 
-## Cambiar APP_URL (cambio de dominio)
+No image rebuild required. Users may need to log in again.
 
-1. Actualice NPM Proxy Host
-2. Cambie `APP_URL` en `.env`
-3. `docker compose ... up -d app`
+## Related docs
 
-No hace falta recompilar la imagen. Los usuarios pueden necesitar iniciar sesión de nuevo.
-
-## Documentación relacionada
-
-- [Copia de seguridad y restauración](./backup-restore.md)
+- [Backup and restore](./backup-restore.md)
+- [Portainer deployment](../deployment/portainer.md)
 - [GHCR + Compose](../deployment/ghcr-compose.md)

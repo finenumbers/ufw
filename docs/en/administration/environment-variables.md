@@ -12,14 +12,16 @@ Runtime configuration is supplied via `.env` (Compose) or Portainer environment 
 | `APP_ENCRYPTION_KEY` | AES key for SSH credentials (32 decoded bytes) | `openssl rand -base64 32` |
 | `NPM_NETWORK` | Docker network name shared with NPM | `docker network ls` |
 
-## GHCR deployment
+## GHCR deployment (optional)
 
-| Variable | Description |
-|----------|-------------|
-| `GHCR_APP_IMAGE` | e.g. `ghcr.io/finenumbers/ufw-remote-manager:v0.1.0` |
-| `GHCR_MIGRATE_IMAGE` | e.g. `ghcr.io/finenumbers/ufw-remote-manager-migrate:v0.1.0` |
-| `IMAGE_TAG` | Tag for reference in docs/scripts |
-| `GHCR_OWNER` | GitHub owner (lowercase), e.g. `finenumbers` |
+Compose and Portainer stack default to `ghcr.io/finenumbers/ufw-remote-manager:latest`. Each GitHub release updates the `latest` tag.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `GHCR_OWNER` | GitHub owner (lowercase) | `finenumbers` |
+| `GHCR_IMAGE_TAG` | Image tag (`latest` or pin e.g. `v0.2.1`) | `latest` |
+
+Legacy `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` are no longer required — image URLs are built from owner + tag in compose files.
 
 ## Optional
 

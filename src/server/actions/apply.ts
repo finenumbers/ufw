@@ -28,27 +28,6 @@ export async function previewApplyAction(
     const data = await previewApply(serverId, userId, desired);
     return { success: true, data };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Preview failed";
-    // #region agent log
-    fetch("http://127.0.0.1:7609/ingest/14ecf3d2-f6bd-4c83-93e8-e6fa310f4508", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "e30bc9" },
-      body: JSON.stringify({
-        sessionId: "e30bc9",
-        runId: "post-fix",
-        hypothesisId: "A",
-        location: "apply.ts:previewApplyAction",
-        message: "previewApplyAction failed",
-        data: {
-          serverId,
-          rowCount: desired.length,
-          emptyFingerprintCount: desired.filter((row) => !row.fingerprint?.trim()).length,
-          errorMessage: message,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
     return {
       success: false,
       error: sanitizeGenericClientError(error, "Preview failed"),

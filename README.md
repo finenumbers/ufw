@@ -34,7 +34,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compos
 ./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
 ```
 
-Images: `ghcr.io/finenumbers/ufw-remote-manager:v0.1.0`
+Images: `ghcr.io/finenumbers/ufw-remote-manager:latest` (auto-updated on each release)
 
 ## Stack
 

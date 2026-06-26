@@ -12,14 +12,16 @@
 | `APP_ENCRYPTION_KEY` | AES-ключ для SSH-учётных данных (32 декодированных байта) | `openssl rand -base64 32` |
 | `NPM_NETWORK` | Имя Docker-сети, общей с NPM | `docker network ls` |
 
-## Развёртывание GHCR
+## Развёртывание GHCR (опционально)
 
-| Переменная | Описание |
-|------------|----------|
-| `GHCR_APP_IMAGE` | например, `ghcr.io/finenumbers/ufw-remote-manager:v0.1.0` |
-| `GHCR_MIGRATE_IMAGE` | например, `ghcr.io/finenumbers/ufw-remote-manager-migrate:v0.1.0` |
-| `IMAGE_TAG` | Тег для ссылок в документации/скриптах |
-| `GHCR_OWNER` | Владелец GitHub (lowercase), например `finenumbers` |
+Compose и Portainer stack по умолчанию используют `ghcr.io/finenumbers/ufw-remote-manager:latest`. Каждый GitHub release обновляет тег `latest`.
+
+| Переменная | Описание | По умолчанию |
+|------------|----------|--------------|
+| `GHCR_OWNER` | Владелец GitHub (lowercase) | `finenumbers` |
+| `GHCR_IMAGE_TAG` | Тег образа (`latest` или фиксация, напр. `v0.2.1`) | `latest` |
+
+Устаревшие `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` больше не требуются — URL образов собираются из owner + tag в compose-файлах.
 
 ## Опциональные
 

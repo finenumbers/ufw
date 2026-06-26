@@ -1,57 +1,52 @@
 # Обновление и откат
 
-Стек: `ufw-postgres`, `ufw-migrate` (one-shot), `ufw-app`. Образы универсальны — задайте `APP_URL` в `.env` во время выполнения.
+Стек: `ufw-postgres`, `ufw-migrate` (одноразовый), `ufw-app`. Образы универсальны — `APP_URL` задаётся в `.env` при запуске.
+
+По умолчанию используется тег **`latest`** (обновляется при каждом GitHub release). Для обновления не нужно менять compose/stack файлы.
 
 ## Перед каждым обновлением
 
 1. [Резервная копия](./backup-restore.md) Postgres и `.env`
-2. Запишите текущий тег образа: `grep IMAGE_TAG .env`
-3. Прочитайте [release notes](https://github.com/finenumbers/ufw/releases)
+2. Прочитайте [release notes](https://github.com/finenumbers/ufw/releases)
+
+## Обновление (Portainer) — рекомендуется
+
+1. Portainer → **Stacks** → `ufw-remote-manager` → **Update the stack**
+2. Включите **Pull latest image**
+3. Deploy (без изменений env, если `GHCR_IMAGE_TAG` не задан или `latest`)
+4. Проверка: `ufw-migrate` exited 0, `ufw-app` healthy, smoke test
 
 ## Обновление (GHCR + Compose)
-
-1. Обновите `.env`:
-
-```bash
-IMAGE_TAG=v0.2.0
-GHCR_APP_IMAGE=ghcr.io/finenumbers/ufw-remote-manager:v0.2.0
-GHCR_MIGRATE_IMAGE=ghcr.io/finenumbers/ufw-remote-manager-migrate:v0.2.0
-```
-
-2. Загрузите и переразверните:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env pull
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env up -d
 ```
 
-3. Проверка: `docker logs ufw-migrate` (exit 0) и `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
+Миграции выполняет `ufw-migrate` автоматически.
 
-Миграции выполняются автоматически через `ufw-migrate`.
+## Фиксация версии или откат
 
-## Обновление (Portainer)
+В `.env` или environment стека Portainer:
 
-Обновите `GHCR_*_IMAGE` в переменных окружения стека → **Update the stack** (Pull & redeploy).
+```bash
+GHCR_IMAGE_TAG=v0.2.1
+```
 
-## Откат
+Затем pull и redeploy. Уберите `GHCR_IMAGE_TAG` (или задайте `latest`), чтобы снова получать последний релиз.
 
-Миграции Prisma только вперёд. Если новая версия применила необратимые изменения схемы, **восстановите Postgres из резервной копии до обновления** — не откатывайте только тег образа.
-
-Безопасный откат только образа (без деструктивной миграции):
-
-1. Верните теги образов в `.env` на предыдущую версию
-2. `docker compose ... pull && docker compose ... up -d`
-3. Дымовой тест
+Миграции Prisma необратимы вперёд. Если новая версия применила необратимые изменения схемы — **восстановите Postgres из бэкапа**, а не только откатите тег образа.
 
 ## Смена APP_URL (перенос домена)
 
 1. Обновите NPM Proxy Host
 2. Измените `APP_URL` в `.env`
-3. `docker compose ... up -d app`
+3. Redeploy или `docker compose ... up -d app`
 
-Пересборка образа не требуется. Пользователям может понадобиться войти снова.
+Пересборка образа не нужна. Пользователям может потребоваться повторный вход.
 
 ## Связанные документы
 
-- [Резервное копирование и восстановление](./backup-restore.md)
+- [Резервное копирование](./backup-restore.md)
+- [Portainer](../deployment/portainer.md)
 - [GHCR + Compose](../deployment/ghcr-compose.md)

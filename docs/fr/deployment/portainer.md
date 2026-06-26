@@ -25,7 +25,7 @@ docker inspect <npm_container> --format '{{range $k,$v := .NetworkSettings.Netwo
 
 Ou copier [`.env.production.example`](../../../.env.production.example).
 
-Obligatoires : `APP_URL`, `NPM_NETWORK`, `GHCR_APP_IMAGE`, `GHCR_MIGRATE_IMAGE`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `APP_ENCRYPTION_KEY`.
+Obligatoires : `APP_URL`, `NPM_NETWORK`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `APP_ENCRYPTION_KEY`. Optionnel : `GHCR_OWNER`, `GHCR_IMAGE_TAG` (défaut `latest`).
 
 ## Créer la stack
 

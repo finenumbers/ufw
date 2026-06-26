@@ -7,7 +7,9 @@ Production images are published to **GitHub Container Registry (GHCR)**:
 | `ghcr.io/finenumbers/ufw-remote-manager:TAG` | Next.js app |
 | `ghcr.io/finenumbers/ufw-remote-manager-migrate:TAG` | Prisma migrations (one-shot) |
 
-Replace `finenumbers` with your fork owner if you use a fork.
+Each release publishes **`latest`** plus version tags (e.g. `v0.2.1`, `0.2.1`). Production deploys use **`latest`** by default — no version in `.env` required.
+
+Replace `finenumbers` with your fork owner if you use a fork (`GHCR_OWNER` in `.env`).
 
 ## Universal images — APP_URL at runtime
 
@@ -18,15 +20,15 @@ Images are **domain-agnostic**. Set `APP_URL` in `.env` to your public HTTPS URL
 ### Option A — Git tag release (recommended)
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.2.2
+git push origin v0.2.2
 ```
 
-GitHub Actions publishes tagged images. Packages must be **Public** on first use (GitHub → Packages → settings).
+GitHub Actions publishes tagged images and updates `latest`. Packages must be **Public** on first use (GitHub → Packages → settings).
 
 ### Option B — Release (dispatch)
 
-Actions → **Release (dispatch)** → enter `image_tag` (e.g. `v0.1.0-prod`).
+Actions → **Release (dispatch)** → enter `image_tag` (custom tag; does not update `latest` unless you tag `latest` manually).
 
 ## Prepare `.env` on the server
 
@@ -36,18 +38,15 @@ cp .env.production.example .env
 ./scripts/generate-production-env.sh .env
 ```
 
-Example:
+Example (secrets required; image vars optional):
 
 ```bash
 APP_URL=https://ufw.example.com
 NPM_NETWORK=nginxproxymanager_default
-GHCR_OWNER=finenumbers
-IMAGE_TAG=v0.1.0
-GHCR_APP_IMAGE=ghcr.io/finenumbers/ufw-remote-manager:v0.1.0
-GHCR_MIGRATE_IMAGE=ghcr.io/finenumbers/ufw-remote-manager-migrate:v0.1.0
 POSTGRES_PASSWORD=...
 BETTER_AUTH_SECRET=...
 APP_ENCRYPTION_KEY=...
+# Optional: GHCR_OWNER=finenumbers  GHCR_IMAGE_TAG=latest
 ```
 
 Generate secrets:
@@ -85,7 +84,9 @@ Configure NPM — see [Nginx Proxy Manager](./nginx-proxy-manager.md).
 
 ## Upgrade
 
-See [Upgrade and rollback](../operations/upgrade-rollback.md).
+Redeploy with `docker compose ... pull && up -d` — no `.env` changes when using `latest`.
+
+See [Upgrade and rollback](../operations/upgrade-rollback.md) to pin a version.
 
 ## Troubleshooting
 

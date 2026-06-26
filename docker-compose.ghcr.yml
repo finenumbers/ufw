@@ -1,8 +1,7 @@
 # Pull pre-built images from GitHub Container Registry (GHCR).
 #
-# Prerequisites:
-#   1. Build or pull images (see docs/en/deployment/ghcr-compose.md).
-#   2. Set GHCR_APP_IMAGE and GHCR_MIGRATE_IMAGE in .env (see .env.production.example).
+# Defaults: ghcr.io/finenumbers/ufw-remote-manager:latest (see Release workflow).
+# Optional in .env: GHCR_OWNER, GHCR_IMAGE_TAG (pin e.g. v0.2.1 for rollback).
 #
 # Usage (production behind NPM):
 #   docker compose \
@@ -10,13 +9,13 @@
 #     -f docker-compose.prod.yml \
 #     -f docker-compose.ghcr.yml \
 #     --env-file .env \
-#     up -d
+#     pull && up -d
 
 services:
   migrate:
     build: !reset null
-    image: ${GHCR_MIGRATE_IMAGE:?Set GHCR_MIGRATE_IMAGE in .env}
+    image: ghcr.io/${GHCR_OWNER:-finenumbers}/ufw-remote-manager-migrate:${GHCR_IMAGE_TAG:-latest}
 
   app:
     build: !reset null
-    image: ${GHCR_APP_IMAGE:?Set GHCR_APP_IMAGE in .env}
+    image: ghcr.io/${GHCR_OWNER:-finenumbers}/ufw-remote-manager:${GHCR_IMAGE_TAG:-latest}

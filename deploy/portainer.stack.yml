@@ -2,10 +2,13 @@
 # NPM is NOT part of this stack.
 #
 # Deploy:
-#   1. Copy .env.production.example → set secrets on the host (or Portainer env UI).
+#   1. Set secrets in Portainer env (or copy .env.production.example).
 #   2. Portainer → Stacks → Add stack → Web editor → paste this file.
-#   3. Set all required environment variables in Portainer (never commit real values to git).
-#   4. Configure NPM Proxy Host: ufw-app:8088, WebSockets ON, Force SSL.
+#   3. Configure NPM Proxy Host: ufw-app:8088, WebSockets ON, Force SSL.
+#
+# Images default to ghcr.io/finenumbers/ufw-remote-manager:latest (updated on each release).
+# Redeploy: Update the stack with "Pull latest image" — no env/file changes needed.
+# Pin a version: set GHCR_IMAGE_TAG=v0.2.1 in stack environment (optional).
 #
 # See docs/en/deployment/portainer.md
 
@@ -30,7 +33,7 @@ services:
       start_period: 10s
 
   migrate:
-    image: ${GHCR_MIGRATE_IMAGE:?GHCR_MIGRATE_IMAGE is required}
+    image: ghcr.io/${GHCR_OWNER:-finenumbers}/ufw-remote-manager-migrate:${GHCR_IMAGE_TAG:-latest}
     container_name: ufw-migrate
     environment:
       DATABASE_URL: postgresql://ufw:${POSTGRES_PASSWORD}@postgres:5432/ufw?schema=public
@@ -40,7 +43,7 @@ services:
     restart: "no"
 
   app:
-    image: ${GHCR_APP_IMAGE:?GHCR_APP_IMAGE is required}
+    image: ghcr.io/${GHCR_OWNER:-finenumbers}/ufw-remote-manager:${GHCR_IMAGE_TAG:-latest}
     container_name: ufw-app
     restart: unless-stopped
     environment:

@@ -2,56 +2,51 @@
 
 Stack: `ufw-postgres`, `ufw-migrate` (one-shot), `ufw-app`. Images are universal — set `APP_URL` in `.env` at runtime.
 
+Default image tag is **`latest`** (updated on every GitHub release). You do not need to edit compose/stack files to upgrade.
+
 ## Before every upgrade
 
 1. [Backup](./backup-restore.md) Postgres and `.env`
-2. Record current image tag: `grep IMAGE_TAG .env`
-3. Read [release notes](https://github.com/finenumbers/ufw/releases)
+2. Read [release notes](https://github.com/finenumbers/ufw/releases)
+
+## Upgrade (Portainer) — recommended
+
+1. Portainer → **Stacks** → `ufw-remote-manager` → **Update the stack**
+2. Enable **Pull latest image**
+3. Deploy (no env changes if `GHCR_IMAGE_TAG` is unset or `latest`)
+4. Verify: `ufw-migrate` exited 0, `ufw-app` healthy, smoke test
 
 ## Upgrade (GHCR + Compose)
-
-1. Update `.env`:
-
-```bash
-IMAGE_TAG=v0.2.0
-GHCR_APP_IMAGE=ghcr.io/finenumbers/ufw-remote-manager:v0.2.0
-GHCR_MIGRATE_IMAGE=ghcr.io/finenumbers/ufw-remote-manager-migrate:v0.2.0
-```
-
-2. Pull and redeploy:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env pull
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env up -d
 ```
 
-3. Verify: `docker logs ufw-migrate` (exit 0) and `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
-
 Migrations run automatically via `ufw-migrate`.
 
-## Upgrade (Portainer)
+## Pin or rollback to a specific version
 
-Update `GHCR_*_IMAGE` in stack environment → **Update the stack** (Pull & redeploy).
+Set in `.env` or Portainer stack environment:
 
-## Rollback
+```bash
+GHCR_IMAGE_TAG=v0.2.1
+```
+
+Then pull and redeploy. Omit `GHCR_IMAGE_TAG` (or set `latest`) to track the newest release again.
 
 Prisma migrations are forward-only. If a new version applied irreversible schema changes, **restore Postgres from pre-upgrade backup** — do not only revert the image tag.
-
-Safe image-only rollback (no destructive migration):
-
-1. Revert `.env` image tags to previous version
-2. `docker compose ... pull && docker compose ... up -d`
-3. Smoke test
 
 ## Change APP_URL (domain move)
 
 1. Update NPM Proxy Host
 2. Change `APP_URL` in `.env`
-3. `docker compose ... up -d app`
+3. Redeploy or `docker compose ... up -d app`
 
 No image rebuild required. Users may need to log in again.
 
 ## Related docs
 
 - [Backup and restore](./backup-restore.md)
+- [Portainer deployment](../deployment/portainer.md)
 - [GHCR + Compose](../deployment/ghcr-compose.md)

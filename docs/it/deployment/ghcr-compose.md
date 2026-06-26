@@ -1,56 +1,55 @@
 # GHCR + Docker Compose
 
-Le immagini di produzione sono pubblicate su **GitHub Container Registry (GHCR)**:
+Production images are published to **GitHub Container Registry (GHCR)**:
 
-| Immagine | Scopo |
+| Image | Purpose |
 |-------|---------|
-| `ghcr.io/finenumbers/ufw-remote-manager:TAG` | App Next.js |
-| `ghcr.io/finenumbers/ufw-remote-manager-migrate:TAG` | Migrazioni Prisma (one-shot) |
+| `ghcr.io/finenumbers/ufw-remote-manager:TAG` | Next.js app |
+| `ghcr.io/finenumbers/ufw-remote-manager-migrate:TAG` | Prisma migrations (one-shot) |
 
-Sostituisci `finenumbers` con il proprietario del tuo fork se usi un fork.
+Each release publishes **`latest`** plus version tags (e.g. `v0.2.1`, `0.2.1`). Production deploys use **`latest`** by default — no version in `.env` required.
 
-## Immagini universali — APP_URL a runtime
+Replace `finenumbers` with your fork owner if you use a fork (`GHCR_OWNER` in `.env`).
 
-Le immagini sono **indipendenti dal dominio**. Imposta `APP_URL` in `.env` al tuo URL HTTPS pubblico. Nessuna build per dominio richiesta.
+## Universal images — APP_URL at runtime
 
-## Ottenere le immagini
+Images are **domain-agnostic**. Set `APP_URL` in `.env` to your public HTTPS URL. No per-domain build required.
 
-### Opzione A — Release tag Git (consigliata)
+## Get images
+
+### Option A — Git tag release (recommended)
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.2.2
+git push origin v0.2.2
 ```
 
-GitHub Actions pubblica immagini taggate. I pacchetti devono essere **Public** al primo uso (GitHub → Packages → settings).
+GitHub Actions publishes tagged images and updates `latest`. Packages must be **Public** on first use (GitHub → Packages → settings).
 
-### Opzione B — Release (dispatch)
+### Option B — Release (dispatch)
 
-Actions → **Release (dispatch)** → inserisci `image_tag` (es. `v0.1.0-prod`).
+Actions → **Release (dispatch)** → enter `image_tag` (custom tag; does not update `latest` unless you tag `latest` manually).
 
-## Preparare `.env` sul server
+## Prepare `.env` on the server
 
 ```bash
 cp .env.production.example .env
-# oppure
+# or
 ./scripts/generate-production-env.sh .env
 ```
 
-Esempio:
+Example (secrets required; image vars optional):
 
 ```bash
 APP_URL=https://ufw.example.com
 NPM_NETWORK=nginxproxymanager_default
-GHCR_OWNER=finenumbers
-IMAGE_TAG=v0.1.0
-GHCR_APP_IMAGE=ghcr.io/finenumbers/ufw-remote-manager:v0.1.0
-GHCR_MIGRATE_IMAGE=ghcr.io/finenumbers/ufw-remote-manager-migrate:v0.1.0
 POSTGRES_PASSWORD=...
 BETTER_AUTH_SECRET=...
 APP_ENCRYPTION_KEY=...
+# Optional: GHCR_OWNER=finenumbers  GHCR_IMAGE_TAG=latest
 ```
 
-Genera segreti:
+Generate secrets:
 
 ```bash
 openssl rand -base64 32   # BETTER_AUTH_SECRET, APP_ENCRYPTION_KEY
@@ -75,28 +74,30 @@ docker compose \
   up -d
 ```
 
-Valida:
+Validate:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env config
 ```
 
-Configura NPM — vedi [Nginx Proxy Manager](./nginx-proxy-manager.md).
+Configure NPM — see [Nginx Proxy Manager](./nginx-proxy-manager.md).
 
-## Aggiornamento
+## Upgrade
 
-Vedi [Aggiornamento e rollback](../operations/upgrade-rollback.md).
+Redeploy with `docker compose ... pull && up -d` — no `.env` changes when using `latest`.
 
-## Risoluzione problemi
+See [Upgrade and rollback](../operations/upgrade-rollback.md) to pin a version.
 
-| Sintomo | Verifica |
+## Troubleshooting
+
+| Symptom | Check |
 |---------|-------|
-| Loop redirect auth | `APP_URL` corrisponde esattamente all'URL pubblico NPM |
-| `pull access denied` | Visibilità pacchetto Public, o `docker login ghcr.io` |
-| `APP_URL is required` | `.env` caricato con `--env-file .env` |
-| NPM 502 | App su rete `npm_proxy`; nome container `ufw-app` |
+| Auth redirect loops | `APP_URL` exactly matches NPM public URL |
+| `pull access denied` | Package visibility Public, or `docker login ghcr.io` |
+| `APP_URL is required` | `.env` loaded with `--env-file .env` |
+| NPM 502 | App on `npm_proxy` network; container name `ufw-app` |
 
-## Documentazione correlata
+## Related docs
 
-- [Panoramica deployment](./overview.md)
-- [Smoke test](../operations/smoke-tests.md)
+- [Deployment overview](./overview.md)
+- [Smoke tests](../operations/smoke-tests.md)

@@ -21,17 +21,11 @@ if [[ -z "$NPM_NETWORK" ]]; then
   exit 1
 fi
 
-read -r -p "GitHub owner for GHCR images (lowercase): " GHCR_OWNER
-if [[ -z "$GHCR_OWNER" ]]; then
-  echo "GHCR_OWNER is required." >&2
-  exit 1
-fi
+read -r -p "GitHub owner for GHCR images [finenumbers]: " GHCR_OWNER
+GHCR_OWNER="${GHCR_OWNER:-finenumbers}"
 
-read -r -p "Image tag to deploy (e.g. v0.1.0): " IMAGE_TAG
-if [[ -z "$IMAGE_TAG" ]]; then
-  echo "IMAGE_TAG is required." >&2
-  exit 1
-fi
+read -r -p "Image tag [latest — always newest release]: " GHCR_IMAGE_TAG
+GHCR_IMAGE_TAG="${GHCR_IMAGE_TAG:-latest}"
 
 POSTGRES_PASSWORD="$(openssl rand -base64 24 | tr -d '\n')"
 BETTER_AUTH_SECRET="$(openssl rand -base64 32 | tr -d '\n')"
@@ -45,10 +39,8 @@ cat >"$TARGET_FILE" <<EOF
 
 APP_URL=${APP_URL}
 NPM_NETWORK=${NPM_NETWORK}
-IMAGE_TAG=${IMAGE_TAG}
 GHCR_OWNER=${GHCR_OWNER_LOWER}
-GHCR_APP_IMAGE=ghcr.io/${GHCR_OWNER_LOWER}/ufw-remote-manager:${IMAGE_TAG}
-GHCR_MIGRATE_IMAGE=ghcr.io/${GHCR_OWNER_LOWER}/ufw-remote-manager-migrate:${IMAGE_TAG}
+GHCR_IMAGE_TAG=${GHCR_IMAGE_TAG}
 
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
@@ -61,12 +53,16 @@ cat <<EOF
 
 Created ${TARGET_FILE} (mode 600).
 
+Images: ghcr.io/${GHCR_OWNER_LOWER}/ufw-remote-manager:${GHCR_IMAGE_TAG}
+
 Next steps:
-  1. Pull or build GHCR images (see docs/en/deployment/ghcr-compose.md).
-  2. Deploy with Portainer or:
+  1. Deploy with Portainer (deploy/portainer.stack.yml) or:
+       docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file ${TARGET_FILE} pull
        docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file ${TARGET_FILE} up -d
-  3. Configure NPM Proxy Host → ufw-app:8088
-  4. Run: ./scripts/smoke-production.sh --env-file ${TARGET_FILE} --ghcr --app-url ${APP_URL}
-  5. Open ${APP_URL}/setup and create the admin account
+  2. Configure NPM Proxy Host → ufw-app:8088
+  3. Run: ./scripts/smoke-production.sh --env-file ${TARGET_FILE} --ghcr --app-url ${APP_URL}
+  4. Open ${APP_URL}/setup and create the admin account
+
+To upgrade later: redeploy the stack with "Pull latest image" (leave GHCR_IMAGE_TAG=latest).
 
 EOF
