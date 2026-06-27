@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { DockerContainerDrawer } from "@/components/servers/docker-container-drawer";
 import { DockerContainersTable } from "@/components/servers/docker-containers-table";
-import { resolveActionFailureMessage } from "@/lib/i18n/action-errors";
+import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { notifyOperationStarted } from "@/lib/operations/events";
 import type {
   DockerContainerAction,
@@ -31,7 +31,7 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
   const [inventory, setInventory] = useState<DockerInventoryView | null>(null);
   const [snapshotId, setSnapshotId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { message: error, showFailure, clearMessage } = useActionFailureState();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [inspect, setInspect] = useState<DockerInspectView | null>(null);
   const [inspectLoading, setInspectLoading] = useState(false);
@@ -51,7 +51,7 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
 
   const startRefresh = useCallback(async () => {
     setRefreshing(true);
-    setError(null);
+    clearMessage();
     setInventory(null);
     setSnapshotId(null);
 
@@ -59,14 +59,14 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
     setRefreshing(false);
 
     if (!result.success) {
-      setError(resolveActionFailureMessage(result, tCommon));
+      showFailure(result, tCommon);
       return;
     }
 
     setSnapshotId(result.snapshotId);
     notifyOperationStarted(serverId);
     await refreshById(result.snapshotId);
-  }, [refreshById, serverId, tCommon]);
+  }, [clearMessage, refreshById, serverId, showFailure, tCommon]);
 
   useEffect(() => {
     if (!autoStart || startedRef.current) {
@@ -110,7 +110,7 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
   async function runControl(container: DockerContainerView, action: DockerContainerAction) {
     setLoadingActionRef(container.containerId);
     setPendingAction(action);
-    setError(null);
+    clearMessage();
 
     const result = await controlDockerContainerAction(
       serverId,
@@ -125,7 +125,7 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
     setConfirmContainer(null);
 
     if (!result.success) {
-      setError(resolveActionFailureMessage(result, tCommon));
+      showFailure(result, tCommon);
       return;
     }
 

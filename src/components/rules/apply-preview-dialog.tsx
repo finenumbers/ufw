@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { notifyOperationStarted } from "@/lib/operations/events";
-import { resolveActionFailureMessage } from "@/lib/i18n/action-errors";
+import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { confirmApplyAction } from "@/server/actions/apply";
 import { forceResyncFromRemoteAction } from "@/server/actions/servers";
 
@@ -40,13 +40,13 @@ export function ApplyPreviewDialog({
   const tc = useTranslations("common");
   const [loading, setLoading] = useState(false);
   const [resyncLoading, setResyncLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { message: error, showFailure, setMessage: setError, clearMessage } = useActionFailureState();
   const [needsResync, setNeedsResync] = useState(false);
 
   async function handleConfirm() {
     if (!sessionId || loading) return;
     setLoading(true);
-    setError(null);
+    clearMessage();
     setNeedsResync(false);
     onOpenChange(false);
     notifyOperationStarted(serverId);
@@ -67,14 +67,14 @@ export function ApplyPreviewDialog({
   async function handleForceResync() {
     if (resyncLoading) return;
     setResyncLoading(true);
-    setError(null);
+    clearMessage();
     notifyOperationStarted(serverId);
 
     const result = await forceResyncFromRemoteAction(serverId);
     setResyncLoading(false);
 
     if (!result.success) {
-      setError(resolveActionFailureMessage(result, tc));
+      showFailure(result, tc);
       return;
     }
 

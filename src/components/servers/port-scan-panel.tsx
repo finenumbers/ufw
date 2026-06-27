@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { PortScanTable } from "@/components/servers/port-scan-table";
-import { resolveActionFailureMessage } from "@/lib/i18n/action-errors";
+import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { notifyOperationStarted } from "@/lib/operations/events";
 import type { PortScanView } from "@/types/port-scan";
 import {
@@ -22,7 +22,7 @@ export function PortScanPanel({ serverId, autoStart = false }: PortScanPanelProp
   const tCommon = useTranslations("common");
   const [scan, setScan] = useState<PortScanView | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { message: error, showFailure, clearMessage } = useActionFailureState();
   const startedRef = useRef(false);
 
   const refreshById = useCallback(async (scanId: string) => {
@@ -35,20 +35,20 @@ export function PortScanPanel({ serverId, autoStart = false }: PortScanPanelProp
 
   const startScan = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    clearMessage();
     setScan(null);
 
     const result = await startPortScanAction(serverId);
     setLoading(false);
 
     if (!result.success) {
-      setError(resolveActionFailureMessage(result, tCommon));
+      showFailure(result, tCommon);
       return;
     }
 
     notifyOperationStarted(serverId);
     await refreshById(result.scanId);
-  }, [refreshById, serverId, tCommon]);
+  }, [clearMessage, refreshById, serverId, showFailure, tCommon]);
 
   useEffect(() => {
     if (!autoStart || startedRef.current) {

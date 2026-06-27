@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { notifyOperationStarted } from "@/lib/operations/events";
-import { resolveActionFailureMessage } from "@/lib/i18n/action-errors";
+import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { appendEmptyRule } from "@/lib/rules/add-rule";
 import { cn } from "@/lib/utils";
 import type { UnifiedRuleRow } from "@/types/rule";
@@ -70,7 +70,12 @@ export function UfwDashboard({
   const [state, setState] = useState(initialState);
   const [dbRulesCount, setDbRulesCount] = useState(initialDbRulesCount);
   const [loading, setLoading] = useState(false);
-  const [operationError, setOperationError] = useState<string | null>(null);
+  const {
+    message: operationError,
+    showFailure: showOperationFailure,
+    setMessage: setOperationError,
+    clearMessage: clearOperationError,
+  } = useActionFailureState();
   const [saveError, setSaveError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSessionId, setPreviewSessionId] = useState<string | null>(null);
@@ -89,12 +94,12 @@ export function UfwDashboard({
   async function refresh() {
     onShowUfwView();
     setLoading(true);
-    setOperationError(null);
+    clearOperationError();
     notifyOperationStarted(serverId);
 
     const result = await loadUfwStateAction(serverId);
     if (!result.success) {
-      setOperationError(resolveActionFailureMessage(result, tc));
+      showOperationFailure(result, tc);
       setLoading(false);
       return;
     }
@@ -143,13 +148,13 @@ export function UfwDashboard({
   async function handleInstall() {
     onShowUfwView();
     setLoading(true);
-    setOperationError(null);
+    clearOperationError();
     notifyOperationStarted(serverId);
     const result = await installUfwAction(serverId);
     if (result.success) {
       const refreshResult = await loadUfwStateAction(serverId);
       if (!refreshResult.success) {
-        setOperationError(resolveActionFailureMessage(refreshResult, tc));
+        showOperationFailure(refreshResult, tc);
       } else {
         setState(refreshResult.state);
         await onRulesRefresh();
