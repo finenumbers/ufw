@@ -57,6 +57,7 @@ services:
       LOG_LEVEL: info
       PORT_SCAN_ENABLED: ${PORT_SCAN_ENABLED:-false}
       DOCKER_MONITOR_ENABLED: ${DOCKER_MONITOR_ENABLED:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
     healthcheck:
       test:
         [

@@ -28,6 +28,7 @@ Legacy `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` are no longer requi
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `SSH_ALLOWED_CIDRS` | Comma-separated CIDRs allowed as SSH targets | Empty (private IPs blocked) |
+| `TRUST_PROXY` | Set to `1` when the app runs behind Nginx Proxy Manager so setup rate limits use `X-Forwarded-For` | Unset (forwarded headers ignored) |
 | `APP_BIND` | Local compose bind address | `127.0.0.1` |
 | `APP_PORT` | Host port for local compose | `8088` |
 | `POSTGRES_PORT` | Host port for Postgres in dev | `5434` |
@@ -43,6 +44,15 @@ Repeat server actions use a **30 second** cooldown per server (not configurable 
 - Docker container start, stop, restart
 
 Since **v0.5.1**, legacy variables such as `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS`, and `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` are **ignored** if still present in `.env`.
+
+In-memory rate-limit buckets are evicted when empty (single-replica deployment only — see [Architecture](../architecture.md)).
+
+## Production behind NPM
+
+When `ufw-app` sits behind Nginx Proxy Manager on a shared Docker network:
+
+1. Set `TRUST_PROXY=1` in the app environment so `/setup` rate limits use the client IP from `X-Forwarded-For` (NPM sets this header).
+2. Without `TRUST_PROXY`, setup limits use a single shared bucket (`direct`) — acceptable for local dev, not ideal for production.
 
 ## How variables reach containers
 

@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
-import { auth } from "@/lib/auth";
+import { requireUserId, requireUserIdForAction } from "@/lib/auth/require-user";
 import { checkOperationRateLimit, createRateLimitedFailure } from "@/lib/operation-rate-limit";
 import { isPortScanEnabled } from "@/lib/port-scan/config";
 import { getServerPath } from "@/lib/server-path";
@@ -15,14 +14,6 @@ import {
 } from "@/server/services/port-scan.service";
 import { getServerById } from "@/server/services/server.service";
 
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-  return session.user.id;
-}
-
 export async function startPortScanAction(
   serverId: string,
 ): Promise<
@@ -33,7 +24,11 @@ export async function startPortScanAction(
     return { success: false, error: "Port scanning is disabled on this installation." };
   }
 
-  const userId = await requireUserId();
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
   const rateLimit = checkOperationRateLimit(`port-scan:${serverId}`);
 
   if (!rateLimit.allowed) {
@@ -41,7 +36,7 @@ export async function startPortScanAction(
   }
 
   try {
-    const result = await startPortScan({ serverId, userId });
+    const result = await startPortScan({ serverId, userId: auth.userId });
     const server = await getServerById(serverId);
     if (server) {
       revalidatePath(getServerPath(server.host));

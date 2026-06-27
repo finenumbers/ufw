@@ -1,22 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
-import { auth } from "@/lib/auth";
+import { requireUserId, requireUserIdForAction } from "@/lib/auth/require-user";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { TABLE_PAGE_SIZE } from "@/lib/pagination/table-page-size";
 import { listAuditEvents } from "@/server/services/audit.service";
 import { listOperationLogs } from "@/server/services/operation-log.service";
 import { clearOperationsHistory } from "@/server/services/operations-history.service";
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-  return session.user.id;
-}
 
 export async function getOperationLogsPageAction(page: number) {
   await requireUserId();
@@ -31,8 +22,12 @@ export async function getAuditEventsPageAction(page: number) {
 export async function clearOperationsHistoryAction(): Promise<
   { success: true } | { success: false; error: string }
 > {
-  const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`operations:clear:${userId}`, {
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
+  const rateLimit = assertRateLimit(`operations:clear:${auth.userId}`, {
     limit: 5,
     windowMs: 60_000,
   });
@@ -41,7 +36,7 @@ export async function clearOperationsHistoryAction(): Promise<
     return { success: false, error: "Too many requests. Please try again later." };
   }
 
-  const result = await clearOperationsHistory(userId);
+  const result = await clearOperationsHistory(auth.userId);
   if (!result.success) {
     return result;
   }

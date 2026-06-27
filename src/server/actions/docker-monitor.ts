@@ -1,14 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
 import { z } from "zod";
 
-import { auth } from "@/lib/auth";
-import {
-  isDockerMonitorEnabled,
-} from "@/lib/docker/config";
+import { requireUserId, requireUserIdForAction } from "@/lib/auth/require-user";
+import { isDockerMonitorEnabled } from "@/lib/docker/config";
 import { assertValidContainerRef } from "@/lib/docker/container-ref";
 import { checkOperationRateLimit, createRateLimitedFailure } from "@/lib/operation-rate-limit";
 import { getServerPath } from "@/lib/server-path";
@@ -25,14 +22,6 @@ import { getServerById } from "@/server/services/server.service";
 
 const dockerContainerActionSchema = z.enum(["START", "STOP", "RESTART"]);
 
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-  return session.user.id;
-}
-
 export async function refreshDockerInventoryAction(
   serverId: string,
 ): Promise<
@@ -43,7 +32,11 @@ export async function refreshDockerInventoryAction(
     return { success: false, error: "Docker monitoring is disabled on this installation." };
   }
 
-  const userId = await requireUserId();
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
   const rateLimit = checkOperationRateLimit(`docker-refresh:${serverId}`);
 
   if (!rateLimit.allowed) {
@@ -51,7 +44,7 @@ export async function refreshDockerInventoryAction(
   }
 
   try {
-    const result = await startDockerInventoryRefresh({ serverId, userId });
+    const result = await startDockerInventoryRefresh({ serverId, userId: auth.userId });
     const server = await getServerById(serverId);
     if (server) {
       revalidatePath(getServerPath(server.host));
@@ -100,7 +93,11 @@ export async function controlDockerContainerAction(
     return { success: false, error: "Docker monitoring is disabled on this installation." };
   }
 
-  const userId = await requireUserId();
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
   const parsedAction = dockerContainerActionSchema.safeParse(action);
   if (!parsedAction.success) {
     return { success: false, error: "Invalid container action" };
@@ -116,7 +113,7 @@ export async function controlDockerContainerAction(
     assertValidContainerRef(containerRef);
     const { followUpSnapshotId } = await controlDockerContainer({
       serverId,
-      userId,
+      userId: auth.userId,
       containerRef,
       containerName,
       action: parsedAction.data,

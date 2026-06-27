@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
-import { auth } from "@/lib/auth";
+import { requireUserId, requireUserIdForAction } from "@/lib/auth/require-user";
 import { assertRateLimit } from "@/lib/rate-limit";
 import type { UnifiedRuleRow } from "@/types/rule";
 import { getServerPath } from "@/lib/server-path";
@@ -18,14 +17,6 @@ import {
 } from "@/lib/imports/normalize-import";
 import { assertImportFileSize } from "@/lib/imports/import-limits";
 import { TABLE_PAGE_SIZE } from "@/lib/pagination/table-page-size";
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-  return session.user.id;
-}
 
 async function revalidateServerPaths(serverId: string) {
   const server = await getServerById(serverId);
@@ -63,8 +54,12 @@ export async function importRulesAction(
   | { success: true; rows: UnifiedRuleRow[]; duplicateCount: number }
   | { success: false; error: string }
 > {
-  const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`import:${userId}`, { limit: 10, windowMs: 60_000 });
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
+  const rateLimit = assertRateLimit(`import:${auth.userId}`, { limit: 10, windowMs: 60_000 });
   if (!rateLimit.allowed) {
     return { success: false, error: "Too many import attempts. Please try again later." };
   }
@@ -94,7 +89,7 @@ export async function importRulesAction(
         : await file.text();
 
     const imported = await parseImportFile(content, format);
-    const { rows, duplicateCount } = await importRulesToDraft(serverId, userId, imported);
+    const { rows, duplicateCount } = await importRulesToDraft(serverId, auth.userId, imported);
     await revalidateServerPaths(serverId);
     return { success: true, rows, duplicateCount };
   } catch (error) {

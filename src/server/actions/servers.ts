@@ -1,11 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 
 import { verifyUserPassword } from "@/lib/auth/password-verify";
-import { auth } from "@/lib/auth";
+import { requireUserId, requireUserIdForAction } from "@/lib/auth/require-user";
 import { createExportToken } from "@/lib/export-token";
 import {
   sanitizeConfigImportError,
@@ -46,14 +45,6 @@ import {
   startOperation,
 } from "@/server/services/operation-progress.service";
 
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-  return session.user.id;
-}
-
 async function revalidateServerPaths(serverId: string) {
   const server = await getServerById(serverId);
   if (!server) return;
@@ -88,13 +79,17 @@ async function mapServerSaveError(
 export async function createServerAction(
   input: ServerInput,
 ): Promise<{ success: true; serverAddress: string } | { success: false; error: string }> {
-  const userId = await requireUserId();
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
   const parsed = serverSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
   }
 
-  const result = await createServer(parsed.data, userId);
+  const result = await createServer(parsed.data, auth.userId);
   if (!result.success) {
     return {
       success: false,
@@ -110,14 +105,18 @@ export async function updateServerAction(
   id: string,
   input: ServerInput,
 ): Promise<{ success: true; serverAddress: string } | { success: false; error: string }> {
-  const userId = await requireUserId();
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
   const parsed = serverSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
   }
 
   const existing = await getServerById(id);
-  const result = await updateServer(id, parsed.data, userId);
+  const result = await updateServer(id, parsed.data, auth.userId);
   if (!result.success) {
     return {
       success: false,
@@ -140,13 +139,17 @@ export async function updateServerAction(
 export async function deleteServerAction(
   id: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
-  const userId = await requireUserId();
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
   const existing = await getServerById(id);
   if (!existing) {
     return { success: false, error: "Server not found" };
   }
 
-  const result = await deleteServer(id, userId);
+  const result = await deleteServer(id, auth.userId);
   if (!result.success) {
     return result;
   }
@@ -160,8 +163,12 @@ export async function deleteServerAction(
 }
 
 export async function testServerConnectionAction(serverId: string) {
-  const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`ssh-test:${userId}`, { limit: 10, windowMs: 60_000 });
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return { success: false, message: auth.failure.error };
+  }
+
+  const rateLimit = assertRateLimit(`ssh-test:${auth.userId}`, { limit: 10, windowMs: 60_000 });
   if (!rateLimit.allowed) {
     return {
       success: false,
@@ -169,7 +176,7 @@ export async function testServerConnectionAction(serverId: string) {
     };
   }
 
-  return testServerConnection(serverId, userId);
+  return testServerConnection(serverId, auth.userId);
 }
 
 export async function syncRemoteRulesAction(
@@ -187,7 +194,10 @@ export async function forceResyncFromRemoteAction(
 async function runRemoteRulesSync(
   serverId: string,
 ): Promise<{ success: true } | ActionFailureResult> {
-  const userId = await requireUserId();
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
 
   const rateLimit = checkOperationRateLimit(`ufw-refresh:${serverId}`);
   if (!rateLimit.allowed) {
@@ -196,7 +206,7 @@ async function runRemoteRulesSync(
 
   const tracker = await startOperation({
     serverId,
-    userId,
+    userId: auth.userId,
     type: "ufw.sync",
     messageI18n: { key: "messages.sync_start" },
     steps: [
@@ -206,7 +216,7 @@ async function runRemoteRulesSync(
   });
 
   try {
-    await refreshRemoteRules(serverId, userId, tracker);
+    await refreshRemoteRules(serverId, auth.userId, tracker);
     await revalidateServerPaths(serverId);
     await tracker.complete({ key: "messages.sync_complete" });
     return { success: true };
@@ -223,7 +233,10 @@ export async function loadUfwStateAction(
   | { success: true; state: Awaited<ReturnType<typeof detectUfwState>> }
   | ActionFailureResult
 > {
-  const userId = await requireUserId();
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
 
   const rateLimit = checkOperationRateLimit(`ufw-refresh:${serverId}`);
   if (!rateLimit.allowed) {
@@ -232,7 +245,7 @@ export async function loadUfwStateAction(
 
   const tracker = await startOperation({
     serverId,
-    userId,
+    userId: auth.userId,
     type: "ufw.refresh",
     messageI18n: { key: "messages.refresh_start" },
     steps: [semanticStep("detect", "steps.detect")],
@@ -250,7 +263,7 @@ export async function loadUfwStateAction(
     if (state.installed && state.active) {
       await tracker.addStep(semanticStep("load_ufw", "steps.load_ufw"));
       await tracker.addStep(semanticStep("draft_sync", "steps.draft_sync"));
-      await refreshRemoteRules(serverId, userId, tracker);
+      await refreshRemoteRules(serverId, auth.userId, tracker);
     }
 
     await revalidateServerPaths(serverId);
@@ -266,7 +279,11 @@ export async function loadUfwStateAction(
 export async function installUfwAction(
   serverId: string,
 ): Promise<{ success: boolean; message: string }> {
-  const userId = await requireUserId();
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return { success: false, message: auth.failure.error };
+  }
+
   const rateLimit = assertRateLimit(`ufw-install:${serverId}`, { limit: 3, windowMs: 60_000 });
   if (!rateLimit.allowed) {
     return {
@@ -277,7 +294,7 @@ export async function installUfwAction(
 
   const tracker = await startOperation({
     serverId,
-    userId,
+    userId: auth.userId,
     type: "ufw.install",
     messageI18n: { key: "messages.install_start" },
     steps: [
@@ -297,7 +314,7 @@ export async function installUfwAction(
     });
 
     await createAuditEvent({
-      userId,
+      userId: auth.userId,
       action: "UFW_INSTALL",
       entityType: "server",
       entityId: serverId,
@@ -323,7 +340,7 @@ export async function installUfwAction(
     });
 
     await createAuditEvent({
-      userId,
+      userId: auth.userId,
       action: "UFW_ENABLE",
       entityType: "server",
       entityId: serverId,
@@ -353,7 +370,7 @@ export async function installUfwAction(
       return { success: false, message };
     }
 
-    await refreshRemoteRules(serverId, userId, tracker);
+    await refreshRemoteRules(serverId, auth.userId, tracker);
     await tracker.complete({ key: "messages.install_complete" });
     await revalidateServerPaths(serverId);
     return { success: true, message: "UFW installed and enabled successfully" };
@@ -384,8 +401,12 @@ export async function previewImportServersConfigAction(
     }
   | { success: false; error: string }
 > {
-  const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`servers-config-import-preview:${userId}`, {
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
+  const rateLimit = assertRateLimit(`servers-config-import-preview:${auth.userId}`, {
     limit: 10,
     windowMs: 60_000,
   });
@@ -406,8 +427,12 @@ export async function previewImportServersConfigAction(
 export async function confirmConfigExportAction(
   password: string,
 ): Promise<{ success: true; token: string } | { success: false; error: string }> {
-  const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`config-export:${userId}`, {
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
+  const rateLimit = assertRateLimit(`config-export:${auth.userId}`, {
     limit: 5,
     windowMs: 60_000,
   });
@@ -416,12 +441,12 @@ export async function confirmConfigExportAction(
     return { success: false, error: "Too many export attempts. Please try again later." };
   }
 
-  const valid = await verifyUserPassword(userId, password);
+  const valid = await verifyUserPassword(auth.userId, password);
   if (!valid) {
     return { success: false, error: "Invalid password" };
   }
 
-  return { success: true, token: createExportToken(userId) };
+  return { success: true, token: createExportToken(auth.userId) };
 }
 
 export async function importServersConfigAction(
@@ -430,8 +455,12 @@ export async function importServersConfigAction(
   | { success: true; diff: Awaited<ReturnType<typeof diffServersConfigImport>> }
   | { success: false; error: string }
 > {
-  const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`servers-config-import:${userId}`, {
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
+  const rateLimit = assertRateLimit(`servers-config-import:${auth.userId}`, {
     limit: 10,
     windowMs: 60_000,
   });
@@ -445,7 +474,7 @@ export async function importServersConfigAction(
     const deletedHosts = (await diffServersConfigImport(content)).toDelete.map(
       (entry) => entry.host,
     );
-    const { diff } = await applyServersConfigImport(content, userId);
+    const { diff } = await applyServersConfigImport(content, auth.userId);
 
     revalidatePath("/servers");
     for (const host of deletedHosts) {

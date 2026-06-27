@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
-import { auth } from "@/lib/auth";
+import { requireUserId, requireUserIdForAction } from "@/lib/auth/require-user";
 import { assertRateLimit } from "@/lib/rate-limit";
 import {
   identityCreateSchema,
@@ -19,14 +18,6 @@ import {
   updateIdentity,
 } from "@/server/services/identity.service";
 
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-  return session.user.id;
-}
-
 export async function listIdentitiesAction() {
   await requireUserId();
   return listIdentities();
@@ -40,8 +31,12 @@ export async function getIdentityByIdAction(id: string) {
 export async function createIdentityAction(
   input: IdentityCreateInput,
 ): Promise<{ success: true; id: string } | { success: false; error: string }> {
-  const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`identity:create:${userId}`, {
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
+  const rateLimit = assertRateLimit(`identity:create:${auth.userId}`, {
     limit: 20,
     windowMs: 60_000,
   });
@@ -55,7 +50,7 @@ export async function createIdentityAction(
     return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
   }
 
-  const result = await createIdentity(parsed.data, userId);
+  const result = await createIdentity(parsed.data, auth.userId);
   if (!result.success) {
     return result;
   }
@@ -69,8 +64,12 @@ export async function updateIdentityAction(
   id: string,
   input: IdentityUpdateInput,
 ): Promise<{ success: true } | { success: false; error: string }> {
-  const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`identity:update:${userId}`, {
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
+  const rateLimit = assertRateLimit(`identity:update:${auth.userId}`, {
     limit: 30,
     windowMs: 60_000,
   });
@@ -84,7 +83,7 @@ export async function updateIdentityAction(
     return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
   }
 
-  const result = await updateIdentity(id, parsed.data, userId);
+  const result = await updateIdentity(id, parsed.data, auth.userId);
   if (!result.success) {
     return result;
   }
@@ -98,8 +97,12 @@ export async function updateIdentityAction(
 export async function deleteIdentityAction(
   id: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
-  const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`identity:delete:${userId}`, {
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
+  const rateLimit = assertRateLimit(`identity:delete:${auth.userId}`, {
     limit: 20,
     windowMs: 60_000,
   });
@@ -108,7 +111,7 @@ export async function deleteIdentityAction(
     return { success: false, error: "Too many requests. Please try again later." };
   }
 
-  const result = await deleteIdentity(id, userId);
+  const result = await deleteIdentity(id, auth.userId);
   if (!result.success) {
     return result;
   }

@@ -64,6 +64,21 @@ When `NODE_ENV=production`:
 
 TLS terminates at Nginx Proxy Manager; app receives HTTP on the Docker network.
 
+### Content-Security-Policy note
+
+The current CSP includes `'unsafe-inline'` and `'unsafe-eval'` for Next.js App Router scripts and hydration. Nonce-based CSP is deferred until Next.js supports it without breaking client bundles. Do not remove these directives without a full regression pass.
+
+## Public endpoints
+
+| Path | Auth | Notes |
+|------|------|-------|
+| `/api/health` | None | Returns `status`, `db`, `version`; `revision` (git/build id) only in non-production |
+| `/setup` | None (once) | Rate-limited; use `TRUST_PROXY=1` behind NPM |
+
+## Setup rate limiting
+
+Initial admin registration (`/setup`) is limited to **5 attempts per minute** per client IP when `TRUST_PROXY=1`, otherwise per direct connection bucket.
+
 ## Network exposure checklist
 
 - [ ] Admin UI only via HTTPS reverse proxy
@@ -76,6 +91,8 @@ TLS terminates at Nginx Proxy Manager; app receives HTTP on the Docker network.
 ## Error sanitization
 
 Client-facing errors from SSH/apply paths are sanitized to avoid leaking stack traces or internal paths.
+
+Expired sessions return a consistent message from server actions: `Session expired. Please sign in again.` (no raw `Unauthorized` propagated to the UI).
 
 ## Related docs
 

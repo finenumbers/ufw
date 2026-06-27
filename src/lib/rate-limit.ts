@@ -54,6 +54,10 @@ export function assertRateLimit(key: string, options: RateLimitOptions): RateLim
 }
 
 export function getClientIp(headerStore: Headers): string {
+  if (process.env.TRUST_PROXY !== "1") {
+    return "direct";
+  }
+
   const forwarded = headerStore.get("x-forwarded-for");
   if (forwarded) {
     return forwarded.split(",")[0]?.trim() || "unknown";

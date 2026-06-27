@@ -17,6 +17,7 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Content-Security-Policy",
+    // Next.js App Router requires unsafe-inline/eval today; see docs/en/administration/security-model.md
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",

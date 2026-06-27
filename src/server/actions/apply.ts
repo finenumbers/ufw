@@ -1,37 +1,26 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
-import { auth } from "@/lib/auth";
 import { sanitizeApplyClientError, sanitizeGenericClientError } from "@/lib/errors/sanitize";
+import { requireUserIdForAction } from "@/lib/auth/require-user";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { getServerPath } from "@/lib/server-path";
 import type { ApplyPreviewResult } from "@/types/apply";
 import { previewApply, confirmApply, getApplySession } from "@/server/services/apply.service";
 import { getServerById } from "@/server/services/server.service";
 
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
-  return session.user.id;
-}
-
 export async function previewApplyAction(
   serverId: string,
   desired: import("@/types/rule").UnifiedRuleRow[],
 ): Promise<{ success: true; data: ApplyPreviewResult } | { success: false; error: string }> {
-  let userId: string;
-  try {
-    userId = await requireUserId();
-  } catch {
-    return { success: false, error: "Session expired. Please sign in again." };
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
   }
 
   try {
-    const data = await previewApply(serverId, userId, desired);
+    const data = await previewApply(serverId, auth.userId, desired);
     return { success: true, data };
   } catch (error) {
     return {
@@ -50,13 +39,17 @@ export async function confirmApplyAction(
   needsResync?: boolean;
   needsRePreview?: boolean;
 }> {
-  const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`apply:${userId}`, { limit: 5, windowMs: 60_000 });
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return auth.failure;
+  }
+
+  const rateLimit = assertRateLimit(`apply:${auth.userId}`, { limit: 5, windowMs: 60_000 });
   if (!rateLimit.allowed) {
     return { success: false, error: "Too many apply attempts. Please try again later." };
   }
 
-  const result = await confirmApply(sessionId, userId);
+  const result = await confirmApply(sessionId, auth.userId);
   if (result.success) {
     const session = await getApplySession(sessionId);
     if (session) {
