@@ -343,7 +343,7 @@
     }
   },
   "portScan": {
-    "title": "Offene Ports (externe Scan aller TCP-Ports 1–65535)",
+    "title": "Externe Scan aller TCP-Ports (1–65535)",
     "description": "Fast discovery with Naabu, then Nmap service detection from the UFW app container toward this server's address.",
     "scanButton": "Scan ports",
     "scanning": "Scanning...",

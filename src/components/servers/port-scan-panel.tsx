@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { PortScanTable } from "@/components/servers/port-scan-table";
@@ -14,16 +14,15 @@ import {
 
 type PortScanPanelProps = {
   serverId: string;
-  autoStart?: boolean;
+  startToken?: number;
 };
 
-export function PortScanPanel({ serverId, autoStart = false }: PortScanPanelProps) {
+export function PortScanPanel({ serverId, startToken = 0 }: PortScanPanelProps) {
   const t = useTranslations("portScan");
   const tCommon = useTranslations("common");
   const [scan, setScan] = useState<PortScanView | null>(null);
   const [loading, setLoading] = useState(false);
   const { message: error, showFailure, clearMessage } = useActionFailureState();
-  const startedRef = useRef(false);
 
   const refreshById = useCallback(async (scanId: string) => {
     const latest = await getPortScanByIdAction(scanId);
@@ -51,13 +50,12 @@ export function PortScanPanel({ serverId, autoStart = false }: PortScanPanelProp
   }, [clearMessage, refreshById, serverId, showFailure, tCommon]);
 
   useEffect(() => {
-    if (!autoStart || startedRef.current) {
+    if (startToken <= 0) {
       return;
     }
 
-    startedRef.current = true;
     void startScan();
-  }, [autoStart, startScan]);
+  }, [startToken, startScan]);
 
   useEffect(() => {
     if (!scan?.id || (scan.status !== "RUNNING" && scan.status !== "PENDING")) {

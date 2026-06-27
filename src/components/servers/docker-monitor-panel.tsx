@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { DockerContainerDrawer } from "@/components/servers/docker-container-drawer";
@@ -22,10 +22,10 @@ import {
 
 type DockerMonitorPanelProps = {
   serverId: string;
-  autoStart?: boolean;
+  startToken?: number;
 };
 
-export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonitorPanelProps) {
+export function DockerMonitorPanel({ serverId, startToken = 0 }: DockerMonitorPanelProps) {
   const t = useTranslations("dockerMonitor");
   const tCommon = useTranslations("common");
   const [inventory, setInventory] = useState<DockerInventoryView | null>(null);
@@ -39,7 +39,6 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
   const [pendingAction, setPendingAction] = useState<DockerContainerAction | null>(null);
   const [confirmAction, setConfirmAction] = useState<DockerContainerAction | null>(null);
   const [confirmContainer, setConfirmContainer] = useState<DockerContainerView | null>(null);
-  const startedRef = useRef(false);
 
   const refreshById = useCallback(async (id: string) => {
     const latest = await getDockerInventoryByIdAction(id);
@@ -69,13 +68,12 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
   }, [clearMessage, refreshById, serverId, showFailure, tCommon]);
 
   useEffect(() => {
-    if (!autoStart || startedRef.current) {
+    if (startToken <= 0) {
       return;
     }
 
-    startedRef.current = true;
     void startRefresh();
-  }, [autoStart, startRefresh]);
+  }, [startToken, startRefresh]);
 
   useEffect(() => {
     if (!snapshotId) {

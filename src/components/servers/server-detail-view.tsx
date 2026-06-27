@@ -18,8 +18,6 @@ import type { UnifiedRuleRow } from "@/types/rule";
 import type { UfwDetectionResult } from "@/types/ufw";
 import { getRulesViewPageAction } from "@/server/actions/rules";
 
-type ServerWorkspaceView = "ufw" | "portScan" | "docker";
-
 type ServerDetailViewProps = {
   server: {
     id: string;
@@ -62,9 +60,8 @@ export function ServerDetailView({
   dockerMonitorEnabled,
 }: ServerDetailViewProps) {
   const tServers = useTranslations("servers");
-  const [activeView, setActiveView] = useState<ServerWorkspaceView>("ufw");
-  const [portScanSessionKey, setPortScanSessionKey] = useState(0);
-  const [dockerSessionKey, setDockerSessionKey] = useState(0);
+  const [portScanStartToken, setPortScanStartToken] = useState(0);
+  const [dockerStartToken, setDockerStartToken] = useState(0);
   const [rows, setRows] = useState(() => sortRows(initialRows));
   const [total, setTotal] = useState(initialTotal);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -141,20 +138,6 @@ export function ServerDetailView({
     return sortRows(result);
   }, [server.id, nextOffset, hasMore]);
 
-  function handleShowUfwView() {
-    setActiveView("ufw");
-  }
-
-  function handlePortScanClick() {
-    setActiveView("portScan");
-    setPortScanSessionKey((value) => value + 1);
-  }
-
-  function handleDockerRefreshClick() {
-    setActiveView("docker");
-    setDockerSessionKey((value) => value + 1);
-  }
-
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -199,39 +182,36 @@ export function ServerDetailView({
         onRowsChange={setRows}
         resolveAllRows={resolveAllRows}
         onRulesRefresh={refreshRules}
-        onShowUfwView={handleShowUfwView}
         portScanEnabled={portScanEnabled}
         dockerMonitorEnabled={dockerMonitorEnabled}
-        onPortScanClick={handlePortScanClick}
-        onDockerRefreshClick={handleDockerRefreshClick}
+        onPortScanClick={() => setPortScanStartToken((value) => value + 1)}
+        onDockerRefreshClick={() => setDockerStartToken((value) => value + 1)}
       />
 
-      {activeView === "ufw" ? (
-        rulesAvailable ? (
-          <div className="space-y-4">
-            <RulesToolbar />
-            <RulesGroupSection
-              serverId={server.id}
-              rows={rows}
-              onChange={setRows}
-              optionsRefreshKey={optionsRefreshKey}
-              total={total}
-              hasMore={hasMore}
-              loadingMore={loadingMore}
-              onLoadMore={loadMore}
-            />
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">{rulesUnavailableMessage}</p>
-        )
+      {rulesAvailable ? (
+        <div className="space-y-4">
+          <RulesToolbar />
+          <RulesGroupSection
+            serverId={server.id}
+            rows={rows}
+            onChange={setRows}
+            optionsRefreshKey={optionsRefreshKey}
+            total={total}
+            hasMore={hasMore}
+            loadingMore={loadingMore}
+            onLoadMore={loadMore}
+          />
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">{rulesUnavailableMessage}</p>
+      )}
+
+      {portScanEnabled ? (
+        <PortScanPanel serverId={server.id} startToken={portScanStartToken} />
       ) : null}
 
-      {activeView === "portScan" && portScanEnabled ? (
-        <PortScanPanel key={portScanSessionKey} serverId={server.id} autoStart />
-      ) : null}
-
-      {activeView === "docker" && dockerMonitorEnabled ? (
-        <DockerMonitorPanel key={dockerSessionKey} serverId={server.id} autoStart />
+      {dockerMonitorEnabled ? (
+        <DockerMonitorPanel serverId={server.id} startToken={dockerStartToken} />
       ) : null}
     </div>
   );
