@@ -39,6 +39,11 @@ type UfwDashboardProps = {
   onRowsChange: (rows: UnifiedRuleRow[]) => void;
   resolveAllRows: () => Promise<UnifiedRuleRow[]>;
   onRulesRefresh: () => Promise<void>;
+  onShowUfwView: () => void;
+  portScanEnabled: boolean;
+  dockerMonitorEnabled: boolean;
+  onPortScanClick: () => void;
+  onDockerRefreshClick: () => void;
 };
 
 export function UfwDashboard({
@@ -49,10 +54,17 @@ export function UfwDashboard({
   onRowsChange,
   resolveAllRows,
   onRulesRefresh,
+  onShowUfwView,
+  portScanEnabled,
+  dockerMonitorEnabled,
+  onPortScanClick,
+  onDockerRefreshClick,
 }: UfwDashboardProps) {
   const router = useRouter();
   const t = useTranslations("ufw");
   const tRules = useTranslations("rules.toolbar");
+  const tPortScan = useTranslations("portScan");
+  const tDocker = useTranslations("dockerMonitor");
   const tc = useTranslations("common");
   const [state, setState] = useState(initialState);
   const [dbRulesCount, setDbRulesCount] = useState(initialDbRulesCount);
@@ -74,6 +86,7 @@ export function UfwDashboard({
   }, [initialState, initialDbRulesCount]);
 
   async function refresh() {
+    onShowUfwView();
     setLoading(true);
     notifyOperationStarted(serverId);
     const next = await loadUfwStateAction(serverId);
@@ -84,6 +97,7 @@ export function UfwDashboard({
   }
 
   async function handleTestSsh() {
+    onShowUfwView();
     setLoading(true);
     notifyOperationStarted(serverId);
     await testServerConnectionAction(serverId);
@@ -91,6 +105,7 @@ export function UfwDashboard({
   }
 
   async function handlePreviewApply() {
+    onShowUfwView();
     setLoading(true);
     setSaveError(null);
     try {
@@ -112,10 +127,12 @@ export function UfwDashboard({
   }
 
   function handleAddRule() {
+    onShowUfwView();
     onRowsChange(appendEmptyRule(rows));
   }
 
   async function handleInstall() {
+    onShowUfwView();
     setLoading(true);
     setOperationError(null);
     notifyOperationStarted(serverId);
@@ -133,97 +150,127 @@ export function UfwDashboard({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <div className="flex w-[160px] shrink-0 flex-col gap-1">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleTestSsh}
-            disabled={loading}
-          >
-            {t("testSsh")}
-          </Button>
-          <div
-            className={cn(
-              "w-full rounded-md py-1 text-center text-xs font-semibold",
-              state.installed ? "bg-green-600 text-white" : "bg-red-600 text-white",
-            )}
-          >
-            {state.installed ? t("installed") : t("notInstalled")}
-          </div>
-        </div>
-        <div className="flex w-[160px] shrink-0 flex-col gap-1">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={refresh}
-            disabled={loading}
-          >
-            {t("refreshStatus")}
-          </Button>
-          <div
-            className={cn(
-              "w-full rounded-md py-1 text-center text-xs font-semibold",
-              state.active ? "bg-green-600 text-white" : "bg-red-600 text-white",
-            )}
-          >
-            {state.active ? t("active") : t("inactive")}
-          </div>
-        </div>
-        {state.installed && state.active ? (
-          <>
-            <div className="flex w-[160px] shrink-0 flex-col gap-1">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleAddRule}
-                disabled={loading}
-              >
-                {tRules("addRule")}
-              </Button>
-              <div
-                className={cn(
-                  "w-full rounded-md py-1 text-center text-xs font-semibold",
-                  dbRulesCount > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
-                )}
-              >
-                {t("dbRules", { count: dbRulesCount })}
-              </div>
-            </div>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          <div className="flex w-[160px] shrink-0 flex-col gap-1">
             <Button
-              className={dashboardActionButtonClass}
-              onClick={handlePreviewApply}
+              variant="outline"
+              className="w-full"
+              onClick={() => void handleTestSsh()}
               disabled={loading}
             >
-              {tRules("saveRules")}
+              {t("testSsh")}
             </Button>
-          </>
-        ) : null}
-        {!state.installed && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+            <div
+              className={cn(
+                "w-full rounded-md py-1 text-center text-xs font-semibold",
+                state.installed ? "bg-green-600 text-white" : "bg-red-600 text-white",
+              )}
+            >
+              {state.installed ? t("installed") : t("notInstalled")}
+            </div>
+          </div>
+          <div className="flex w-[160px] shrink-0 flex-col gap-1">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => void refresh()}
+              disabled={loading}
+            >
+              {t("refreshStatus")}
+            </Button>
+            <div
+              className={cn(
+                "w-full rounded-md py-1 text-center text-xs font-semibold",
+                state.active ? "bg-green-600 text-white" : "bg-red-600 text-white",
+              )}
+            >
+              {state.active ? t("active") : t("inactive")}
+            </div>
+          </div>
+          {state.installed && state.active ? (
+            <>
+              <div className="flex w-[160px] shrink-0 flex-col gap-1">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleAddRule}
+                  disabled={loading}
+                >
+                  {tRules("addRule")}
+                </Button>
+                <div
+                  className={cn(
+                    "w-full rounded-md py-1 text-center text-xs font-semibold",
+                    dbRulesCount > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
+                  )}
+                >
+                  {t("dbRules", { count: dbRulesCount })}
+                </div>
+              </div>
               <Button
-                className={cn(
-                  dashboardActionButtonClass,
-                  "border-yellow-400 bg-yellow-300 text-yellow-950 hover:bg-yellow-400 hover:text-yellow-950",
-                )}
+                className={dashboardActionButtonClass}
+                onClick={() => void handlePreviewApply()}
                 disabled={loading}
               >
-                {t("installUfw")}
+                {tRules("saveRules")}
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("installTitle")}</AlertDialogTitle>
-                <AlertDialogDescription>{t("installDescription")}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={handleInstall}>{t("confirmInstall")}</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
+            </>
+          ) : null}
+          {!state.installed && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  className={cn(
+                    dashboardActionButtonClass,
+                    "border-yellow-400 bg-yellow-300 text-yellow-950 hover:bg-yellow-400 hover:text-yellow-950",
+                  )}
+                  disabled={loading}
+                  onClick={onShowUfwView}
+                >
+                  {t("installUfw")}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("installTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("installDescription")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => void handleInstall()}>
+                    {t("confirmInstall")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+
+        {portScanEnabled || dockerMonitorEnabled ? (
+          <div className="ml-auto flex flex-wrap gap-2">
+            {portScanEnabled ? (
+              <Button
+                variant="outline"
+                className={dashboardActionButtonClass}
+                onClick={onPortScanClick}
+                disabled={loading}
+              >
+                {tPortScan("scanButton")}
+              </Button>
+            ) : null}
+            {dockerMonitorEnabled ? (
+              <Button
+                variant="outline"
+                className={dashboardActionButtonClass}
+                onClick={onDockerRefreshClick}
+                disabled={loading}
+              >
+                {tDocker("refreshButton")}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       {operationError ? <p className="text-sm text-destructive">{operationError}</p> : null}
       {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}

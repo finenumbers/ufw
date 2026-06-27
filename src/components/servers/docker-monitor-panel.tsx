@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { DockerContainerDrawer } from "@/components/servers/docker-container-drawer";
 import { DockerContainersTable } from "@/components/servers/docker-containers-table";
-import { Button } from "@/components/ui/button";
 import { notifyOperationStarted } from "@/lib/operations/events";
 import type {
   DockerContainerAction,
@@ -16,23 +15,19 @@ import type {
 import {
   controlDockerContainerAction,
   getDockerContainerInspectAction,
-  getLatestDockerInventoryAction,
+  getDockerInventoryByIdAction,
   refreshDockerInventoryAction,
 } from "@/server/actions/docker-monitor";
 
 type DockerMonitorPanelProps = {
   serverId: string;
-  initialInventory: DockerInventoryView | null;
-  enabled: boolean;
+  autoStart?: boolean;
 };
 
-export function DockerMonitorPanel({
-  serverId,
-  initialInventory,
-  enabled,
-}: DockerMonitorPanelProps) {
+export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonitorPanelProps) {
   const t = useTranslations("dockerMonitor");
-  const [inventory, setInventory] = useState<DockerInventoryView | null>(initialInventory);
+  const [inventory, setInventory] = useState<DockerInventoryView | null>(null);
+  const [snapshotId, setSnapshotId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -42,39 +37,21 @@ export function DockerMonitorPanel({
   const [pendingAction, setPendingAction] = useState<DockerContainerAction | null>(null);
   const [confirmAction, setConfirmAction] = useState<DockerContainerAction | null>(null);
   const [confirmContainer, setConfirmContainer] = useState<DockerContainerView | null>(null);
+  const startedRef = useRef(false);
 
-  const refresh = useCallback(async () => {
-    const latest = await getLatestDockerInventoryAction(serverId);
-    setInventory(latest);
-  }, [serverId]);
-
-  useEffect(() => {
-    function handleOperationStarted(event: Event) {
-      const detail = (event as CustomEvent<{ serverId?: string }>).detail;
-      if (detail?.serverId === serverId) {
-        void refresh();
-      }
+  const refreshById = useCallback(async (id: string) => {
+    const latest = await getDockerInventoryByIdAction(id);
+    if (latest) {
+      setInventory(latest);
     }
+    return latest;
+  }, []);
 
-    window.addEventListener("operation-started", handleOperationStarted);
-    return () => window.removeEventListener("operation-started", handleOperationStarted);
-  }, [refresh, serverId]);
-
-  useEffect(() => {
-    if (!inventory || inventory.status !== "PENDING") {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      void refresh();
-    }, 3000);
-
-    return () => window.clearInterval(timer);
-  }, [inventory, refresh]);
-
-  async function handleRefresh() {
+  const startRefresh = useCallback(async () => {
     setRefreshing(true);
     setError(null);
+    setInventory(null);
+    setSnapshotId(null);
 
     const result = await refreshDockerInventoryAction(serverId);
     setRefreshing(false);
@@ -84,9 +61,39 @@ export function DockerMonitorPanel({
       return;
     }
 
+    setSnapshotId(result.snapshotId);
     notifyOperationStarted(serverId);
-    await refresh();
-  }
+    await refreshById(result.snapshotId);
+  }, [refreshById, serverId]);
+
+  useEffect(() => {
+    if (!autoStart || startedRef.current) {
+      return;
+    }
+
+    startedRef.current = true;
+    void startRefresh();
+  }, [autoStart, startRefresh]);
+
+  useEffect(() => {
+    if (!snapshotId) {
+      return;
+    }
+
+    if (
+      inventory &&
+      inventory.status !== "PENDING" &&
+      inventory.status !== "RUNNING"
+    ) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      void refreshById(snapshotId);
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [inventory, refreshById, snapshotId]);
 
   async function handleDetails(container: DockerContainerView) {
     setDrawerOpen(true);
@@ -121,7 +128,8 @@ export function DockerMonitorPanel({
     }
 
     notifyOperationStarted(serverId);
-    await refresh();
+    setSnapshotId(result.followUpSnapshotId);
+    await refreshById(result.followUpSnapshotId);
   }
 
   function requestConfirm(container: DockerContainerView, action: DockerContainerAction) {
@@ -129,34 +137,22 @@ export function DockerMonitorPanel({
     setConfirmAction(action);
   }
 
-  if (!enabled) {
-    return (
-      <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-        {t("disabled")}
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-semibold">{t("title")}</h3>
-          <p className="text-sm text-muted-foreground">{t("description")}</p>
-          {inventory?.dockerVersion ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("meta", {
-                version: inventory.dockerVersion,
-                compose: inventory.composeVersion ?? "—",
-              })}
-            </p>
-          ) : null}
-        </div>
-        <Button onClick={() => void handleRefresh()} disabled={refreshing}>
-          {refreshing ? t("refreshing") : t("refreshButton")}
-        </Button>
+      <div>
+        <h3 className="text-lg font-semibold">{t("title")}</h3>
+        <p className="text-sm text-muted-foreground">{t("description")}</p>
+        {inventory?.dockerVersion ? (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("meta", {
+              version: inventory.dockerVersion,
+              compose: inventory.composeVersion ?? "—",
+            })}
+          </p>
+        ) : null}
       </div>
 
+      {refreshing ? <p className="text-sm text-muted-foreground">{t("refreshing")}</p> : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       {inventory?.capturedAt ? (

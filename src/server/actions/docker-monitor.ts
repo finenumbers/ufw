@@ -16,6 +16,7 @@ import type { DockerContainerAction } from "@/types/docker-monitor";
 import {
   controlDockerContainer,
   getDockerContainerInspect,
+  getDockerInventoryById,
   getLatestDockerInventory,
   startDockerInventoryRefresh,
 } from "@/server/services/docker-monitor.service";
@@ -70,6 +71,11 @@ export async function getLatestDockerInventoryAction(serverId: string) {
   return getLatestDockerInventory(serverId);
 }
 
+export async function getDockerInventoryByIdAction(snapshotId: string) {
+  await requireUserId();
+  return getDockerInventoryById(snapshotId);
+}
+
 export async function getDockerContainerInspectAction(serverId: string, containerRef: string) {
   await requireUserId();
   if (!isDockerMonitorEnabled()) {
@@ -89,7 +95,10 @@ export async function controlDockerContainerAction(
   containerRef: string,
   containerName: string,
   action: DockerContainerAction,
-): Promise<{ success: true } | { success: false; error: string }> {
+): Promise<
+  | { success: true; followUpSnapshotId: string }
+  | { success: false; error: string }
+> {
   if (!isDockerMonitorEnabled()) {
     return { success: false, error: "Docker monitoring is disabled on this installation." };
   }
@@ -109,7 +118,7 @@ export async function controlDockerContainerAction(
 
   try {
     assertValidContainerRef(containerRef);
-    await controlDockerContainer({
+    const { followUpSnapshotId } = await controlDockerContainer({
       serverId,
       userId,
       containerRef,
@@ -122,7 +131,7 @@ export async function controlDockerContainerAction(
       revalidatePath(getServerPath(server.host));
     }
 
-    return { success: true };
+    return { success: true, followUpSnapshotId };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Docker control failed";
     return { success: false, error: message };

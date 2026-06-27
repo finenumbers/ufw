@@ -146,6 +146,21 @@ export async function getLatestDockerInventory(
   return toInventoryView(snapshot);
 }
 
+export async function getDockerInventoryById(
+  snapshotId: string,
+): Promise<DockerInventoryView | null> {
+  const snapshot = await db.dockerInventorySnapshot.findUnique({
+    where: { id: snapshotId },
+    include: {
+      containers: {
+        orderBy: [{ composeProject: "asc" }, { name: "asc" }],
+      },
+    },
+  });
+
+  return snapshot ? toInventoryView(snapshot) : null;
+}
+
 export async function runDockerInventoryRefresh(
   snapshotId: string,
   tracker: OperationTracker,
@@ -332,7 +347,7 @@ export async function controlDockerContainer(params: {
   containerRef: string;
   containerName: string;
   action: DockerContainerAction;
-}): Promise<void> {
+}): Promise<{ followUpSnapshotId: string }> {
   const tracker = await startOperation({
     serverId: params.serverId,
     userId: params.userId,
@@ -378,10 +393,12 @@ export async function controlDockerContainer(params: {
       },
     });
 
-    void startDockerInventoryRefresh({
+    const followUp = await startDockerInventoryRefresh({
       serverId: params.serverId,
       userId: params.userId,
-    }).catch(() => {});
+    });
+
+    return { followUpSnapshotId: followUp.snapshotId };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Docker control failed";
     await tracker.fail(

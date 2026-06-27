@@ -1,62 +1,40 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/button";
+import { PortScanTable } from "@/components/servers/port-scan-table";
 import { notifyOperationStarted } from "@/lib/operations/events";
 import type { PortScanView } from "@/types/port-scan";
 import {
-  getLatestPortScanAction,
+  getPortScanByIdAction,
   startPortScanAction,
 } from "@/server/actions/port-scan";
 
-import { PortScanTable } from "@/components/servers/port-scan-table";
-
 type PortScanPanelProps = {
   serverId: string;
-  initialScan: PortScanView | null;
-  enabled: boolean;
+  autoStart?: boolean;
 };
 
-export function PortScanPanel({ serverId, initialScan, enabled }: PortScanPanelProps) {
+export function PortScanPanel({ serverId, autoStart = false }: PortScanPanelProps) {
   const t = useTranslations("portScan");
-  const [scan, setScan] = useState<PortScanView | null>(initialScan);
+  const [scan, setScan] = useState<PortScanView | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const startedRef = useRef(false);
 
-  const refresh = useCallback(async () => {
-    const latest = await getLatestPortScanAction(serverId);
-    setScan(latest);
-  }, [serverId]);
-
-  useEffect(() => {
-    function handleOperationStarted(event: Event) {
-      const detail = (event as CustomEvent<{ serverId?: string }>).detail;
-      if (detail?.serverId === serverId) {
-        void refresh();
-      }
+  const refreshById = useCallback(async (scanId: string) => {
+    const latest = await getPortScanByIdAction(scanId);
+    if (latest) {
+      setScan(latest);
     }
+    return latest;
+  }, []);
 
-    window.addEventListener("operation-started", handleOperationStarted);
-    return () => window.removeEventListener("operation-started", handleOperationStarted);
-  }, [refresh, serverId]);
-
-  useEffect(() => {
-    if (!scan || (scan.status !== "RUNNING" && scan.status !== "PENDING")) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      void refresh();
-    }, 3000);
-
-    return () => window.clearInterval(timer);
-  }, [refresh, scan]);
-
-  async function handleScan() {
+  const startScan = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setScan(null);
 
     const result = await startPortScanAction(serverId);
     setLoading(false);
@@ -66,30 +44,39 @@ export function PortScanPanel({ serverId, initialScan, enabled }: PortScanPanelP
       return;
     }
 
+    await refreshById(result.scanId);
     notifyOperationStarted(serverId);
-    await refresh();
-  }
+  }, [refreshById, serverId]);
 
-  if (!enabled) {
-    return (
-      <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-        {t("disabled")}
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!autoStart || startedRef.current) {
+      return;
+    }
+
+    startedRef.current = true;
+    void startScan();
+  }, [autoStart, startScan]);
+
+  useEffect(() => {
+    if (!scan?.id || (scan.status !== "RUNNING" && scan.status !== "PENDING")) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      void refreshById(scan.id);
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [refreshById, scan?.id, scan?.status]);
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-semibold">{t("title")}</h3>
-          <p className="text-sm text-muted-foreground">{t("description")}</p>
-        </div>
-        <Button onClick={() => void handleScan()} disabled={loading}>
-          {loading ? t("scanning") : t("scanButton")}
-        </Button>
+      <div>
+        <h3 className="text-lg font-semibold">{t("title")}</h3>
+        <p className="text-sm text-muted-foreground">{t("description")}</p>
       </div>
 
+      {loading ? <p className="text-sm text-muted-foreground">{t("scanning")}</p> : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       {scan?.completedAt ? (
