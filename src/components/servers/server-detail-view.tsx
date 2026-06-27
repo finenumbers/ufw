@@ -14,6 +14,8 @@ import { UfwDashboard } from "@/components/servers/ufw-dashboard";
 import { PortScanPanel } from "@/components/servers/port-scan-panel";
 import { DockerMonitorPanel } from "@/components/servers/docker-monitor-panel";
 import { Button } from "@/components/ui/button";
+import type { DockerInventoryView } from "@/types/docker-monitor";
+import type { PortScanView } from "@/types/port-scan";
 import type { UnifiedRuleRow } from "@/types/rule";
 import type { UfwDetectionResult } from "@/types/ufw";
 import { getRulesViewPageAction } from "@/server/actions/rules";
@@ -30,6 +32,10 @@ type ServerDetailViewProps = {
   ufwState: UfwDetectionResult;
   needsSync: boolean;
   dbRulesCount: number;
+  portFindingCount: number;
+  containerCount: number;
+  initialPortScan: PortScanView | null;
+  initialDockerInventory: DockerInventoryView | null;
   initialRows: UnifiedRuleRow[];
   initialTotal: number;
   initialHasMore: boolean;
@@ -50,6 +56,10 @@ export function ServerDetailView({
   ufwState,
   needsSync,
   dbRulesCount,
+  portFindingCount: initialPortFindingCount,
+  containerCount: initialContainerCount,
+  initialPortScan,
+  initialDockerInventory,
   initialRows,
   initialTotal,
   initialHasMore,
@@ -62,6 +72,8 @@ export function ServerDetailView({
   const tServers = useTranslations("servers");
   const [portScanStartToken, setPortScanStartToken] = useState(0);
   const [dockerStartToken, setDockerStartToken] = useState(0);
+  const [portFindingCount, setPortFindingCount] = useState(initialPortFindingCount);
+  const [containerCount, setContainerCount] = useState(initialContainerCount);
   const [rows, setRows] = useState(() => sortRows(initialRows));
   const [total, setTotal] = useState(initialTotal);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -74,6 +86,11 @@ export function ServerDetailView({
   const loadingMoreRef = useRef(false);
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
+
+  useEffect(() => {
+    setPortFindingCount(initialPortFindingCount);
+    setContainerCount(initialContainerCount);
+  }, [initialPortFindingCount, initialContainerCount]);
 
   useEffect(() => {
     setRows(sortRows(initialRows));
@@ -178,6 +195,8 @@ export function ServerDetailView({
         serverId={server.id}
         initialState={ufwState}
         dbRulesCount={dbRulesCount}
+        portFindingCount={portFindingCount}
+        containerCount={containerCount}
         rows={rows}
         onRowsChange={setRows}
         resolveAllRows={resolveAllRows}
@@ -207,11 +226,23 @@ export function ServerDetailView({
       )}
 
       {portScanEnabled ? (
-        <PortScanPanel serverId={server.id} startToken={portScanStartToken} />
+        <PortScanPanel
+          serverId={server.id}
+          initialScan={initialPortScan}
+          startToken={portScanStartToken}
+          onScanUpdated={(scan) => setPortFindingCount(scan.findings.length)}
+        />
       ) : null}
 
       {dockerMonitorEnabled ? (
-        <DockerMonitorPanel serverId={server.id} startToken={dockerStartToken} />
+        <DockerMonitorPanel
+          serverId={server.id}
+          initialInventory={initialDockerInventory}
+          startToken={dockerStartToken}
+          onInventoryUpdated={(inventory) =>
+            setContainerCount(inventory.summary?.containerCount ?? 0)
+          }
+        />
       ) : null}
     </div>
   );

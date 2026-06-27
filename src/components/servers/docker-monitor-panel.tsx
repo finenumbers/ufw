@@ -22,14 +22,21 @@ import {
 
 type DockerMonitorPanelProps = {
   serverId: string;
+  initialInventory?: DockerInventoryView | null;
   startToken?: number;
+  onInventoryUpdated?: (inventory: DockerInventoryView) => void;
 };
 
-export function DockerMonitorPanel({ serverId, startToken = 0 }: DockerMonitorPanelProps) {
+export function DockerMonitorPanel({
+  serverId,
+  initialInventory = null,
+  startToken = 0,
+  onInventoryUpdated,
+}: DockerMonitorPanelProps) {
   const t = useTranslations("dockerMonitor");
   const tCommon = useTranslations("common");
-  const [inventory, setInventory] = useState<DockerInventoryView | null>(null);
-  const [snapshotId, setSnapshotId] = useState<string | null>(null);
+  const [inventory, setInventory] = useState<DockerInventoryView | null>(initialInventory);
+  const [snapshotId, setSnapshotId] = useState<string | null>(initialInventory?.id ?? null);
   const [refreshing, setRefreshing] = useState(false);
   const { message: error, showFailure, clearMessage } = useActionFailureState();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -40,31 +47,48 @@ export function DockerMonitorPanel({ serverId, startToken = 0 }: DockerMonitorPa
   const [confirmAction, setConfirmAction] = useState<DockerContainerAction | null>(null);
   const [confirmContainer, setConfirmContainer] = useState<DockerContainerView | null>(null);
 
-  const refreshById = useCallback(async (id: string) => {
-    const latest = await getDockerInventoryByIdAction(id);
-    if (latest) {
-      setInventory(latest);
-    }
-    return latest;
-  }, []);
+  useEffect(() => {
+    setInventory(initialInventory);
+    setSnapshotId(initialInventory?.id ?? null);
+  }, [initialInventory]);
+
+  const notifyInventoryUpdate = useCallback(
+    (next: DockerInventoryView) => {
+      setInventory(next);
+      if (next.status === "SUCCESS") {
+        onInventoryUpdated?.(next);
+      }
+    },
+    [onInventoryUpdated],
+  );
+
+  const refreshById = useCallback(
+    async (id: string) => {
+      const latest = await getDockerInventoryByIdAction(id);
+      if (latest) {
+        notifyInventoryUpdate(latest);
+      }
+      return latest;
+    },
+    [notifyInventoryUpdate],
+  );
 
   const startRefresh = useCallback(async () => {
     setRefreshing(true);
     clearMessage();
-    setInventory(null);
-    setSnapshotId(null);
 
     const result = await refreshDockerInventoryAction(serverId);
-    setRefreshing(false);
-
     if (!result.success) {
+      setRefreshing(false);
       showFailure(result, tCommon);
       return;
     }
 
+    setInventory(null);
     setSnapshotId(result.snapshotId);
     notifyOperationStarted(serverId);
     await refreshById(result.snapshotId);
+    setRefreshing(false);
   }, [clearMessage, refreshById, serverId, showFailure, tCommon]);
 
   useEffect(() => {

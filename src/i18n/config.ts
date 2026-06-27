@@ -1,6 +1,8 @@
 export const LOCALE_COOKIE = "ufw_locale";
 
-export const locales = ["en", "de", "fr", "es", "it", "pt-BR", "ru"] as const;
+export const localeDisplayOrder = ["en", "de", "es", "fr", "it", "pt-BR", "ru"] as const;
+
+export const locales = localeDisplayOrder;
 
 export type AppLocale = (typeof locales)[number];
 
@@ -9,8 +11,8 @@ export const defaultLocale: AppLocale = "en";
 export const localeLabels: Record<AppLocale, string> = {
   en: "English",
   de: "Deutsch",
-  fr: "Français",
   es: "Español",
+  fr: "Français",
   it: "Italiano",
   "pt-BR": "Português (Brasil)",
   ru: "Русский",
@@ -41,6 +43,7 @@ export function detectLocaleFromAcceptLanguage(header: string | null): AppLocale
   return defaultLocale;
 }
 
-export const sortedLocaleOptions = locales
-  .map((locale) => ({ locale, label: localeLabels[locale] }))
-  .sort((a, b) => a.label.localeCompare(b.label, "en", { sensitivity: "base" }));
+export const sortedLocaleOptions = localeDisplayOrder.map((locale) => ({
+  locale,
+  label: localeLabels[locale],
+}));

@@ -36,6 +36,8 @@ type UfwDashboardProps = {
   serverId: string;
   initialState: UfwDetectionResult;
   dbRulesCount: number;
+  portFindingCount: number;
+  containerCount: number;
   rows: UnifiedRuleRow[];
   onRowsChange: (rows: UnifiedRuleRow[]) => void;
   resolveAllRows: () => Promise<UnifiedRuleRow[]>;
@@ -50,6 +52,8 @@ export function UfwDashboard({
   serverId,
   initialState,
   dbRulesCount: initialDbRulesCount,
+  portFindingCount: initialPortFindingCount,
+  containerCount: initialContainerCount,
   rows,
   onRowsChange,
   resolveAllRows,
@@ -67,6 +71,8 @@ export function UfwDashboard({
   const tc = useTranslations("common");
   const [state, setState] = useState(initialState);
   const [dbRulesCount, setDbRulesCount] = useState(initialDbRulesCount);
+  const [portFindingCount, setPortFindingCount] = useState(initialPortFindingCount);
+  const [containerCount, setContainerCount] = useState(initialContainerCount);
   const [loading, setLoading] = useState(false);
   const {
     message: operationError,
@@ -87,7 +93,9 @@ export function UfwDashboard({
   useEffect(() => {
     setState(initialState);
     setDbRulesCount(initialDbRulesCount);
-  }, [initialState, initialDbRulesCount]);
+    setPortFindingCount(initialPortFindingCount);
+    setContainerCount(initialContainerCount);
+  }, [initialState, initialDbRulesCount, initialPortFindingCount, initialContainerCount]);
 
   async function refresh() {
     setLoading(true);
@@ -161,8 +169,9 @@ export function UfwDashboard({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start gap-2">
-        <div className="flex w-[160px] shrink-0 flex-col gap-1">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          <div className="flex w-[160px] shrink-0 flex-col gap-1">
           <Button
             variant="outline"
             className="w-full"
@@ -227,51 +236,77 @@ export function UfwDashboard({
             </Button>
           </>
         ) : null}
-        {portScanEnabled ? (
-          <Button
-            className={dashboardActionButtonClass}
-            onClick={onPortScanClick}
-            disabled={loading}
-          >
-            {tPortScan("scanButton")}
-          </Button>
+          {!state.installed && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  className={cn(
+                    dashboardActionButtonClass,
+                    "border-yellow-400 bg-yellow-300 text-yellow-950 hover:bg-yellow-400 hover:text-yellow-950",
+                  )}
+                  disabled={loading}
+                >
+                  {t("installUfw")}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("installTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("installDescription")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => void handleInstall()}>
+                    {t("confirmInstall")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+
+        {portScanEnabled || dockerMonitorEnabled ? (
+          <div className="ml-auto flex flex-wrap gap-2">
+            {portScanEnabled ? (
+              <div className="flex w-[160px] shrink-0 flex-col gap-1">
+                <Button
+                  className="w-full"
+                  onClick={onPortScanClick}
+                  disabled={loading}
+                >
+                  {tPortScan("scanButton")}
+                </Button>
+                <div
+                  className={cn(
+                    "w-full rounded-md py-1 text-center text-xs font-semibold",
+                    portFindingCount > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
+                  )}
+                >
+                  {tPortScan("portCount", { count: portFindingCount })}
+                </div>
+              </div>
+            ) : null}
+            {dockerMonitorEnabled ? (
+              <div className="flex w-[160px] shrink-0 flex-col gap-1">
+                <Button
+                  className="w-full"
+                  onClick={onDockerRefreshClick}
+                  disabled={loading}
+                >
+                  {tDocker("refreshButton")}
+                </Button>
+                <div
+                  className={cn(
+                    "w-full rounded-md py-1 text-center text-xs font-semibold",
+                    containerCount > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
+                  )}
+                >
+                  {tDocker("containerCount", { count: containerCount })}
+                </div>
+              </div>
+            ) : null}
+          </div>
         ) : null}
-        {dockerMonitorEnabled ? (
-          <Button
-            className={dashboardActionButtonClass}
-            onClick={onDockerRefreshClick}
-            disabled={loading}
-          >
-            {tDocker("refreshButton")}
-          </Button>
-        ) : null}
-        {!state.installed && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                className={cn(
-                  dashboardActionButtonClass,
-                  "border-yellow-400 bg-yellow-300 text-yellow-950 hover:bg-yellow-400 hover:text-yellow-950",
-                )}
-                disabled={loading}
-              >
-                {t("installUfw")}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("installTitle")}</AlertDialogTitle>
-                <AlertDialogDescription>{t("installDescription")}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={() => void handleInstall()}>
-                  {t("confirmInstall")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
       </div>
       {operationError ? <p className="text-sm text-destructive">{operationError}</p> : null}
       {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}

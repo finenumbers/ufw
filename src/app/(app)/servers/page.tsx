@@ -12,6 +12,8 @@ import { getServersAction } from "@/server/actions/servers";
 export default async function ServersPage() {
   const t = await getTranslations("servers");
   const tUfw = await getTranslations("ufw");
+  const tPortScan = await getTranslations("portScan");
+  const tDocker = await getTranslations("dockerMonitor");
   const tc = await getTranslations("common");
   const servers = await getServersAction();
 
@@ -36,14 +38,29 @@ export default async function ServersPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-4">
-                <p
-                  className={cn(
-                    "text-sm font-semibold",
-                    server.ruleRecordCount > 0 ? "text-green-700" : "text-red-600",
-                  )}
-                >
-                  {tUfw("dbRules", { count: server.ruleRecordCount })}
-                </p>
+                <div className="flex flex-col gap-1 text-sm font-semibold">
+                  <span
+                    className={cn(
+                      server.ruleRecordCount > 0 ? "text-green-700" : "text-red-600",
+                    )}
+                  >
+                    {tUfw("dbRules", { count: server.ruleRecordCount })}
+                  </span>
+                  <span
+                    className={cn(
+                      server.portFindingCount > 0 ? "text-green-700" : "text-red-600",
+                    )}
+                  >
+                    {tPortScan("portCount", { count: server.portFindingCount })}
+                  </span>
+                  <span
+                    className={cn(
+                      server.containerCount > 0 ? "text-green-700" : "text-red-600",
+                    )}
+                  >
+                    {tDocker("containerCount", { count: server.containerCount })}
+                  </span>
+                </div>
                 <div className="flex shrink-0 gap-2">
                   <Button asChild variant="outline">
                     <Link href={getServerPath(server.host)}>{tc("open")}</Link>

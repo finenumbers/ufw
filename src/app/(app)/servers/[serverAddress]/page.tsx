@@ -7,7 +7,9 @@ import { isDockerMonitorEnabled } from "@/lib/docker/config";
 import { getServerPath } from "@/lib/server-path";
 import { getServerByAddressAction } from "@/server/actions/servers";
 import { getRulesViewPageAction } from "@/server/actions/rules";
-import { getRuleRecordCount } from "@/server/services/server.service";
+import { getLatestDockerInventory } from "@/server/services/docker-monitor.service";
+import { getLatestSuccessfulPortScan } from "@/server/services/port-scan.service";
+import { getServerInventoryStats } from "@/server/services/server-stats.service";
 import { detectUfwState } from "@/server/services/ssh.service";
 import { getLatestSnapshot, persistSnapshotInterfaceOptions } from "@/server/services/snapshot.service";
 import { remoteSnapshotOutOfSync } from "@/server/services/rules-view.service";
@@ -68,10 +70,14 @@ export default async function ServerDetailPage({ params }: PageProps) {
   const rulesPage = userId
     ? await getRulesViewPageAction(server.id, 0)
     : { rows: [], total: 0, hasMore: false, nextOffset: 0 };
-  const dbRulesCount = await getRuleRecordCount(server.id);
+  const inventoryStats = await getServerInventoryStats(server.id);
   const rulesAvailable = ufwState.installed && ufwState.active;
   const portScanEnabled = isPortScanEnabled();
   const dockerMonitorEnabled = isDockerMonitorEnabled();
+  const initialPortScan = portScanEnabled ? await getLatestSuccessfulPortScan(server.id) : null;
+  const initialDockerInventory = dockerMonitorEnabled
+    ? await getLatestDockerInventory(server.id)
+    : null;
 
   return (
     <ServerDetailView
@@ -85,7 +91,11 @@ export default async function ServerDetailPage({ params }: PageProps) {
       editHref={getServerPath(server.host, "/edit")}
       ufwState={ufwState}
       needsSync={needsSync}
-      dbRulesCount={dbRulesCount}
+      dbRulesCount={inventoryStats.ufwRuleCount}
+      portFindingCount={inventoryStats.portFindingCount}
+      containerCount={inventoryStats.containerCount}
+      initialPortScan={initialPortScan}
+      initialDockerInventory={initialDockerInventory}
       initialRows={rulesPage.rows}
       initialTotal={rulesPage.total}
       initialHasMore={rulesPage.hasMore}

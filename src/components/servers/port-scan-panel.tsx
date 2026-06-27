@@ -14,39 +14,63 @@ import {
 
 type PortScanPanelProps = {
   serverId: string;
+  initialScan?: PortScanView | null;
   startToken?: number;
+  onScanUpdated?: (scan: PortScanView) => void;
 };
 
-export function PortScanPanel({ serverId, startToken = 0 }: PortScanPanelProps) {
+export function PortScanPanel({
+  serverId,
+  initialScan = null,
+  startToken = 0,
+  onScanUpdated,
+}: PortScanPanelProps) {
   const t = useTranslations("portScan");
   const tCommon = useTranslations("common");
-  const [scan, setScan] = useState<PortScanView | null>(null);
+  const [scan, setScan] = useState<PortScanView | null>(initialScan);
   const [loading, setLoading] = useState(false);
   const { message: error, showFailure, clearMessage } = useActionFailureState();
 
-  const refreshById = useCallback(async (scanId: string) => {
-    const latest = await getPortScanByIdAction(scanId);
-    if (latest) {
-      setScan(latest);
-    }
-    return latest;
-  }, []);
+  useEffect(() => {
+    setScan(initialScan);
+  }, [initialScan]);
+
+  const notifyScanUpdate = useCallback(
+    (next: PortScanView) => {
+      setScan(next);
+      if (next.status === "SUCCESS") {
+        onScanUpdated?.(next);
+      }
+    },
+    [onScanUpdated],
+  );
+
+  const refreshById = useCallback(
+    async (scanId: string) => {
+      const latest = await getPortScanByIdAction(scanId);
+      if (latest) {
+        notifyScanUpdate(latest);
+      }
+      return latest;
+    },
+    [notifyScanUpdate],
+  );
 
   const startScan = useCallback(async () => {
     setLoading(true);
     clearMessage();
-    setScan(null);
 
     const result = await startPortScanAction(serverId);
-    setLoading(false);
-
     if (!result.success) {
+      setLoading(false);
       showFailure(result, tCommon);
       return;
     }
 
+    setScan(null);
     notifyOperationStarted(serverId);
     await refreshById(result.scanId);
+    setLoading(false);
   }, [clearMessage, refreshById, serverId, showFailure, tCommon]);
 
   useEffect(() => {
@@ -59,6 +83,9 @@ export function PortScanPanel({ serverId, startToken = 0 }: PortScanPanelProps) 
 
   useEffect(() => {
     if (!scan?.id || (scan.status !== "RUNNING" && scan.status !== "PENDING")) {
+      if (scan && scan.status !== "RUNNING" && scan.status !== "PENDING") {
+        setLoading(false);
+      }
       return;
     }
 
@@ -67,7 +94,7 @@ export function PortScanPanel({ serverId, startToken = 0 }: PortScanPanelProps) 
     }, 3000);
 
     return () => window.clearInterval(timer);
-  }, [refreshById, scan?.id, scan?.status]);
+  }, [refreshById, scan]);
 
   return (
     <div className="space-y-4">

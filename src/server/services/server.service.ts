@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { clearServerQueue, isServerQueueBusy, waitForServerQueueIdle } from "@/lib/queue/queue-registry";
 import type { ServerInput } from "@/lib/validations/server";
 import { createAuditEvent } from "@/server/services/audit.service";
+import { getServerInventoryStatsMap } from "@/server/services/server-stats.service";
 import { resolveIdentitySecrets } from "@/server/services/identity.service";
 import { createOperationLog } from "@/server/services/operation-log.service";
 import { verifySshConnection } from "@/lib/ssh/verify";
@@ -50,6 +51,26 @@ export async function listServersWithRuleCounts() {
     ...server,
     ruleRecordCount: countByServerId.get(server.id) ?? 0,
   }));
+}
+
+export async function listServersWithInventoryStats() {
+  const servers = await listServers();
+  const statsByServerId = await getServerInventoryStatsMap(servers.map((server) => server.id));
+
+  return servers.map((server) => {
+    const stats = statsByServerId.get(server.id) ?? {
+      ufwRuleCount: 0,
+      portFindingCount: 0,
+      containerCount: 0,
+    };
+
+    return {
+      ...server,
+      ruleRecordCount: stats.ufwRuleCount,
+      portFindingCount: stats.portFindingCount,
+      containerCount: stats.containerCount,
+    };
+  });
 }
 
 export async function getServerById(id: string): Promise<Server | null> {

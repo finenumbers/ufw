@@ -127,6 +127,34 @@ export async function getLatestPortScan(serverId: string): Promise<PortScanView 
   return scan ? toPortScanView(scan) : null;
 }
 
+export async function getLatestSuccessfulPortScan(serverId: string): Promise<PortScanView | null> {
+  const scan = await db.portScan.findFirst({
+    where: { serverId, status: "SUCCESS" },
+    orderBy: { startedAt: "desc" },
+    include: {
+      findings: {
+        orderBy: [{ port: "asc" }, { protocol: "asc" }],
+      },
+    },
+  });
+
+  if (scan) {
+    return toPortScanView(scan);
+  }
+
+  const failed = await db.portScan.findFirst({
+    where: { serverId },
+    orderBy: { startedAt: "desc" },
+    include: {
+      findings: {
+        orderBy: [{ port: "asc" }, { protocol: "asc" }],
+      },
+    },
+  });
+
+  return failed ? toPortScanView(failed) : null;
+}
+
 export async function getPortScanById(scanId: string): Promise<PortScanView | null> {
   const scan = await db.portScan.findUnique({
     where: { id: scanId },

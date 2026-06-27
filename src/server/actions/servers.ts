@@ -29,7 +29,7 @@ import {
   deleteServer,
   getServerByHost,
   getServerById,
-  listServersWithRuleCounts,
+  listServersWithInventoryStats,
   SERVER_DUPLICATE_ERROR,
   testServerConnection,
   updateServer,
@@ -64,7 +64,7 @@ async function revalidateServerPaths(serverId: string) {
 
 export async function getServersAction() {
   await requireUserId();
-  return listServersWithRuleCounts();
+  return listServersWithInventoryStats();
 }
 
 export async function getServerByAddressAction(serverAddress: string) {
