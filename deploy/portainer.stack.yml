@@ -33,7 +33,7 @@ services:
       start_period: 10s
 
   migrate:
-    image: ghcr.io/finenumbers/ufw-remote-manager-migrate:latest
+    image: ghcr.io/finenumbers/ufw-remote-manager-migrate:${GHCR_IMAGE_TAG:-latest}
     container_name: ufw-migrate
     environment:
       DATABASE_URL: postgresql://ufw:${POSTGRES_PASSWORD}@postgres:5432/ufw?schema=public
@@ -43,7 +43,7 @@ services:
     restart: "no"
 
   app:
-    image: ghcr.io/finenumbers/ufw-remote-manager:latest
+    image: ghcr.io/finenumbers/ufw-remote-manager:${GHCR_IMAGE_TAG:-latest}
     container_name: ufw-app
     restart: unless-stopped
     environment:

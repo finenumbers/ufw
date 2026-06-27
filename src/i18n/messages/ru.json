@@ -11,7 +11,9 @@
   },
   "footer": {
     "documentation": "Документация",
-    "versionTitle": "Версия развёрнутого приложения"
+    "versionTitle": "Версия развёрнутого приложения",
+    "updateAvailable": "Обновление: {version}",
+    "updateAvailableTitle": "Доступна более новая версия на GitHub"
   },
   "common": {
     "cancel": "Отмена",

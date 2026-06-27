@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { AppVersionFooter } from "@/components/layout/app-version-footer";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
 import { getDocsUrl } from "@/lib/docs-url";
-import { getAppVersionLabel } from "@/lib/app-version";
 import type { AppLocale } from "@/i18n/config";
 import { getServerPath, isServerPathActive } from "@/lib/server-path";
 import { cn } from "@/lib/utils";
@@ -78,19 +78,10 @@ export function AppSidebar({ servers }: AppSidebarProps) {
         <Button variant="outline" className="w-full" onClick={handleLogout}>
           {t("sidebar.logout")}
         </Button>
-        <div className="flex items-center justify-between gap-2 pt-2 text-xs text-muted-foreground">
-          <a
-            href={getDocsUrl(locale)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline-offset-4 hover:underline"
-          >
-            {t("footer.documentation")}
-          </a>
-          <span className="shrink-0 font-mono tabular-nums" title={t("footer.versionTitle")}>
-            {getAppVersionLabel()}
-          </span>
-        </div>
+        <AppVersionFooter
+          docsHref={getDocsUrl(locale)}
+          docsLabel={t("footer.documentation")}
+        />
       </div>
     </aside>
   );

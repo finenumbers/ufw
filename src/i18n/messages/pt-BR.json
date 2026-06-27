@@ -11,7 +11,9 @@
   },
   "footer": {
     "documentation": "Documentação",
-    "versionTitle": "Versão implantada da aplicação"
+    "versionTitle": "Versão implantada da aplicação",
+    "updateAvailable": "Atualização: {version}",
+    "updateAvailableTitle": "Há uma versão mais recente no GitHub"
   },
   "common": {
     "cancel": "Cancelar",

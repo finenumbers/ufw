@@ -11,7 +11,9 @@
   },
   "footer": {
     "documentation": "Documentazione",
-    "versionTitle": "Versione dell'applicazione distribuita"
+    "versionTitle": "Versione dell'applicazione distribuita",
+    "updateAvailable": "Aggiornamento: {version}",
+    "updateAvailableTitle": "È disponibile una versione più recente su GitHub"
   },
   "common": {
     "cancel": "Annulla",
