@@ -26,10 +26,10 @@ Symptom → likely cause → what to do.
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| SSH test fails | Wrong credentials, firewall, host down | Verify identity, port, server allows Docker host IP |
+| SSH connection fails on save | Wrong credentials, firewall, host down | Verify identity, port, server allows Docker host IP |
 | Host validation error | Private IP blocked | Set `SSH_ALLOWED_CIDRS` for internal networks |
 | Host key changed | Server reinstall or MITM | Verify fingerprint on server; update after confirmation |
-| Unverified host key | Imported from config | Run SSH test from server edit page |
+| Unverified host key | Imported from config | Run **Refresh Status** on the server dashboard |
 
 ## Rules / apply
 

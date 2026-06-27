@@ -27,8 +27,10 @@ Password SSH e chiavi private sono crittografate con **AES-256-GCM** prima dell'
 - Validazione host blocca SSRF verso indirizzi privati/metadati al momento del salvataggio
 - **Controllo risoluzione DNS:** prima di ogni connessione SSH e port scan, l'IP risolto viene validato di nuovo — blocca DNS rebinding verso indirizzi privati/metadati anche quando l'hostname sembrava sicuro al salvataggio
 - `SSH_ALLOWED_CIDRS` opzionale per reti interne
-- Pinning chiave host al primo collegamento riuscito
-- Chiavi importate contrassegnate non verificate finché il test SSH non riesce
+- Pinning chiave host al primo **Aggiorna stato** riuscito (connessione SSH), o al salvataggio riuscito durante creazione/aggiornamento del server
+- L'import configurazione **non** effettua il pinning automatico delle chiavi host — i server importati restano `sshHostKeyVerified: false` finché l'operatore esegue Aggiorna stato
+- Apply e installazione UFW sono bloccati finché la chiave host non è verificata
+- **Rischio residuo TOFU:** il primo Aggiorna stato considera attendibile la chiave presentata in quel momento (TOFU SSH standard). Un attaccante che controlla il percorso di rete alla prima connessione potrebbe pinnare una chiave malevola; per host ad alto rischio, verificare il fingerprint fuori banda
 - Iniezione comandi prevenuta tramite enum in allowlist e costruzione comandi UFW sanitizzata
 
 ## Scansione porte esterna (opzionale)
@@ -36,7 +38,7 @@ Password SSH e chiavi private sono crittografate con **AES-256-GCM** prima dell'
 Quando `PORT_SCAN_ENABLED=true`:
 
 - Le scansioni vengono eseguite **solo** verso record `Server.host` già presenti nel database
-- I hostname vengono risolti in IPv4 e validati con le stesse regole di SSH (**nessuna scansione senza IP validato**)
+- I hostname vengono risolti in IPv4 e validati con le stesse regole di SSH (**nessuna scansione senza IP risolto validato**)
 - Naabu + Nmap vengono eseguiti dentro `ufw-app` (connect scan, nessun target arbitrario)
 - Limitazione frequenza per server; eventi di audit registrati
 - Richiede **egress di rete** dal container app verso gli host gestiti sulle porte scansionate — vedi [Scansione porte](../deployment/port-scan.md)
@@ -53,7 +55,9 @@ Quando `DOCKER_MONITOR_ENABLED=true`:
 ## Salvaguardie applicazione ed export
 
 - Le modifiche UFW richiedono **anteprima + conferma esplicita**
+- I fingerprint delle regole vengono **ricalcolati server-side** nell'anteprima di apply — fingerprint client alterati non possono riassegnare gli elementi del piano
 - L'export configurazione richiede **reinserimento password** e scrive evento audit `CONFIG_EXPORT`
+- L'import configurazione richiede **reinserimento password** (stessi limiti di frequenza dell'export)
 - I file di export contengono **segreti in testo chiaro** — responsabilità dell'operatore
 
 ## Header di sicurezza HTTP (produzione)

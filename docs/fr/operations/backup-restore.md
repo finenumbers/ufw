@@ -50,7 +50,7 @@ Sans le `APP_ENCRYPTION_KEY` d'origine, resaisissez manuellement les secrets d'i
 2. Restaurer le dump Postgres
 3. Confirmer que `ufw-migrate` exited 0
 4. Connexion sur `APP_URL/login`
-5. Test SSH sur chaque serveur
+5. **Actualiser le statut** sur chaque tableau de bord serveur
 
 ## Documentation associée
 

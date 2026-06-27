@@ -46,14 +46,15 @@ export async function listServersWithInventoryStats() {
 
   return servers.map((server) => {
     const stats = statsByServerId.get(server.id) ?? {
-      ufwRuleCount: 0,
+      savedRuleCount: 0,
+      remoteRuleCount: 0,
       portFindingCount: 0,
       containerCount: 0,
     };
 
     return {
       ...server,
-      ruleRecordCount: stats.ufwRuleCount,
+      savedRuleCount: stats.savedRuleCount,
       portFindingCount: stats.portFindingCount,
       containerCount: stats.containerCount,
     };

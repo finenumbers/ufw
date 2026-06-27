@@ -50,10 +50,10 @@ export async function startPortScanAction(
 }
 
 /** Single round-trip poll: lightweight status while running, full scan when finished. */
-export async function pollPortScanAction(scanId: string) {
+export async function pollPortScanAction(scanId: string, serverId: string) {
   await requireUserId();
   const status = await getPortScanStatusById(scanId);
-  if (!status) {
+  if (!status || status.serverId !== serverId) {
     return null;
   }
   if (status.status === "SUCCESS" || status.status === "FAILED") {

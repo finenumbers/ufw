@@ -21,13 +21,16 @@ The export file contains **plaintext SSH passwords and private keys**. Treat it 
 1. Use **Load configuration** on the Servers page
 2. Select JSON v2 file
 3. Review the summary: servers to create, update, delete
-4. Confirm — import runs in a transaction (upsert first, delete last)
+4. Re-enter your **account password** on the confirmation dialog
+5. Confirm — import runs in a transaction (upsert first, delete last)
+
+Import uses the same rate limits as export (10 attempts per minute per user).
 
 ### Destructive behavior
 
 Servers **missing** from the import file can be **deleted** along with all their rules and snapshots. Read the confirmation dialog carefully.
 
-Imported SSH host keys may be marked **unverified** until you run SSH test on each server.
+Imported SSH host keys are marked **unverified** — run **Refresh Status** on each server dashboard before applying rules.
 
 ### Import limits
 

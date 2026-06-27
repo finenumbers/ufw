@@ -54,7 +54,7 @@ type ServerDetailViewProps = {
   editHref: string;
   ufwState: UfwDetectionResult;
   needsSync: boolean;
-  dbRulesCount: number;
+  sshHostKeyVerified: boolean;
   portFindingCount: number;
   containerCount: number;
   initialPortScan: PortScanView | null;
@@ -78,7 +78,7 @@ export function ServerDetailView({
   editHref,
   ufwState,
   needsSync,
-  dbRulesCount,
+  sshHostKeyVerified,
   portFindingCount: initialPortFindingCount,
   containerCount: initialContainerCount,
   initialPortScan,
@@ -256,9 +256,11 @@ export function ServerDetailView({
       <UfwDashboard
         serverId={server.id}
         initialState={ufwState}
-        dbRulesCount={dbRulesCount}
+        rulesTotal={total}
         portFindingCount={portFindingCount}
         containerCount={containerCount}
+        sshHostKeyVerified={sshHostKeyVerified}
+        hasUnsavedEdits={() => rowsDirtyRef.current}
         rows={rows}
         onRowsChange={handleRowsChange}
         resolveAllRows={resolveAllRows}

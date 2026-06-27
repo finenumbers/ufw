@@ -36,7 +36,7 @@ Ouvrez **http://localhost:8088** dans votre navigateur.
 ## 4. Premier workflow dans l'interface
 
 1. **Identités SSH** (`/identities`) — créer des identifiants (mot de passe ou clé privée)
-2. **Ajouter un serveur** — choisir l'identité, saisir hôte/port ; un test SSH s'exécute avant l'enregistrement
+2. **Ajouter un serveur** — choisir l'identité, saisir hôte/port ; la connexion SSH est vérifiée automatiquement à l'enregistrement
 3. Sur la page du serveur — installer/activer UFW si nécessaire, puis ouvrir **Règles**
 4. Éditer les règles, cliquer sur **Enregistrer les règles**, confirmer pour pousser les modifications via SSH
 

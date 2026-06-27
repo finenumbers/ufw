@@ -26,10 +26,10 @@ Symptom → wahrscheinliche Ursache → Vorgehen.
 
 | Symptom | Ursache | Lösung |
 |---------|---------|--------|
-| SSH-Test schlägt fehl | Falsche Zugangsdaten, Firewall, Host down | Identität, Port prüfen; Server erlaubt Docker-Host-IP |
+| SSH-Verbindung beim Speichern schlägt fehl | Falsche Zugangsdaten, Firewall, Host down | Identität, Port prüfen; Server erlaubt Docker-Host-IP |
 | Host-Validierungsfehler | Private IP blockiert | `SSH_ALLOWED_CIDRS` für interne Netzwerke setzen |
 | Host-Key geändert | Server-Neuinstallation oder MITM | Fingerabdruck auf Server verifizieren; nach Bestätigung aktualisieren |
-| Nicht verifizierter Host-Key | Aus Konfiguration importiert | SSH-Test von der Server-Bearbeitungsseite ausführen |
+| Nicht verifizierter Host-Key | Aus Konfiguration importiert | **Status aktualisieren** auf dem Server-Dashboard ausführen |
 
 ## Regeln / Anwenden
 

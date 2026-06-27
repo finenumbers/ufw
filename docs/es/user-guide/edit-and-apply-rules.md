@@ -1,6 +1,6 @@
 # Editar y aplicar reglas
 
-Cuando UFW está **instalado y activo** en un servidor, abra la pestaña **Reglas** para gestionar las reglas del firewall.
+Cuando UFW está **instalado y activo** en un servidor, la **tabla de reglas** del panel permite gestionar reglas de firewall.
 
 ## Tabla de reglas
 
@@ -9,16 +9,18 @@ Funciones:
 - Búsqueda y filtros por columna
 - Secciones de grupos con expandir/contraer
 - Reordenación por arrastrar y soltar (el orden importa para UFW)
-- Colores de fila según [estado de sincronización](../concepts/ufw-rules-and-states.md)
+- Colores de fila según [estado de sync](../concepts/ufw-rules-and-states.md)
 - Añadir fila, editar en línea, eliminar fila
 
 ## Actualizar desde el servidor
 
-Haga clic en **Actualizar** (o use la actualización del panel) para:
+Use **Actualizar estado** en el panel (o la actualización desde la barra de herramientas de reglas) para:
 
-1. Detectar el estado UFW
-2. Cargar el snapshot del servidor
-3. Sincronizar los estados de origen del borrador
+1. Detectar el estado UFW por SSH
+2. Cargar un nuevo snapshot del servidor
+3. Volver a poblar la tabla de reglas desde datos remotos y metadatos locales
+
+Si tiene **cambios sin guardar**, la app muestra un diálogo de confirmación antes de recargar desde el servidor.
 
 Úselo tras cambios manuales en la CLI del servidor o tras una aplicación parcial.
 
@@ -32,18 +34,20 @@ Barra de herramientas → importar CSV, XLSX o JSON. Valide las filas importadas
 
 ## Flujo de aplicación
 
-1. Realizar ediciones del borrador
-2. **Vista previa de aplicación** — revisar comandos planificados y resumen de diff
-3. **Confirmar** — ejecuta por SSH (rechazado si el UFW remoto cambió desde la vista previa — ejecute la vista previa de nuevo)
-4. Observe el banner de operación para el progreso
+1. Realizar cambios en el borrador
+2. **Vista previa de aplicación** — revisar comandos planificados y resumen de diferencias
+3. **Confirmar** — se ejecuta por SSH (se rechaza si UFW remoto cambió desde la vista previa — ejecute la vista previa de nuevo)
+4. Siga el progreso en el banner de operación
 
-Véase [Flujo de borrador y aplicación](../concepts/draft-apply-workflow.md) para detalles.
+**Guardar reglas** (vista previa de aplicación) está deshabilitado hasta que la clave de host SSH esté **verificada** — ejecute primero **Actualizar estado** si el servidor se importó desde la configuración.
+
+Consulte [Flujo de borrador y aplicación](../concepts/draft-apply-workflow.md) para más detalles.
 
 ## Consejos de seguridad
 
 - Mantenga al menos una regla que permita SSH desde su red de administración antes de aplicar reglas deny
 - Ejecute la vista previa en producción durante una ventana de mantenimiento
-- Compruebe el **Historial de operaciones** tras aplicar el estado SUCCESS o FAILED
+- Compruebe el **Historial de operaciones** tras aplicar para el estado SUCCESS o FAILED
 
 ## Documentación relacionada
 

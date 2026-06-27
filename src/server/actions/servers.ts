@@ -167,10 +167,11 @@ export async function syncRemoteRulesAction(
   return runRemoteRulesSync(serverId);
 }
 
+/** @deprecated Use syncRemoteRulesAction — kept for apply-preview resync UI. */
 export async function forceResyncFromRemoteAction(
   serverId: string,
 ): Promise<{ success: true } | ActionFailureResult> {
-  return runRemoteRulesSync(serverId);
+  return syncRemoteRulesAction(serverId);
 }
 
 async function runRemoteRulesSync(
@@ -245,7 +246,7 @@ export async function loadUfwStateAction(
     if (state.installed && state.active) {
       await tracker.addStep(semanticStep("load_ufw", "steps.load_ufw"));
       await tracker.addStep(semanticStep("draft_sync", "steps.draft_sync"));
-      await refreshRemoteRules(serverId, auth.userId, tracker);
+      await refreshRemoteRules(serverId, auth.userId, tracker, state);
     }
 
     await revalidateServerPaths(serverId);
@@ -352,7 +353,7 @@ export async function installUfwAction(
       return { success: false, message };
     }
 
-    await refreshRemoteRules(serverId, auth.userId, tracker);
+    await refreshRemoteRules(serverId, auth.userId, tracker, state);
     await tracker.complete({ key: "messages.install_complete" });
     await revalidateServerPaths(serverId);
     return { success: true, message: "UFW installed and enabled successfully" };
@@ -433,6 +434,7 @@ export async function confirmConfigExportAction(
 
 export async function importServersConfigAction(
   formData: FormData,
+  password: string,
 ): Promise<
   | { success: true; diff: Awaited<ReturnType<typeof diffServersConfigImport>> }
   | { success: false; error: string }
@@ -448,7 +450,12 @@ export async function importServersConfigAction(
   });
 
   if (!rateLimit.allowed) {
-    return { success: false, error: "Too many import attempts. Please try again later." };
+    return { success: false, error: "Too many import attempts. Please try later." };
+  }
+
+  const valid = await verifyUserPassword(auth.userId, password);
+  if (!valid) {
+    return { success: false, error: "Invalid password" };
   }
 
   try {

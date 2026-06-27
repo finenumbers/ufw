@@ -41,10 +41,10 @@ export default async function ServersPage() {
                 <div className="flex flex-col gap-1 text-sm font-semibold">
                   <span
                     className={cn(
-                      server.ruleRecordCount > 0 ? "text-green-700" : "text-red-600",
+                      server.savedRuleCount > 0 ? "text-green-700" : "text-red-600",
                     )}
                   >
-                    {tUfw("dbRules", { count: server.ruleRecordCount })}
+                    {tUfw("savedRules", { count: server.savedRuleCount })}
                   </span>
                   <span
                     className={cn(

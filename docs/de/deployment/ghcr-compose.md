@@ -7,7 +7,7 @@ Produktions-Images werden in der **GitHub Container Registry (GHCR)** veröffent
 | `ghcr.io/finenumbers/ufw-remote-manager:TAG` | Next.js-App |
 | `ghcr.io/finenumbers/ufw-remote-manager-migrate:TAG` | Prisma-Migrationen (Einmal-Lauf) |
 
-Jede Release veröffentlicht **`latest`** plus Versions-Tags (z. B. `v0.6.1`, `0.6.1`). Produktions-Deploys nutzen standardmäßig **`latest`** — keine Version in `.env` erforderlich.
+Jede Release veröffentlicht **`latest`** plus Versions-Tags (z. B. `v0.8.0`, `0.6.1`). Produktions-Deploys nutzen standardmäßig **`latest`** — keine Version in `.env` erforderlich.
 
 Ersetzen Sie `finenumbers` durch Ihren Fork-Owner bei Verwendung eines Forks (`GHCR_OWNER` in `.env`).
 
@@ -20,8 +20,8 @@ Images sind **domänenunabhängig**. Setzen Sie `APP_URL` in `.env` auf Ihre öf
 ### Option A — Git-Tag-Release (empfohlen)
 
 ```bash
-git tag v0.7.4
-git push origin v0.7.4
+git tag v0.8.0
+git push origin v0.8.0
 ```
 
 GitHub Actions veröffentlicht getaggte Images und aktualisiert `latest`. Pakete müssen beim ersten Gebrauch **Public** sein (GitHub → Packages → Einstellungen).

@@ -38,7 +38,7 @@ flowchart LR
   Identity --> ServerC[Server_C]
 ```
 
-Chaque enregistrement serveur stocke une référence à une identité. Changer l'identité d'un serveur nécessite un **test SSH** réussi avant l'enregistrement.
+Chaque enregistrement serveur stocke une référence à une identité. Changer l'identité d'un serveur exécute une **vérification SSH** automatiquement à l'enregistrement.
 
 ## Notes de sécurité
 

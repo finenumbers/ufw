@@ -29,7 +29,7 @@ Symptôme → cause probable → action.
 | Test SSH échoué | Mauvais identifiants, pare-feu, hôte down | Vérifier identité, port ; le serveur autorise l'IP de l'hôte Docker |
 | Erreur de validation d'hôte | IP privée bloquée | Définir `SSH_ALLOWED_CIDRS` pour les réseaux internes |
 | Clé hôte modifiée | Réinstallation serveur ou MITM | Vérifier l'empreinte sur le serveur ; mettre à jour après confirmation |
-| Clé hôte non vérifiée | Importée depuis la config | Exécuter le test SSH depuis la page de modification du serveur |
+| Clé hôte non vérifiée | Importée depuis la config | Exécuter **Actualiser le statut** sur le tableau de bord du serveur |
 
 ## Règles / application
 

@@ -27,8 +27,10 @@ SSH passwords and private keys are encrypted with **AES-256-GCM** before storage
 - Host validation blocks SSRF to private/metadata addresses at save time
 - **DNS resolution check:** before each SSH connect and port scan, the resolved IP is validated again — blocks DNS rebinding to private/metadata addresses even when the hostname looked safe at save time
 - Optional `SSH_ALLOWED_CIDRS` for internal networks
-- Host key pinning on first successful connection
-- Imported keys marked unverified until SSH test succeeds
+- Host key pinning on first successful **Refresh Status** (SSH connect), or on successful create/update server save
+- Config import does **not** auto-pin host keys — imported servers stay `sshHostKeyVerified: false` until the operator runs Refresh Status
+- Apply and UFW install are blocked until the host key is verified
+- **TOFU residual risk:** first Refresh Status trusts the key presented at that moment (standard SSH TOFU). An attacker who controls the network path on first connect could pin a malicious key; mitigate with out-of-band fingerprint checks for high-risk hosts
 - Command injection prevented via allowlisted enums and sanitized UFW command building
 
 ## External port scanning (optional)
@@ -53,7 +55,9 @@ When `DOCKER_MONITOR_ENABLED=true`:
 ## Apply and export safeguards
 
 - UFW changes require **preview + explicit confirm**
+- Rule fingerprints are **recomputed server-side** on apply preview — tampered client fingerprints cannot remap plan items
 - Config export requires **password re-entry** and writes `CONFIG_EXPORT` audit event
+- Config import requires **password re-entry** (same rate limits as export)
 - Export files contain **plaintext secrets** — operator responsibility
 
 ## HTTP security headers (production)

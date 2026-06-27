@@ -30,27 +30,7 @@ flowchart LR
 1. Администратор открывает `APP_URL` в браузере (HTTPS через NPM).
 2. Better Auth проверяет cookie сессии.
 3. Server actions и API-маршруты оркестрируют SSH и работу с БД.
-4. Команды UFW на удалённых хостах выполняются только после явного подтверждения apply.
-
-## Runtime-конфигурация
-
-Публичный URL задаётся **во время выполнения**, а не в образе Docker:
-
-- `APP_URL` в `.env` → `BETTER_AUTH_URL` в контейнере
-- Один GHCR-образ подходит для любого домена — см. [GHCR + Compose](./deployment/ghcr-compose.md)
-
-Реализация: `getPublicAppUrl()` в `src/lib/app-url.ts`.
-
-**Важно:** `APP_URL` — это **публичный HTTPS-URL**, который использует браузер (через NPM). NPM проксирует на `http://ufw-app:8088` в Docker-сети — внутренний HTTP **задуман так**. См. [Nginx Proxy Manager](./deployment/nginx-proxy-manager.md).
-
-## Модель загрузки страницы сервера
-
-Открытие dashboard сервера работает **cache-first** — без SSH при первой загрузке:
-
-1. **SSR** читает последний **snapshot** UFW из Postgres (`detectionFromSnapshot`) и отображает статус и правила из БД.
-2. Правила, результаты port scan и Docker inventory загружаются **параллельно** из Postgres (`Promise.all`) — по-прежнему без SSH.
-3. **Refresh** (на dashboard или в toolbar правил) запускает live SSH-чтение и обновляет snapshot.
-4. **Initial sync** автоматически в фоне, когда UFW установлен и активен, но **snapshot ещё нет** (`needsSync`).
+4. **Initial sync** автоматически в фоне, когда **в Postgres ещё нет UFW snapshot** (`needsSync`) — например сразу после создания сервера или до первого обновления статуса.
 
 Страницы серверов остаются быстрыми; SSH выполняется только при явном refresh или когда кэша ещё нет.
 

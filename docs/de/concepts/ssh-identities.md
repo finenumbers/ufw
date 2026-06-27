@@ -38,7 +38,7 @@ flowchart LR
   Identity --> ServerC[Server_C]
 ```
 
-Jeder Serverdatensatz speichert eine Referenz auf eine Identität. Das Ändern der Identität auf einem Server erfordert vor dem Speichern einen erfolgreichen **SSH-Test**.
+Jeder Serverdatensatz speichert eine Referenz auf eine Identität. Das Ändern der Identität auf einem Server führt beim Absenden automatisch eine **SSH-Verifizierung** aus.
 
 ## Sicherheitshinweise
 

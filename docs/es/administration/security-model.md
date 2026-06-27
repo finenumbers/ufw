@@ -27,8 +27,10 @@ Las contraseñas SSH y claves privadas se cifran con **AES-256-GCM** antes del a
 - La validación del host bloquea SSRF hacia direcciones privadas/metadatos al guardar
 - **Comprobación de resolución DNS:** antes de cada conexión SSH y escaneo de puertos, la IP resuelta se valida de nuevo — bloquea DNS rebinding hacia direcciones privadas/metadatos aunque el nombre de host pareciera seguro al guardar
 - `SSH_ALLOWED_CIDRS` opcional para redes internas
-- Fijación de clave de host en la primera conexión exitosa
-- Claves importadas marcadas como no verificadas hasta que el test SSH tenga éxito
+- Fijación de clave de host en la primera **Actualizar estado** exitosa (conexión SSH), o al guardar con éxito al crear/actualizar un servidor
+- La importación de configuración **no** fija automáticamente las claves de host — los servidores importados permanecen `sshHostKeyVerified: false` hasta que el operador ejecute Actualizar estado
+- La aplicación y la instalación de UFW están bloqueadas hasta que la clave de host esté verificada
+- **Riesgo residual TOFU:** la primera Actualizar estado confía en la clave presentada en ese momento (TOFU SSH estándar). Un atacante que controla la ruta de red en la primera conexión podría fijar una clave maliciosa; para hosts de alto riesgo, verifique la huella fuera de banda
 - Inyección de comandos evitada mediante enums en lista blanca y construcción de comandos UFW saneada
 
 ## Escaneo de puertos externo (opcional)
@@ -36,7 +38,7 @@ Las contraseñas SSH y claves privadas se cifran con **AES-256-GCM** antes del a
 Cuando `PORT_SCAN_ENABLED=true`:
 
 - Los escaneos se ejecutan **solo** hacia registros `Server.host` ya presentes en la base de datos
-- Los hostnames se resuelven a IPv4 y se validan con las mismas reglas que SSH (**sin escaneo sin IP validada**)
+- Los hostnames se resuelven a IPv4 y se validan con las mismas reglas que SSH (**sin escaneo sin IP resuelta validada**)
 - Naabu + Nmap se ejecutan dentro de `ufw-app` (escaneos connect, sin destinos arbitrarios)
 - Limitado por servidor; eventos de auditoría registrados
 - Requiere **egreso de red** del contenedor de la aplicación hacia los hosts gestionados en los puertos escaneados — consulte [Escaneo de puertos](../deployment/port-scan.md)
@@ -53,7 +55,9 @@ Cuando `DOCKER_MONITOR_ENABLED=true`:
 ## Salvaguardas de aplicación y exportación
 
 - Los cambios UFW requieren **vista previa + confirmación explícita**
+- Las huellas de reglas se **recalculan en el servidor** en la vista previa de aplicación — huellas de cliente alteradas no pueden reasignar elementos del plan
 - La exportación de configuración requiere **reintroducir la contraseña** y escribe un evento de auditoría `CONFIG_EXPORT`
+- La importación de configuración requiere **reintroducir la contraseña** (mismos límites de tasa que la exportación)
 - Los archivos de exportación contienen **secretos en texto plano** — responsabilidad del operador
 
 ## Cabeceras de seguridad HTTP (producción)

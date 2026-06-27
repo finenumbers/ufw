@@ -34,7 +34,7 @@ docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r
 
 1. `APP_URL/login` — autenticarsi
 2. **Identità SSH** — identità esistente o crearne una
-3. **Server** — test SSH riuscito
+3. **Server** — verifica SSH al salvataggio riuscita
 4. **Regole** — anteprima applicazione eseguita (conferma opzionale)
 5. **Cronologia operazioni** — voci recenti visibili
 

@@ -74,7 +74,7 @@ export function PortScanPanel({
 
   const pollScan = useCallback(
     async (scanId: string) => {
-      const result = await pollPortScanAction(scanId);
+      const result = await pollPortScanAction(scanId, serverId);
       if (!result) {
         return null;
       }
@@ -91,7 +91,7 @@ export function PortScanPanel({
       );
       return result;
     },
-    [notifyScanUpdate],
+    [notifyScanUpdate, serverId],
   );
 
   useActiveOperationPoll({

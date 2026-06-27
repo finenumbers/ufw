@@ -31,18 +31,20 @@ Die Validierung erfolgt in zwei Stufen:
 
 Dies schließt DNS-Rebinding-Lücken, bei denen ein öffentlicher Hostname später in eine private oder Metadaten-IP aufgelöst wird.
 
-## SSH-Test vor dem Speichern
+## SSH-Verifizierung beim Speichern
 
-Das Anlegen oder Aktualisieren eines Servers (Host-, Port- oder Identitätsänderung) erfordert einen erfolgreichen **SSH-Verbindungstest**. Die Oberfläche blockiert das Speichern, bis der Test bestanden ist.
+Beim Anlegen oder Aktualisieren eines Servers (Host-, Port- oder Identitätsänderung) wird beim Absenden automatisch ein **SSH-Verbindungstest** ausgeführt. Es gibt keine separate Test-Schaltfläche — das Speichern ist blockiert, bis die Verifizierung erfolgreich ist.
+
+Bei der ersten erfolgreichen Verifizierung wird der Host-Key-Fingerabdruck gespeichert und der Server als **verifiziert** markiert.
 
 ## SSH-Host-Key-Pinning
 
-Bei der ersten erfolgreichen Verbindung wird der SSH-Host-Key-Fingerabdruck des Servers gespeichert.
-
 | Zustand | Bedeutung |
 |---------|-----------|
-| **Verified** | Key nach erfolgreichem SSH-Test oder normalem Betrieb gespeichert |
-| **Unverified** | Key aus Konfigurationsdatei importiert — SSH-Test zur Verifizierung ausführen |
+| **Verifiziert** | Key nach erfolgreichem Speichern beim Anlegen/Aktualisieren oder **Status aktualisieren** gespeichert |
+| **Nicht verifiziert** | Key aus Konfiguration importiert — **Status aktualisieren** im Server-Dashboard ausführen, um zu verifizieren |
+
+Die Bearbeitungsseite zeigt den Fingerabdruck und bei Bedarf eine Warnung **Nicht verifiziert**, führt aber keine Verifizierung aus, bis Sie geänderte Verbindungseinstellungen speichern oder im Dashboard **Status aktualisieren** nutzen.
 
 Ändert sich der Remote-Host-Key (Neuinstallation, MITM), schlägt die nächste Verbindung fehl, bis Sie die Ursache untersucht haben.
 
@@ -58,9 +60,9 @@ Es **ändert nicht** die UFW-Regeln auf dem Remote-Linux-Host. Der Remote-Firewa
 
 Vom Server-Dashboard aus können Sie:
 
-1. UFW **erkennen** — installiert? aktiv?
-2. UFW **installieren**, falls fehlend
-3. UFW **aktivieren** und Regeln synchronisieren
+1. **Status aktualisieren** — erkennen, ob UFW installiert und aktiv ist (nutzt gecachten Snapshot bis zur Aktualisierung)
+2. **UFW installieren**, falls fehlend — Installation und Aktivierung laufen zusammen in einem Vorgang
+3. Regeln bearbeiten und anwenden, wenn UFW installiert **und** aktiv ist
 
 Regelbearbeitung ist nur verfügbar, wenn UFW installiert **und** aktiv ist.
 

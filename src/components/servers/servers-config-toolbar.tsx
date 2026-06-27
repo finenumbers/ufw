@@ -39,6 +39,7 @@ export function ServersConfigToolbar() {
   const [previewDiff, setPreviewDiff] = useState<ServersConfigImportDiff | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportPassword, setExportPassword] = useState("");
+  const [importPassword, setImportPassword] = useState("");
 
   async function handleExportConfirm() {
     setLoading(true);
@@ -101,6 +102,7 @@ export function ServersConfigToolbar() {
 
     pendingFileRef.current = file;
     setPreviewDiff(result.diff);
+    setImportPassword("");
     setPreviewOpen(true);
   }
 
@@ -115,7 +117,7 @@ export function ServersConfigToolbar() {
 
     const formData = new FormData();
     formData.append("file", file);
-    const result = await importServersConfigAction(formData);
+    const result = await importServersConfigAction(formData, importPassword);
     setLoading(false);
 
     if (!result.success) {
@@ -125,6 +127,7 @@ export function ServersConfigToolbar() {
 
     pendingFileRef.current = null;
     setPreviewDiff(null);
+    setImportPassword("");
     setPreviewOpen(false);
     setNotice(t("configImportSuccess"));
     router.refresh();
@@ -212,6 +215,7 @@ export function ServersConfigToolbar() {
             if (!open) {
               pendingFileRef.current = null;
               setPreviewDiff(null);
+              setImportPassword("");
             }
           }
         }}
@@ -241,9 +245,23 @@ export function ServersConfigToolbar() {
             </div>
           ) : null}
 
+          <div className="space-y-2">
+            <Label htmlFor="import-password">{t("configImportPassword")}</Label>
+            <Input
+              id="import-password"
+              type="password"
+              value={importPassword}
+              onChange={(event) => setImportPassword(event.target.value)}
+              autoComplete="current-password"
+            />
+          </div>
+
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading}>{tc("cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void handleImportConfirm()} disabled={loading}>
+            <AlertDialogAction
+              onClick={() => void handleImportConfirm()}
+              disabled={loading || importPassword.length === 0}
+            >
               {t("configImportConfirm")}
             </AlertDialogAction>
           </AlertDialogFooter>

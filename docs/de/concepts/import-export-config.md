@@ -4,7 +4,7 @@ Sie können eine **vollständige Serverkonfiguration** (alle Server, Identitäte
 
 ## Export
 
-1. Von der **Server**-Seite **Save configuration** verwenden
+1. Von der **Server**-Seite **Konfiguration speichern** verwenden
 2. Ihr **Kontopasswort** erneut eingeben (Step-up-Authentifizierung)
 3. JSON-Datei herunterladen
 
@@ -18,16 +18,19 @@ Die Exportdatei enthält **SSH-Passwörter und private Schlüssel im Klartext**.
 
 ## Import
 
-1. **Load configuration** auf der Server-Seite verwenden
+1. **Konfiguration laden** auf der Server-Seite verwenden
 2. JSON-v2-Datei auswählen
 3. Zusammenfassung prüfen: zu erstellende, aktualisierende, löschende Server
-4. Bestätigen — Import läuft in einer Transaktion (Upsert zuerst, Löschen zuletzt)
+4. Ihr **Kontopasswort** im Bestätigungsdialog erneut eingeben
+5. Bestätigen — Import läuft in einer Transaktion (Upsert zuerst, Löschen zuletzt)
+
+Import nutzt dieselben Rate-Limits wie Export (10 Versuche pro Minute pro Benutzer).
 
 ### Destruktives Verhalten
 
 Server, die in der Importdatei **fehlen**, können **gelöscht** werden, zusammen mit allen Regeln und Snapshots. Lesen Sie den Bestätigungsdialog sorgfältig.
 
-Importierte SSH-Host-Keys können als **unverified** markiert sein, bis Sie auf jedem Server einen SSH test ausführen.
+Importierte SSH-Host-Keys werden als **Nicht verifiziert** markiert — führen Sie auf jedem Server-Dashboard **Status aktualisieren** aus, bevor Sie Regeln anwenden.
 
 ### Import-Limits
 

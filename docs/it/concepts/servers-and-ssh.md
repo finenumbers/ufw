@@ -5,7 +5,7 @@ Un record **server** rappresenta un host Linux che gestisci. L'app si connette v
 ## Campi del server
 
 | Campo | Scopo |
-|-------|---------|
+|-------|-------|
 | **Nome** | Etichetta visualizzata nella barra laterale |
 | **Host** | Indirizzo IP o nome DNS (validato prima del salvataggio) |
 | **Porta** | Porta SSH (predefinita 22) |
@@ -31,18 +31,20 @@ La validazione avviene in due fasi:
 
 Questo chiude le lacune di DNS rebinding dove un hostname pubblico in seguito risolve a un IP privato o di metadati.
 
-## Test SSH prima del salvataggio
+## Verifica SSH al salvataggio
 
-La creazione o l'aggiornamento di un server (host, porta o cambio identità) richiede un **test di connessione SSH** riuscito. L'interfaccia blocca il salvataggio finché il test non passa.
+La creazione o l'aggiornamento di un server (host, porta o cambio identità) esegue un **test di connessione SSH automaticamente all'invio**. Non c'è un pulsante di test separato — il salvataggio resta bloccato finché la verifica non riesce.
+
+Al primo collegamento riuscito, l'impronta della chiave host viene memorizzata e il server è contrassegnato come **verificato**.
 
 ## Pinning chiave host SSH
 
-Al primo collegamento riuscito, viene memorizzata l'impronta della chiave host SSH del server.
-
 | Stato | Significato |
-|-------|---------|
-| **Verificata** | Chiave registrata dopo test SSH riuscito o operazione normale |
-| **Non verificata** | Chiave importata dal file di configurazione — esegui test SSH per verificare |
+|-------|-------------|
+| **Verificata** | Chiave registrata dopo un salvataggio create/update riuscito o **Aggiorna stato** |
+| **Non verificata** | Chiave importata dalla configurazione — eseguire **Aggiorna stato** nella dashboard del server per verificare |
+
+La pagina di modifica mostra l'impronta e un avviso non verificato, ma non esegue la verifica finché non si salvano impostazioni di connessione modificate o non si usa **Aggiorna stato** nella dashboard.
 
 Se la chiave host remota cambia (reinstallazione, MITM), la connessione successiva fallisce finché non indaghi.
 
@@ -58,9 +60,9 @@ Eliminare un server rimuove **solo** i dati locali:
 
 Dalla dashboard del server puoi:
 
-1. **Rilevare** UFW — installato? attivo?
-2. **Installare** UFW se assente
-3. **Attivare** UFW e sincronizzare le regole
+1. **Aggiorna stato** — rilevare se UFW è installato e attivo (usa lo snapshot in cache fino all'aggiornamento)
+2. **Installa UFW** se assente — installazione e abilitazione avvengono insieme in un'unica operazione
+3. Modificare e applicare regole quando UFW è installato **e** attivo
 
 La modifica delle regole è disponibile solo quando UFW è installato **e** attivo.
 

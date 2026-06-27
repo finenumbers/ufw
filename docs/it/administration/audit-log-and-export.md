@@ -16,7 +16,7 @@ Visualizza su **Cronologia operazioni** → scheda **Audit**.
 
 ## Log operazioni
 
-Scritti per lavoro di lunga durata: apply, refresh, installazione, test SSH, ecc. Include metadati passaggi e messaggi successo/errore.
+Scritti per lavoro di lunga durata: apply, refresh, installazione, port scan, inventario/controllo Docker, ecc. Include metadati passaggi e messaggi successo/errore.
 
 Visualizza su **Cronologia operazioni** → scheda **Operazioni** o nel **banner operazioni** live.
 

@@ -26,7 +26,7 @@ Síntoma → causa probable → qué hacer.
 
 | Síntoma | Causa | Solución |
 |---------|-------|----------|
-| Prueba SSH falla | Credenciales incorrectas, firewall, host caído | Verificar identidad, puerto; el servidor permite IP del host Docker |
+| Fallo de conexión SSH al guardar | Credenciales incorrectas, firewall, host caído | Verificar identidad, puerto; el servidor permite IP del host Docker |
 | Error de validación de host | IP privada bloqueada | Definir `SSH_ALLOWED_CIDRS` para redes internas |
 | Clave de host cambiada | Reinstalación del servidor o MITM | Verificar huella en el servidor; actualizar tras confirmación |
 | Clave de host no verificada | Importada desde config | Ejecutar prueba SSH desde la página de edición del servidor |

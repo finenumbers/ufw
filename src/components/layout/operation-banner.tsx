@@ -9,14 +9,11 @@ import { Button } from "@/components/ui/button";
 import {
   dismissOperation,
   isOperationDismissed,
-  notifyOperationEnded,
-  OPERATION_STARTED_EVENT,
 } from "@/lib/operations/events";
 import { resolveOperationText, resolveStepLabel } from "@/lib/i18n/operations";
-import { activeOperationPollDelayMs } from "@/lib/operations/poll-interval";
+import { useOperationBannerPoll } from "@/lib/operations/use-operation-banner-poll";
 import {
   operationTypeToKey,
-  parseOperationMetadata,
   type ActiveOperation,
   type OperationStep,
 } from "@/types/operation";
@@ -45,6 +42,16 @@ export function OperationBanner({ serverId }: OperationBannerProps) {
   const [operation, setOperation] = useState<ActiveOperation | null>(null);
   const [expanded, setExpanded] = useState(true);
 
+  const handleOperation = useCallback((next: ActiveOperation | null) => {
+    if (next && isOperationDismissed(next.id)) {
+      setOperation(null);
+      return;
+    }
+    setOperation(next);
+  }, []);
+
+  useOperationBannerPoll({ serverId, onOperation: handleOperation });
+
   const translateOperation = useCallback(
     (key: string, values?: Record<string, string | number>) =>
       (t as (translationKey: string, translationValues?: Record<string, string | number>) => string)(
@@ -70,68 +77,6 @@ export function OperationBanner({ serverId }: OperationBannerProps) {
     },
     [t],
   );
-
-  const load = useCallback(async () => {
-    if (!serverId) return null;
-
-    const response = await fetch(`/api/operations/active?serverId=${serverId}`);
-    if (!response.ok) return null;
-
-    const data = (await response.json()) as ActiveOperation | null;
-    if (!data || isOperationDismissed(data.id)) {
-      setOperation(null);
-      return null;
-    }
-
-    const parsed: ActiveOperation = {
-      ...data,
-      metadata: parseOperationMetadata(data.metadata),
-    };
-
-    setOperation(parsed);
-    if (parsed.status === "SUCCESS" || parsed.status === "FAILED" || parsed.status === "PARTIAL") {
-      notifyOperationEnded(serverId, parsed.type);
-    }
-    return parsed;
-  }, [serverId]);
-
-  useEffect(() => {
-    if (!serverId) return;
-
-    let active = true;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const schedule = (delayMs: number) => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(async () => {
-        if (!active) return;
-        const current = await load();
-        const nextDelay =
-          current?.status === "RUNNING" ? activeOperationPollDelayMs(0) : 5000;
-        schedule(nextDelay);
-      }, delayMs);
-    };
-
-    void load().then((current) => {
-      if (!active) return;
-      schedule(current?.status === "RUNNING" ? activeOperationPollDelayMs(0) : 5000);
-    });
-
-    const onStarted = (event: Event) => {
-      const detail = (event as CustomEvent<{ serverId?: string }>).detail;
-      if (detail?.serverId && detail.serverId !== serverId) return;
-      if (timer) clearTimeout(timer);
-      void load().then(() => schedule(activeOperationPollDelayMs(0)));
-    };
-
-    window.addEventListener(OPERATION_STARTED_EVENT, onStarted);
-
-    return () => {
-      active = false;
-      if (timer) clearTimeout(timer);
-      window.removeEventListener(OPERATION_STARTED_EVENT, onStarted);
-    };
-  }, [serverId, load]);
 
   useEffect(() => {
     if (!operation || operation.status !== "SUCCESS") return;

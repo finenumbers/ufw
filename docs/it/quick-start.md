@@ -36,7 +36,7 @@ Apri **http://localhost:8088** nel browser.
 ## 4. Primo workflow nell'interfaccia
 
 1. **Identità SSH** (`/identities`) — crea le credenziali (password o chiave privata)
-2. **Aggiungi server** — scegli l'identità, inserisci host/porta; il test SSH viene eseguito prima del salvataggio
+2. **Aggiungi server** — scegli l'identità, inserisci host/porta; la verifica SSH avviene automaticamente al salvataggio
 3. Nella pagina del server — installa/attiva UFW se necessario, poi apri **Regole**
 4. Modifica le regole, esegui **Salva regole** con anteprima, conferma per inviare le modifiche via SSH
 

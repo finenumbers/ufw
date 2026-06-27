@@ -1,6 +1,6 @@
 # Modificare e applicare regole
 
-Quando UFW è **installato e attivo** su un server, aprire la scheda **Regole** per gestire le regole firewall.
+Quando UFW è **installato e attivo** su un server, la **tabella regole** nella dashboard del server consente di gestire le regole firewall.
 
 ## Tabella regole
 
@@ -12,13 +12,15 @@ Funzionalità:
 - Colori riga per [stato di sincronizzazione](../concepts/ufw-rules-and-states.md)
 - Aggiungi riga, modifica inline, elimina riga
 
-## Aggiorna dal server
+## Aggiornamento dal server
 
-Fare clic su **Aggiorna** (o usare l'aggiornamento della dashboard) per:
+Usare **Aggiorna stato** nella dashboard (o l'aggiornamento dalla barra strumenti regole) per:
 
-1. Rilevare lo stato UFW
-2. Caricare lo snapshot dal server
-3. Sincronizzare gli stati di origine della bozza
+1. Rilevare lo stato UFW via SSH
+2. Caricare un nuovo snapshot dal server
+3. Reinizializzare la tabella regole da remoto + metadati locali
+
+Se sono presenti **modifiche non salvate**, l'app mostra una finestra di conferma prima di ricaricare dal server.
 
 Usare dopo modifiche manuali sulla CLI del server o dopo un'applicazione parziale.
 
@@ -36,6 +38,8 @@ Barra strumenti → importa CSV, XLSX o JSON. Validare le righe importate nella 
 2. **Anteprima applicazione** — rivedere comandi pianificati e riepilogo diff
 3. **Conferma** — esecuzione via SSH (rifiutata se l'UFW remoto è cambiato dall'anteprima — eseguire di nuovo l'anteprima)
 4. Seguire il banner operazione per il progresso
+
+**Salva regole** (anteprima applicazione) resta disabilitato finché la chiave host SSH non è **verificata** — eseguire **Aggiorna stato** prima se il server è stato importato dalla configurazione.
 
 Vedere [Flusso bozza e applicazione](../concepts/draft-apply-workflow.md) per i dettagli.
 

@@ -31,9 +31,11 @@ const dashboardActionButtonClass = "w-[160px] shrink-0";
 type UfwDashboardProps = {
   serverId: string;
   initialState: UfwDetectionResult;
-  dbRulesCount: number;
+  rulesTotal: number;
   portFindingCount: number;
   containerCount: number;
+  sshHostKeyVerified: boolean;
+  hasUnsavedEdits: () => boolean;
   rows: UnifiedRuleRow[];
   onRowsChange: (rows: UnifiedRuleRow[]) => void;
   resolveAllRows: () => Promise<UnifiedRuleRow[]>;
@@ -47,9 +49,11 @@ type UfwDashboardProps = {
 export function UfwDashboard({
   serverId,
   initialState,
-  dbRulesCount: initialDbRulesCount,
-  portFindingCount: initialPortFindingCount,
-  containerCount: initialContainerCount,
+  rulesTotal,
+  portFindingCount,
+  containerCount,
+  sshHostKeyVerified,
+  hasUnsavedEdits,
   rows,
   onRowsChange,
   resolveAllRows,
@@ -66,12 +70,10 @@ export function UfwDashboard({
   const tDocker = useTranslations("dockerMonitor");
   const tc = useTranslations("common");
   const [state, setState] = useState(initialState);
-  const [dbRulesCount, setDbRulesCount] = useState(initialDbRulesCount);
-  const [portFindingCount, setPortFindingCount] = useState(initialPortFindingCount);
-  const [containerCount, setContainerCount] = useState(initialContainerCount);
   const [loading, setLoading] = useState(false);
   const [statusChecked, setStatusChecked] = useState(false);
   const [sshReachable, setSshReachable] = useState<boolean | null>(null);
+  const [refreshConfirmOpen, setRefreshConfirmOpen] = useState(false);
   const {
     message: operationError,
     showFailure: showOperationFailure,
@@ -90,12 +92,9 @@ export function UfwDashboard({
 
   useEffect(() => {
     setState(initialState);
-    setDbRulesCount(initialDbRulesCount);
-    setPortFindingCount(initialPortFindingCount);
-    setContainerCount(initialContainerCount);
-  }, [initialState, initialDbRulesCount, initialPortFindingCount, initialContainerCount]);
+  }, [initialState]);
 
-  async function refresh() {
+  async function runRefresh() {
     setLoading(true);
     clearOperationError();
     notifyOperationStarted(serverId);
@@ -115,6 +114,14 @@ export function UfwDashboard({
     await onRulesRefresh();
     router.refresh();
     setLoading(false);
+  }
+
+  function requestRefresh() {
+    if (hasUnsavedEdits()) {
+      setRefreshConfirmOpen(true);
+      return;
+    }
+    void runRefresh();
   }
 
   async function handlePreviewApply() {
@@ -166,6 +173,20 @@ export function UfwDashboard({
   }
 
   const installEnabled = statusChecked && sshReachable === true && !state.installed;
+  const showVerifiedStatus = statusChecked && sshReachable === true;
+  const showCachedStatus = !showVerifiedStatus && (initialState.installed || initialState.active);
+
+  function statusBadgeLabel(): string {
+    if (showVerifiedStatus) {
+      return state.active ? t("active") : t("inactive");
+    }
+    if (showCachedStatus) {
+      return initialState.active ? t("cachedActive") : t("cachedInactive");
+    }
+    return "";
+  }
+
+  const statusBadgeActive = showVerifiedStatus ? state.active : initialState.active;
 
   return (
     <div className="space-y-4">
@@ -175,19 +196,20 @@ export function UfwDashboard({
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => void refresh()}
+              onClick={() => void requestRefresh()}
               disabled={loading}
             >
               {t("refreshStatus")}
             </Button>
-            {statusChecked && sshReachable ? (
+            {statusBadgeLabel() ? (
               <div
                 className={cn(
                   "w-full rounded-md py-1 text-center text-xs font-semibold",
-                  state.active ? "bg-green-600 text-white" : "bg-red-600 text-white",
+                  statusBadgeActive ? "bg-green-600 text-white" : "bg-red-600 text-white",
+                  showCachedStatus ? "opacity-80" : undefined,
                 )}
               >
-                {state.active ? t("active") : t("inactive")}
+                {statusBadgeLabel()}
               </div>
             ) : null}
           </div>
@@ -205,16 +227,16 @@ export function UfwDashboard({
                 <div
                   className={cn(
                     "w-full rounded-md py-1 text-center text-xs font-semibold",
-                    dbRulesCount > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
+                    rulesTotal > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
                   )}
                 >
-                  {t("dbRules", { count: dbRulesCount })}
+                  {t("tableRules", { count: rulesTotal })}
                 </div>
               </div>
               <Button
                 className={dashboardActionButtonClass}
                 onClick={() => void handlePreviewApply()}
-                disabled={loading}
+                disabled={loading || !sshHostKeyVerified}
               >
                 {tRules("saveRules")}
               </Button>
@@ -294,9 +316,33 @@ export function UfwDashboard({
       {statusChecked && sshReachable && !state.installed ? (
         <p className="text-sm text-muted-foreground">{t("ufwNotInstalled")}</p>
       ) : null}
+      {!sshHostKeyVerified ? (
+        <p className="text-sm text-amber-700 dark:text-amber-400">{t("hostKeyUnverified")}</p>
+      ) : null}
 
       {operationError ? <p className="text-sm text-destructive">{operationError}</p> : null}
       {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
+
+      <AlertDialog open={refreshConfirmOpen} onOpenChange={setRefreshConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("refreshDiscardTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("refreshDiscardDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setRefreshConfirmOpen(false);
+                void runRefresh();
+              }}
+            >
+              {t("confirmRefreshDiscard")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <ApplyPreviewDialog
         open={previewOpen}
         onOpenChange={setPreviewOpen}

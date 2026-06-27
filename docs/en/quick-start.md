@@ -36,7 +36,7 @@ Open **http://localhost:8088** in your browser.
 ## 4. First workflow in the UI
 
 1. **SSH Identities** (`/identities`) — create credentials (password or private key)
-2. **Add Server** — choose the identity, enter host/port; SSH test runs before save
+2. **Add Server** — choose the identity, enter host/port; SSH is verified automatically on save
 3. On the server page — install/enable UFW if needed, then open **Rules**
 4. Edit rules, run **Apply preview**, confirm to push changes over SSH
 

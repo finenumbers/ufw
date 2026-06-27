@@ -36,7 +36,7 @@ Sie sollten `ufw-postgres` (healthy), `ufw-migrate` (exited 0) und `ufw-app` (he
 ## 4. Erster Workflow in der Oberfläche
 
 1. **SSH-Identitäten** (`/identities`) — Zugangsdaten anlegen (Passwort oder privater Schlüssel)
-2. **Server hinzufügen** — Identität wählen, Host/Port eingeben; SSH-Test läuft vor dem Speichern
+2. **Server hinzufügen** — Identität wählen, Host/Port eingeben; SSH-Verifizierung läuft automatisch beim Speichern
 3. Auf der Serverseite — UFW bei Bedarf installieren/aktivieren, dann **Regeln** öffnen
 4. Regeln bearbeiten, **Regeln speichern** mit Anwenden-Vorschau, bestätigen, um Änderungen über SSH zu übertragen
 

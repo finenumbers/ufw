@@ -50,7 +50,7 @@ Ohne den ursprünglichen `APP_ENCRYPTION_KEY` SSH-Identitätsgeheimnisse manuell
 2. Postgres-Dump wiederherstellen
 3. Prüfen, dass `ufw-migrate` mit exit 0 beendet
 4. Anmeldung unter `APP_URL/login`
-5. SSH-Test auf jedem Server
+5. **Status aktualisieren** auf jedem Server-Dashboard
 
 ## Verwandte Dokumentation
 

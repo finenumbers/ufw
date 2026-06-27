@@ -96,7 +96,7 @@ export function DockerMonitorPanel({
 
   const pollInventory = useCallback(
     async (id: string) => {
-      const result = await pollDockerInventoryAction(id);
+      const result = await pollDockerInventoryAction(id, serverId);
       if (!result) {
         return null;
       }
@@ -118,7 +118,7 @@ export function DockerMonitorPanel({
       );
       return result;
     },
-    [notifyInventoryUpdate],
+    [notifyInventoryUpdate, serverId],
   );
 
   useActiveOperationPoll({

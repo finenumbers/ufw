@@ -31,18 +31,20 @@ Validation happens in two stages:
 
 This closes DNS rebinding gaps where a public hostname later resolves to a private or metadata IP.
 
-## SSH test before save
+## SSH verification on save
 
-Creating or updating a server (host, port, or identity change) requires a successful **SSH connection test**. The UI blocks save until the test passes.
+Creating or updating a server (host, port, or identity change) runs an **SSH connection test automatically on submit**. There is no separate test button — save is blocked until verification passes.
+
+On first successful verification, the host key fingerprint is stored and the server is marked **verified**.
 
 ## SSH host key pinning
 
-On first successful connection, the server’s SSH host key fingerprint is stored.
-
 | State | Meaning |
 |-------|---------|
-| **Verified** | Key recorded after successful SSH test or normal operation |
-| **Unverified** | Key imported from configuration file — run SSH test to verify |
+| **Verified** | Key recorded after successful create/update save or **Refresh Status** |
+| **Unverified** | Key imported from configuration — run **Refresh Status** on the server dashboard to verify |
+
+The edit page shows the fingerprint and an unverified warning but does not run verification until you save changed connection settings or use **Refresh Status** on the dashboard.
 
 If the remote host key changes (reinstall, MITM), the next connection fails until you investigate.
 
@@ -58,9 +60,9 @@ It does **not** change UFW rules on the remote Linux host. Remote firewall state
 
 From the server dashboard you can:
 
-1. **Detect** UFW — installed? active?
-2. **Install** UFW if missing
-3. **Enable** UFW and sync rules
+1. **Refresh Status** — detect whether UFW is installed and active (uses cached snapshot until refresh)
+2. **Install UFW** if missing — install and enable run together in one operation
+3. Edit and apply rules when UFW is installed **and** active
 
 Rules editing is available only when UFW is installed **and** active.
 

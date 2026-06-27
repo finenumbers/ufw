@@ -69,12 +69,7 @@ function withComputedFingerprints(value: unknown): unknown {
       return row;
     }
 
-    const fingerprint =
-      typeof candidate.fingerprint === "string" && candidate.fingerprint.trim().length > 0
-        ? candidate.fingerprint
-        : computeFingerprint(candidate.core);
-
-    return { ...candidate, fingerprint };
+    return { ...candidate, fingerprint: computeFingerprint(candidate.core) };
   });
 }
 

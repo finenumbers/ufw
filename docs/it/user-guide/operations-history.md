@@ -1,6 +1,6 @@
 # Cronologia operazioni
 
-Le attività di lunga durata (applicazione, aggiornamento, installazione UFW, test SSH) sono tracciate nei **log operazioni** e mostrate nell'interfaccia.
+Le attività di lunga durata (applicazione, aggiornamento, installazione UFW, port scan, inventario Docker) sono tracciate nei **log operazioni** e mostrate nell'interfaccia.
 
 ## Banner operazione
 
@@ -22,21 +22,29 @@ Due schede:
 
 | Scheda | Contenuto |
 |--------|-----------|
-| **Operazioni** | Log tecnico operazioni — applicazione, sync, test SSH, ecc. |
+| **Operazioni** | Log tecnico operazioni — applicazione, sync, aggiornamento, port scan, Docker, ecc. |
 | **Audit** | Eventi rilevanti per la sicurezza — login, logout, export configurazione |
 
 Entrambe supportano lo scroll infinito per voci più vecchie.
 
 ## Tipi di operazione
 
-Esempi:
+Il database memorizza nomi di tipo con punti (ad esempio `ufw.refresh`). L'interfaccia li traduce con chiavi con underscore (ad esempio `ufw_refresh`).
 
-- `apply_rules` — applicazione UFW
-- `ufw_refresh` — aggiornamento stato e regole
-- `ufw_sync` — sincronizzazione bozza con server
-- `ufw_install` / `ufw_enable` — configurazione UFW
-- `ssh_test` — verifica connessione
-- `server_create` — nuovo server aggiunto
+Esempi attivi:
+
+- `apply_rules` / `apply.rules` — applicazione UFW
+- `ufw_refresh` / `ufw.refresh` — Aggiorna stato (lettura SSH live + sync regole)
+- `ufw_sync` / `ufw.sync` — sync iniziale in background quando non esiste uno snapshot
+- `ufw_install` / `ufw.install` — installazione UFW (l'abilitazione avviene durante l'installazione)
+- `port_scan` / `port.scan` — port scan esterno
+- `docker_inventory` / `docker.inventory` — aggiornamento inventario Docker
+- `docker_control` / `docker.control` — avvio/arresto/riavvio container
+- `server_create` / `server.create` — nuovo server aggiunto
+
+Legacy (solo voci storiche nel log):
+
+- `ssh_test` — dalle versioni precedenti a v0.7.4; non viene più creato
 
 ## Cancellare la cronologia
 

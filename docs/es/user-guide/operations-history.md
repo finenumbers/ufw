@@ -1,18 +1,18 @@
 # Historial de operaciones
 
-Las tareas de larga duración (aplicar, actualizar, instalar UFW, prueba SSH) se registran en **logs de operación** y se muestran en la interfaz.
+Las tareas de larga duración (aplicar, actualizar, instalar UFW, escaneo de puertos, inventario Docker) se registran en **registros de operaciones** y se muestran en la interfaz.
 
 ## Banner de operación
 
-Mientras una operación se ejecuta, aparece un banner en la parte superior de la app:
+Mientras se ejecuta una operación, aparece un banner en la parte superior de la app:
 
-- Tipo de operación y estado (RUNNING, SUCCESS, FAILED)
+- Tipo y estado de la operación (RUNNING, SUCCESS, FAILED)
 - Lista de pasos expandible con estado por paso
-- Cierre automático en éxito tras un breve retraso
+- Cierre automático tras éxito tras un breve retraso
 
 El banner consulta actualizaciones mientras el trabajo está en curso.
 
-Si un banner queda atascado en **RUNNING** o **PENDING** tras desconectar el navegador, actualice la página. Las operaciones obsoletas se limpian automáticamente mediante un barrido en segundo plano (típicamente en 30–60 minutos).
+Si un banner queda atascado en **RUNNING** o **PENDING** tras una desconexión del navegador, actualice la página. Las operaciones obsoletas se limpian automáticamente mediante un barrido en segundo plano (normalmente en 30–60 minutos).
 
 ## Página de operaciones
 
@@ -22,27 +22,35 @@ Dos pestañas:
 
 | Pestaña | Contenido |
 |---------|-----------|
-| **Operaciones** | Log técnico de operaciones — aplicar, sync, prueba SSH, etc. |
-| **Auditoría** | Eventos relevantes para seguridad — login, logout, exportación de config |
+| **Operaciones** | Registro técnico — aplicar, sync, actualizar, escaneo de puertos, Docker, etc. |
+| **Audit** | Eventos relevantes para seguridad — inicio/cierre de sesión, exportación de configuración |
 
-Ambas admiten desplazamiento infinito para entradas más antiguas.
+Ambas admiten desplazamiento infinito para entradas antiguas.
 
 ## Tipos de operación
 
-Ejemplos:
+La base de datos almacena nombres de tipo con punto (por ejemplo `ufw.refresh`). La interfaz los traduce con claves con guion bajo (por ejemplo `ufw_refresh`).
 
-- `apply_rules` — aplicación UFW
-- `ufw_refresh` — actualizar estado y reglas
-- `ufw_sync` — sincronizar borrador con servidor
-- `ufw_install` / `ufw_enable` — configuración UFW
-- `ssh_test` — verificación de conexión
-- `server_create` — nuevo servidor añadido
+Ejemplos activos:
+
+- `apply_rules` / `apply.rules` — aplicar UFW
+- `ufw_refresh` / `ufw.refresh` — Actualizar estado (lectura SSH en vivo + sync de reglas)
+- `ufw_sync` / `ufw.sync` — sync inicial en segundo plano cuando no hay snapshot
+- `ufw_install` / `ufw.install` — instalar UFW (la activación se ejecuta dentro de la instalación)
+- `port_scan` / `port.scan` — escaneo de puertos externo
+- `docker_inventory` / `docker.inventory` — actualizar inventario Docker
+- `docker_control` / `docker.control` — iniciar/detener/reiniciar contenedor
+- `server_create` / `server.create` — nuevo servidor añadido
+
+Legacy (solo entradas históricas):
+
+- `ssh_test` — de versiones anteriores a v0.7.4; ya no se crea
 
 ## Borrar historial
 
-Los administradores pueden borrar el historial antiguo de operaciones desde la interfaz (los eventos de auditoría pueden conservarse según la política de retención). Borrar no afecta al estado del servidor ni a las reglas.
+Los administradores pueden borrar el historial antiguo de operaciones desde la interfaz (los eventos de audit pueden conservarse según la política de retención). Borrar no afecta al estado del servidor ni a las reglas.
 
 ## Documentación relacionada
 
-- [Log de auditoría y exportación](../administration/audit-log-and-export.md)
+- [Registro de audit y exportación](../administration/audit-log-and-export.md)
 - [Flujo de borrador y aplicación](../concepts/draft-apply-workflow.md)

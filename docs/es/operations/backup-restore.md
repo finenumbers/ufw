@@ -50,7 +50,7 @@ Sin la `APP_ENCRYPTION_KEY` original, vuelva a introducir secretos de identidad 
 2. Restaure volcado Postgres
 3. Confirme que `ufw-migrate` exited 0
 4. Inicie sesión en `APP_URL/login`
-5. Prueba SSH en cada servidor
+5. **Actualizar estado** en cada panel de servidor
 
 ## Documentación relacionada
 

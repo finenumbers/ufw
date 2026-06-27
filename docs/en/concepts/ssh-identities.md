@@ -38,7 +38,7 @@ flowchart LR
   Identity --> ServerC[Server_C]
 ```
 
-Each server record stores a reference to one identity. Changing the identity on a server requires a successful **SSH test** before save.
+Each server record stores a reference to one identity. Changing the identity on a server runs **SSH verification automatically on submit** before save.
 
 ## Security notes
 

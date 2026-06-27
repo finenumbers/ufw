@@ -27,8 +27,10 @@ Les mots de passe SSH et clés privées sont chiffrés avec **AES-256-GCM** avan
 - La validation de l'hôte bloque le SSRF vers les adresses privées/métadonnées à l'enregistrement
 - **Vérification de résolution DNS :** avant chaque connexion SSH et scan de ports, l'IP résolue est validée à nouveau — bloque le DNS rebinding vers des adresses privées/métadonnées même lorsque le nom d'hôte semblait sûr à l'enregistrement
 - `SSH_ALLOWED_CIDRS` optionnel pour les réseaux internes
-- Épinglage de la clé hôte lors de la première connexion réussie
-- Clés importées marquées non vérifiées jusqu'à un test SSH réussi
+- Épinglage de la clé hôte lors de la première **Actualiser le statut** réussie (connexion SSH), ou lors d'un enregistrement réussi lors de la création/mise à jour d'un serveur
+- L'import de configuration **ne** épingle **pas** automatiquement les clés hôte — les serveurs importés restent `sshHostKeyVerified: false` jusqu'à que l'opérateur exécute Actualiser le statut
+- L'application et l'installation UFW sont bloquées tant que la clé hôte n'est pas vérifiée
+- **Risque résiduel TOFU :** la première Actualiser le statut fait confiance à la clé présentée à ce moment (TOFU SSH standard). Un attaquant contrôlant le chemin réseau lors de la première connexion pourrait épingler une clé malveillante ; pour les hôtes à haut risque, vérifiez l'empreinte hors bande
 - Injection de commandes empêchée via des enums en liste blanche et construction de commandes UFW assainie
 
 ## Scan de ports externe (optionnel)
@@ -36,7 +38,7 @@ Les mots de passe SSH et clés privées sont chiffrés avec **AES-256-GCM** avan
 Lorsque `PORT_SCAN_ENABLED=true` :
 
 - Les scans s'exécutent **uniquement** vers les enregistrements `Server.host` déjà en base de données
-- Les noms d'hôte sont résolus en IPv4 et validés avec les mêmes règles que SSH (**pas de scan sans IP validée**)
+- Les noms d'hôte sont résolus en IPv4 et validés avec les mêmes règles que SSH (**pas de scan sans IP résolue validée**)
 - Naabu + Nmap s'exécutent dans `ufw-app` (scans connect, pas de cibles arbitraires)
 - Limité par serveur ; événements d'audit enregistrés
 - Nécessite une **sortie réseau** du conteneur application vers les hôtes gérés sur les ports scannés — voir [Scan de ports](../deployment/port-scan.md)
@@ -53,7 +55,9 @@ Lorsque `DOCKER_MONITOR_ENABLED=true` :
 ## Protections d'application et d'export
 
 - Les modifications UFW exigent **aperçu + confirmation explicite**
+- Les empreintes de règles sont **recalculées côté serveur** lors de l'aperçu d'application — des empreintes client altérées ne peuvent pas réattribuer les éléments du plan
 - L'export de configuration exige une **resaisie du mot de passe** et écrit un événement d'audit `CONFIG_EXPORT`
+- L'import de configuration exige une **resaisie du mot de passe** (mêmes limites de débit que l'export)
 - Les fichiers d'export contiennent des **secrets en clair** — responsabilité de l'opérateur
 
 ## En-têtes de sécurité HTTP (production)

@@ -7,6 +7,10 @@ UFW Remote Manager can run an **external port scan** from the `ufw-app` containe
 
 Results appear in a table **below the UFW rules** on the server page.
 
+## Server page load
+
+When you open a server dashboard, the app loads the **latest successful scan from Postgres** on the server-side render — no new scan runs on first paint. If no cached scan exists, the panel is empty until you click **Scan ports**.
+
 ## Enable
 
 Set in the app environment (Compose / Portainer):

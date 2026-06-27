@@ -1,6 +1,6 @@
 # Edit and apply rules
 
-When UFW is **installed and active** on a server, open the **Rules** tab to manage firewall rules.
+When UFW is **installed and active** on a server, the **rules table** on the server dashboard lets you manage firewall rules.
 
 ## Rules table
 
@@ -14,11 +14,13 @@ Features:
 
 ## Refresh from server
 
-Click **Refresh** (or use dashboard refresh) to:
+Use **Refresh Status** on the dashboard (or refresh from the rules toolbar) to:
 
-1. Detect UFW state
-2. Load snapshot from server
-3. Sync draft origin states
+1. Detect UFW state over SSH
+2. Load a new snapshot from the server
+3. Re-seed the rules table from remote + local metadata
+
+If you have **unsaved edits**, the app shows a confirmation dialog before reloading from the server.
 
 Use this after manual changes on the server CLI or after a partial apply.
 
@@ -36,6 +38,8 @@ Toolbar → import CSV, XLSX, or JSON. Validate imported rows in the table befor
 2. **Apply preview** — review planned commands and diff summary
 3. **Confirm** — executes over SSH (rejected if remote UFW changed since preview — run preview again)
 4. Watch the operation banner for progress
+
+**Save rules** (apply preview) is disabled until the SSH host key is **verified** — run **Refresh Status** first if the server was imported from configuration.
 
 See [Draft and apply workflow](../concepts/draft-apply-workflow.md) for details.
 

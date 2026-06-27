@@ -4,6 +4,10 @@ UFW Remote Manager can inventory and control **Docker containers** on each regis
 
 Results appear in a table **below the port scan panel** on the server page.
 
+## Server page load
+
+When you open a server dashboard, the app loads the **latest Docker inventory snapshot from Postgres** on the server-side render — no SSH refresh runs on first paint. If no cached inventory exists, the panel is empty until you click **Refresh inventory**.
+
 ## Enable
 
 Set in the app environment (Compose / Portainer):

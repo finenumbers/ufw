@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 
 export type ServerInventoryStats = {
-  ufwRuleCount: number;
+  savedRuleCount: number;
+  remoteRuleCount: number;
   portFindingCount: number;
   containerCount: number;
 };
@@ -47,7 +48,7 @@ async function loadContainerCounts(serverIds: string[]): Promise<Map<string, num
   return new Map(snapshots.map((snapshot) => [snapshot.serverId, snapshot.containerCount]));
 }
 
-async function loadUfwRuleCounts(serverIds: string[]): Promise<Map<string, number>> {
+async function loadSavedRuleCounts(serverIds: string[]): Promise<Map<string, number>> {
   if (serverIds.length === 0) {
     return new Map();
   }
@@ -61,14 +62,34 @@ async function loadUfwRuleCounts(serverIds: string[]): Promise<Map<string, numbe
   return new Map(counts.map((entry) => [entry.serverId, entry._count.id]));
 }
 
+async function loadRemoteRuleCounts(serverIds: string[]): Promise<Map<string, number>> {
+  if (serverIds.length === 0) {
+    return new Map();
+  }
+
+  const snapshots = await db.serverSnapshot.findMany({
+    where: { serverId: { in: serverIds } },
+    orderBy: { capturedAt: "desc" },
+    distinct: ["serverId"],
+    select: {
+      serverId: true,
+      _count: { select: { rules: true } },
+    },
+  });
+
+  return new Map(snapshots.map((snapshot) => [snapshot.serverId, snapshot._count.rules]));
+}
+
 export function mergeServerInventoryStats(
   serverId: string,
-  ufwCounts: Map<string, number>,
+  savedCounts: Map<string, number>,
+  remoteCounts: Map<string, number>,
   portCounts: Map<string, number>,
   containerCounts: Map<string, number>,
 ): ServerInventoryStats {
   return {
-    ufwRuleCount: ufwCounts.get(serverId) ?? 0,
+    savedRuleCount: savedCounts.get(serverId) ?? 0,
+    remoteRuleCount: remoteCounts.get(serverId) ?? 0,
     portFindingCount: portCounts.get(serverId) ?? 0,
     containerCount: containerCounts.get(serverId) ?? 0,
   };
@@ -77,8 +98,9 @@ export function mergeServerInventoryStats(
 export async function getServerInventoryStatsMap(
   serverIds: string[],
 ): Promise<Map<string, ServerInventoryStats>> {
-  const [ufwCounts, portCounts, containerCounts] = await Promise.all([
-    loadUfwRuleCounts(serverIds),
+  const [savedCounts, remoteCounts, portCounts, containerCounts] = await Promise.all([
+    loadSavedRuleCounts(serverIds),
+    loadRemoteRuleCounts(serverIds),
     loadPortFindingCounts(serverIds),
     loadContainerCounts(serverIds),
   ]);
@@ -86,7 +108,7 @@ export async function getServerInventoryStatsMap(
   return new Map(
     serverIds.map((serverId) => [
       serverId,
-      mergeServerInventoryStats(serverId, ufwCounts, portCounts, containerCounts),
+      mergeServerInventoryStats(serverId, savedCounts, remoteCounts, portCounts, containerCounts),
     ]),
   );
 }

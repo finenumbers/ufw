@@ -58,10 +58,10 @@ export async function refreshDockerInventoryAction(
 }
 
 /** Single round-trip poll: lightweight status while running, full inventory when finished. */
-export async function pollDockerInventoryAction(snapshotId: string) {
+export async function pollDockerInventoryAction(snapshotId: string, serverId: string) {
   await requireUserId();
   const status = await getDockerInventoryStatusById(snapshotId);
-  if (!status) {
+  if (!status || status.serverId !== serverId) {
     return null;
   }
   if (status.status === "SUCCESS" || status.status === "FAILED") {

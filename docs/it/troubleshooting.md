@@ -29,7 +29,7 @@ Sintomo → causa probabile → cosa fare.
 | Test SSH fallito | Credenziali errate, firewall, host down | Verificare identità, porta; il server consente IP host Docker |
 | Errore validazione host | IP privato bloccato | Impostare `SSH_ALLOWED_CIDRS` per reti interne |
 | Chiave host cambiata | Reinstallazione server o MITM | Verificare fingerprint sul server; aggiornare dopo conferma |
-| Chiave host non verificata | Importata da config | Eseguire test SSH dalla pagina modifica server |
+| Chiave host non verificata | Importata da config | Eseguire **Aggiorna stato** nella dashboard del server |
 
 ## Regole / applicazione
 

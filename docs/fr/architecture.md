@@ -30,27 +30,7 @@ flowchart LR
 1. L'administrateur ouvre `APP_URL` dans un navigateur (HTTPS via NPM).
 2. Better Auth valide le cookie de session.
 3. Les server actions et routes API orchestrent le travail SSH et base de données.
-4. Les commandes UFW s'exécutent sur les hôtes distants uniquement après confirmation explicite d'application.
-
-## Configuration d'exécution
-
-L'URL publique est définie à **l'exécution**, pas intégrée dans l'image Docker :
-
-- `APP_URL` dans `.env` → `BETTER_AUTH_URL` dans le conteneur
-- Une image GHCR fonctionne pour n'importe quel domaine — voir [GHCR + Compose](./deployment/ghcr-compose.md)
-
-Implémentation : `getPublicAppUrl()` dans `src/lib/app-url.ts`.
-
-**Important :** `APP_URL` est l'**URL HTTPS publique** que le navigateur utilise (via NPM). NPM transmet vers `http://ufw-app:8088` sur le réseau Docker — le HTTP interne est intentionnel. Voir [Nginx Proxy Manager](./deployment/nginx-proxy-manager.md).
-
-## Modèle de chargement des détails serveur
-
-L'ouverture d'un tableau de bord serveur est **cache-first** — pas de SSH au chargement initial de la page :
-
-1. Le **SSR** lit le dernier **snapshot** UFW depuis Postgres (`detectionFromSnapshot`) et affiche le statut et les règles depuis la base de données.
-2. Les règles, les résultats de scan de ports et l'inventaire Docker se chargent **en parallèle** depuis Postgres (`Promise.all`) — toujours sans SSH.
-3. **Actualiser** (tableau de bord ou barre d'outils des règles) déclenche une lecture SSH en direct et met à jour le snapshot.
-4. La **synchronisation initiale** s'exécute automatiquement en arrière-plan lorsque UFW est installé et actif mais qu'**aucun snapshot n'existe encore** (`needsSync`).
+4. La **synchronisation initiale** s'exécute automatiquement en arrière-plan lorsqu'**aucun snapshot UFW n'existe encore dans Postgres** (`needsSync`) — par exemple juste après la création d'un serveur ou avant le premier actualisation.
 
 Cela garde les pages serveur rapides tandis que le travail SSH n'a lieu que lorsque vous actualisez explicitement ou lorsque l'application n'a pas encore d'état en cache.
 

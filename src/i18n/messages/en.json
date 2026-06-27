@@ -56,6 +56,7 @@
     "configExportFailed": "Failed to export configuration",
     "configImportTitle": "Load server configuration?",
     "configImportDescription": "Servers missing from the file will be deleted along with all their rules and snapshots.",
+    "configImportPassword": "Password",
     "configImportDeleteList": "Servers to delete:",
     "configImportCreate": "Create: {count}",
     "configImportUpdate": "Update: {count}",
@@ -75,7 +76,7 @@
       "detailsTitle": "Server Details",
       "detailsDescription": "Changing host or identity requires a successful SSH test.",
       "hostKeyFingerprint": "SSH host key fingerprint",
-      "hostKeyUnverified": "Host key imported from configuration — run SSH test to verify"
+      "hostKeyUnverified": "Host key imported from configuration — refresh status to verify"
     },
     "delete": {
       "button": "Delete Server",
@@ -168,7 +169,6 @@
   "ufw": {
     "active": "UFW Active",
     "inactive": "UFW Inactive",
-    "dbRules": "{count} UFW rules",
     "refreshStatus": "Refresh Status",
     "refreshStatusHint": "Click Refresh Status to check SSH connectivity and UFW state on the server.",
     "sshUnavailable": "SSH is unavailable. Check host, credentials, and that the server allows connections from the app host.",
@@ -176,7 +176,15 @@
     "installUfw": "Install UFW",
     "installTitle": "Install UFW?",
     "installDescription": "UFW will be installed and activated on the remote server via SSH.",
-    "confirmInstall": "Confirm Install"
+    "confirmInstall": "Confirm Install",
+    "savedRules": "{count} saved rules",
+    "tableRules": "{count} in table",
+    "cachedActive": "UFW active (cached)",
+    "cachedInactive": "UFW inactive (cached)",
+    "refreshDiscardTitle": "Discard unsaved rule edits?",
+    "refreshDiscardDescription": "Refresh status will reload rules from the server and reset unsaved changes in the table.",
+    "confirmRefreshDiscard": "Refresh anyway",
+    "hostKeyUnverified": "SSH host key is not verified yet. Refresh status to verify before applying rules."
   },
   "rules": {
     "toolbar": {
@@ -258,7 +266,6 @@
       "ufw_sync": "Syncing with server",
       "ufw_refresh": "Refreshing UFW status",
       "ufw_install": "Installing UFW",
-      "ufw_enable": "Enabling UFW",
       "ssh_test": "Testing SSH",
       "server_create": "Creating server",
       "port_scan": "Scanning open ports",
@@ -292,10 +299,6 @@
       "refresh_complete": "Done: UFW status updated",
       "install_start": "Installing UFW",
       "install_complete": "Done: UFW installed and activated",
-      "enable_start": "Enabling UFW",
-      "enable_complete": "Done: UFW enabled and rules synced",
-      "ssh_start": "Testing SSH connection",
-      "ssh_complete": "SSH connection successful",
       "server_create_complete": "Server {name} created",
       "port_scan_start": "Starting external port scan",
       "port_scan_discovery": "Discovering open ports",
@@ -332,7 +335,6 @@
       "draft_sync": "Syncing draft",
       "install": "Installing UFW on server",
       "enable": "Enabling UFW on server",
-      "ssh": "Testing SSH connection",
       "port_scan_resolve": "Resolving scan target",
       "port_scan_discovery": "Running Naabu discovery",
       "port_scan_enrichment": "Running Nmap enrichment",

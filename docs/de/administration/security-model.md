@@ -1,103 +1,107 @@
 # Sicherheitsmodell
 
-Diese Seite erklärt, wie UFW Remote Manager Zugangsdaten, Sitzungen und Netzwerkgrenzen schützt.
+Diese Seite erklärt, wie UFW Remote Manager Zugangsdaten, Sitzungen und Netzgrenzen schützt.
 
-Zur Meldung von Schwachstellen siehe [SECURITY.md](../../../SECURITY.md) (Englisch, kanonisch).
+Für Schwachstellenmeldungen siehe [SECURITY.md](../../../SECURITY.md) (Englisch, kanonisch).
 
 ## Authentifizierung
 
-- **Better Auth** mit E-Mail/Passwort
-- Ein Admin-Konto nach Ersteinrichtung — keine öffentliche Registrierung
-- Session-Cookies; `BETTER_AUTH_SECRET` in der Produktion erforderlich
-- Rate-Limiting auf Auth-Endpunkten (In-Memory, eine Replik)
+- **Better Auth** with email/password
+- Single admin account after initial setup — no public registration
+- Session cookies; `BETTER_AUTH_SECRET` required in production
+- Rate limiting on auth endpoints (in-memory, single replica)
 
-## Zugangsdaten-Verschlüsselung
+## Verschlüsselung von Zugangsdaten
 
-SSH-Passwörter und private Schlüssel werden vor der Speicherung mit **AES-256-GCM** verschlüsselt.
+SSH passwords and private keys are encrypted with **AES-256-GCM** before storage.
 
-| Geheimnis | Zweck |
-|-----------|-------|
-| `APP_ENCRYPTION_KEY` | Verschlüsselt/entschlüsselt Identitätsgeheimnisse (32 Bytes, Base64) |
-| `BETTER_AUTH_SECRET` | Signiert Session-Tokens |
+| Secret | Purpose |
+|--------|---------|
+| `APP_ENCRYPTION_KEY` | Encrypts/decrypts identity secrets (32 bytes, base64) |
+| `BETTER_AUTH_SECRET` | Signs session tokens |
 
-**Geht `APP_ENCRYPTION_KEY` verloren, können verschlüsselte SSH-Zugangsdaten nicht wiederhergestellt werden** — nur manuell neu eingegeben oder aus Konfigurationsexport-Backup wiederhergestellt.
+**If `APP_ENCRYPTION_KEY` is lost, encrypted SSH credentials cannot be recovered** — only re-entered manually or restored from config export backup.
 
 ## SSH-Sicherheit
 
-- Host-Validierung blockiert SSRF zu privaten/Metadaten-Adressen beim Speichern
-- **DNS-Auflösungsprüfung:** vor jeder SSH-Verbindung und jedem Port-Scan wird die aufgelöste IP erneut validiert — blockiert DNS-Rebinding zu privaten/Metadaten-Adressen, auch wenn der Hostname beim Speichern harmlos wirkte
-- Optionales `SSH_ALLOWED_CIDRS` für interne Netzwerke
-- Host-Key-Pinning bei erster erfolgreicher Verbindung
-- Importierte Keys als nicht verifiziert markiert, bis SSH-Test erfolgreich
-- Command Injection verhindert durch Allowlist-Enums und sanitisierte UFW-Befehlsgenerierung
+- Host validation blocks SSRF to private/metadata addresses at save time
+- **DNS resolution check:** before each SSH connect and port scan, the resolved IP is validated again — blocks DNS rebinding to private/metadata addresses even when the hostname looked safe at save time
+- Optional `SSH_ALLOWED_CIDRS` for internal networks
+- Host-Key-Pinning beim ersten erfolgreichen **Status aktualisieren** (SSH-Verbindung) oder bei erfolgreichem Speichern beim Anlegen/Aktualisieren eines Servers
+- Config-Import pinnt Host-Keys **nicht** automatisch — importierte Server bleiben `sshHostKeyVerified: false`, bis der Operator Status aktualisieren ausführt
+- Apply und UFW-Installation sind blockiert, bis der Host-Key verifiziert ist
+- **TOFU-Restrisiko:** erstes Status aktualisieren vertraut dem dann präsentierten Key (Standard-SSH-TOFU). Ein Angreifer mit Netzwerk-Kontrolle beim ersten Connect könnte einen bösartigen Key pinnen; für kritische Hosts Fingerprint out-of-band prüfen
+- Command injection prevented via allowlisted enums and sanitized UFW command building
 
 ## Externes Port-Scanning (optional)
 
-Bei `PORT_SCAN_ENABLED=true`:
+When `PORT_SCAN_ENABLED=true`:
 
-- Scans laufen **nur** gegen `Server.host`-Einträge, die bereits in der Datenbank stehen
-- Hostnamen werden in IPv4 aufgelöst und mit denselben Regeln wie SSH validiert (**kein Scan ohne validierte IP**)
-- Naabu + Nmap laufen innerhalb von `ufw-app` (Connect-Scans, keine beliebigen Ziele)
-- Rate-Limit pro Server; Audit-Ereignisse werden protokolliert
-- Erfordert **Netzwerk-Egress** vom App-Container zu verwalteten Hosts auf gescannten Ports — siehe [Port-Scanning](../deployment/port-scan.md)
+- Scans run **only** toward `Server.host` records already in the database
+- Hostnames are resolved to IPv4 and validated with the same rules as SSH (**no scan without a validated resolved IP**)
+- Naabu + Nmap execute inside `ufw-app` (connect scans, no arbitrary targets)
+- Rate-limited per server; audit events recorded
+- Requires **network egress** from the app container to managed hosts on scanned ports — see [Port-Scanning](../deployment/port-scan.md)
 
 ## Docker-Monitoring (optional)
 
-Bei `DOCKER_MONITOR_ENABLED=true`:
+When `DOCKER_MONITOR_ENABLED=true`:
 
-- Inventar und Steuerung laufen über **SSH** nur auf registrierten Servern
-- Container-Referenzen werden validiert; nur Aktionen `START` / `STOP` / `RESTART`
-- Rate Limits und Audit-Ereignisse bei Refresh und Steuerung
-- SSH-Benutzer benötigt Docker-CLI-Zugriff — siehe [Docker-Monitoring](../deployment/docker-monitor.md)
+- Inventory and control run over **SSH** on registered servers only
+- Container references validated; only `START` / `STOP` / `RESTART` actions
+- Rate limits and audit events on refresh and control
+- SSH user needs Docker CLI access — see [Docker-Monitoring](../deployment/docker-monitor.md)
 
-## Schutz beim Anwenden und Exportieren
+## Schutz bei Anwenden und Export
 
-- UFW-Änderungen erfordern **Vorschau + explizite Bestätigung**
-- Konfigurationsexport erfordert **Passwort-Neueingabe** und schreibt `CONFIG_EXPORT`-Audit-Ereignis
-- Exportdateien enthalten **Geheimnisse im Klartext** — Verantwortung des Betreibers
+- UFW changes require **preview + explicit confirm**
+- Regel-Fingerprints werden beim Apply-Preview **serverseitig neu berechnet** — manipulierte Client-Fingerprints können Plan-Items nicht umzuordnen
+- Config export requires **password re-entry** and writes `CONFIG_EXPORT` audit event
+- Config-Import erfordert **Passwort erneut eingeben** (gleiche Rate Limits wie Export)
+- Export files contain **plaintext secrets** — operator responsibility
 
 ## HTTP-Security-Header (Produktion)
 
-Bei `NODE_ENV=production`:
+When `NODE_ENV=production`:
 
 - Content-Security-Policy
 - Strict-Transport-Security (HSTS)
 - X-Frame-Options, X-Content-Type-Options, Referrer-Policy
 
-TLS terminiert bei Nginx Proxy Manager; die App empfängt HTTP im Docker-Netzwerk.
+TLS terminates at Nginx Proxy Manager; app receives HTTP on the Docker network.
 
-### Hinweis zur Content-Security-Policy
+### Hinweis zu Content-Security-Policy
 
-Die aktuelle CSP enthält `'unsafe-inline'` und `'unsafe-eval'` für Next.js App Router-Skripte und Hydration. Nonce-basierte CSP ist zurückgestellt, bis Next.js sie ohne Bruch der Client-Bundles unterstützt. Entfernen Sie diese Direktiven nicht ohne vollständigen Regressionstest.
+The current CSP includes `'unsafe-inline'` and `'unsafe-eval'` for Next.js App Router scripts and hydration. Nonce-based CSP is deferred until Next.js supports it without breaking client bundles. Do not remove these directives without a full regression pass.
 
 ## Öffentliche Endpunkte
 
-| Pfad | Auth | Hinweise |
-|------|------|----------|
-| `/api/health` | Keine | Gibt `status`, `db`, `version` zurück; `revision` (Git/Build-ID) nur außerhalb der Produktion |
-| `/setup` | Keine (einmalig) | Rate-limited; `TRUST_PROXY=1` hinter NPM verwenden |
+| Path | Auth | Notes |
+|------|------|-------|
+| `/api/health` | None | Returns `status`, `db`, `version`; `revision` (git/build id) only in non-production |
+| `/setup` | None (once) | Rate-limited; use `TRUST_PROXY=1` behind NPM |
 
-## Setup-Rate-Limiting
+## Rate Limiting für Setup
 
-Die anfängliche Admin-Registrierung (`/setup`) ist auf **5 Versuche pro Minute** pro Client-IP begrenzt, wenn `TRUST_PROXY=1` gesetzt ist, andernfalls pro Direct-Connection-Bucket.
+Initial admin registration (`/setup`) is limited to **5 attempts per minute** per client IP when `TRUST_PROXY=1`, otherwise per direct connection bucket.
 
-## Netzwerkexpositions-Checkliste
+## Checkliste Netzwerk-Exposition
 
-- [ ] Admin-Oberfläche nur über HTTPS-Reverse-Proxy
-- [ ] Postgres in der Produktion nicht auf Host/Internet exponiert
-- [ ] Admin-URL einschränken (VPN, IP-Allowlist in NPM)
-- [ ] Starke eindeutige `.env`-Geheimnisse
-- [ ] Regelmäßige Postgres- + `.env`-Backups off-host
-- [ ] Geheimnisse rotieren, wenn Export oder `.env` geleakt sein könnte
+- [ ] Admin UI only via HTTPS reverse proxy
+- [ ] Postgres not exposed to host/internet in production
+- [ ] Restrict admin URL (VPN, IP allowlist in NPM)
+- [ ] Strong unique `.env` secrets
+- [ ] Regular Postgres + `.env` backups off-host
+- [ ] Rotate secrets if export or `.env` may have leaked
 
-## Fehlerbereinigung
+## Fehler-Sanitisierung
 
-Clientseitige Fehler aus SSH-/Anwenden-Pfaden werden bereinigt, um Stack Traces oder interne Pfade nicht preiszugeben.
+Client-facing errors from SSH/apply paths are sanitized to avoid leaking stack traces or internal paths.
 
-Abgelaufene Sitzungen liefern eine einheitliche Meldung aus Server Actions: `Session expired. Please sign in again.` (kein rohes `Unauthorized` wird an die UI weitergegeben).
+Expired sessions return a consistent message from server actions: `Session expired. Please sign in again.` (no raw `Unauthorized` propagated to the UI).
 
 ## Verwandte Dokumentation
 
 - [Umgebungsvariablen](./environment-variables.md)
-- [Audit-Protokoll und Export](./audit-log-and-export.md)
+- [Audit-Log und Export](./audit-log-and-export.md)
 - [Architektur](../architecture.md)

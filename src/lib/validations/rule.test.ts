@@ -49,6 +49,19 @@ test("parseUnifiedRuleRows computes fingerprint for new draft rows", () => {
   assert.equal(rows[0]?.fingerprint, computeFingerprint(validRow.core));
 });
 
+test("parseUnifiedRuleRows ignores tampered client fingerprint", () => {
+  const rows = parseUnifiedRuleRows([
+    {
+      ...validRow,
+      fingerprint: "tampered-fingerprint",
+    },
+  ]);
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0]?.fingerprint, computeFingerprint(validRow.core));
+  assert.notEqual(rows[0]?.fingerprint, "tampered-fingerprint");
+});
+
 test("parseUnifiedRuleRows rejects invalid action enum", () => {
   assert.throws(
     () =>

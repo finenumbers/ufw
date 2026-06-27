@@ -134,7 +134,7 @@ enum AuditAction {
   IDENTITY_CREATED
   IDENTITY_UPDATED
   IDENTITY_DELETED
-  SSH_TEST
+  SSH_TEST // deprecated: legacy audit rows only; no new events emitted since v0.7.4
   UFW_INSTALL
   UFW_ENABLE
   SNAPSHOT_LOADED

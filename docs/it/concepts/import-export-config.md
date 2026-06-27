@@ -21,13 +21,16 @@ Il file di export contiene **password SSH e chiavi private in testo chiaro**. Tr
 1. Usa **Carica configurazione** nella pagina Server
 2. Seleziona file JSON v2
 3. Rivedi il riepilogo: server da creare, aggiornare, eliminare
-4. Conferma — l'importazione avviene in una transazione (upsert prima, eliminazione per ultimo)
+4. Reinserisci la **password dell'account** nella finestra di conferma
+5. Conferma — l'importazione avviene in una transazione (upsert prima, eliminazione per ultimo)
+
+L'importazione usa gli stessi limiti di frequenza dell'export (10 tentativi al minuto per utente).
 
 ### Comportamento distruttivo
 
 I server **assenti** dal file di importazione possono essere **eliminati** insieme a tutte le regole e snapshot. Leggi attentamente la finestra di conferma.
 
-Le chiavi host SSH importate possono essere contrassegnate come **non verificate** finché non esegui test SSH su ogni server.
+Le chiavi host SSH importate sono contrassegnate come **non verificate** — esegui **Aggiorna stato** nella dashboard di ogni server prima di applicare le regole.
 
 ### Limiti di importazione
 
@@ -37,7 +40,7 @@ Le chiavi host SSH importate possono essere contrassegnate come **non verificate
 ## Export vs backup Postgres
 
 | Metodo | Contiene | Ideale per |
-|--------|----------|----------|
+|--------|----------|------------|
 | **Export configurazione (JSON)** | Configurazione leggibile + segreti in testo chiaro | Migrazione tra istanze, copia disaster |
 | **Dump Postgres** | Database completo inclusi segreti crittografati | Ripristino completo con la stessa `APP_ENCRYPTION_KEY` |
 | **Backup `.env`** | Segreti di runtime | Obbligatorio per decrittografare credenziali DB dopo ripristino |

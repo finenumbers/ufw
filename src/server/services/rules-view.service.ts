@@ -5,9 +5,11 @@ import { TABLE_PAGE_SIZE } from "@/lib/pagination/table-page-size";
 import { originStateToSources, resolveRuleOriginState } from "@/lib/ufw/origin-state";
 import { generateId } from "@/lib/utils";
 import type { RuleCore, UnifiedRuleRow } from "@/types/rule";
+import type { UfwDetectionResult } from "@/types/ufw";
 import {
   captureSnapshot,
   getLatestSnapshot,
+  persistSnapshotFromDetection,
 } from "@/server/services/snapshot.service";
 import {
   getOrCreateDraftSession,
@@ -211,7 +213,8 @@ export async function refreshRemoteRules(
   serverId: string,
   userId: string,
   tracker?: import("@/server/services/operation-progress.service").OperationTracker,
-): Promise<{ draftSkipped: boolean }> {
+  detection?: UfwDetectionResult,
+): Promise<void> {
   const queueOptions = tracker
     ? {
         onStart: async () => {
@@ -221,10 +224,22 @@ export async function refreshRemoteRules(
       }
     : undefined;
 
-  await captureSnapshot(serverId, userId, queueOptions);
+  if (detection) {
+    if (tracker) {
+      await tracker.startStep("load_ufw", semanticStep("load_ufw", "steps.load_ufw"));
+    }
+    await persistSnapshotFromDetection(serverId, userId, detection);
+    if (tracker) {
+      await tracker.completeStep("load_ufw");
+    }
+  } else {
+    await captureSnapshot(serverId, userId, queueOptions);
+    if (tracker) {
+      await tracker.completeStep("load_ufw");
+    }
+  }
 
   if (tracker) {
-    await tracker.completeStep("load_ufw");
     await tracker.startStep("draft_sync", semanticStep("draft_sync", "steps.draft_sync"));
   }
 
@@ -233,8 +248,6 @@ export async function refreshRemoteRules(
   if (tracker) {
     await tracker.completeStep("draft_sync");
   }
-
-  return { draftSkipped: false };
 }
 
 export type RulesViewPage = {
@@ -351,34 +364,14 @@ function draftRulesToUnifiedRows(
         localFingerprints,
       );
 
-      return {
-        clientRowId: rule.clientRowId,
-        fingerprint: rule.fingerprint,
-        sortOrder: rule.sortOrder,
-        ufwRuleNumber: ufwNumberByFingerprint.get(rule.fingerprint) ?? null,
-        core: {
-          action: rule.action,
-          direction: rule.direction,
-          interface: rule.interface,
-          protocol: rule.protocol,
-          fromAddress: rule.fromAddress,
-          fromPort: rule.fromPort,
-          toAddress: rule.toAddress,
-          toPort: rule.toPort,
-          appName: rule.appName,
-          logMode: rule.logMode,
-          ruleComment: rule.ruleComment,
-          ipv6: rule.ipv6,
-        },
-        ui: {
-          group: rule.group,
-          name: rule.name,
-          notes: rule.notes,
+      return recordToUnified(
+        {
+          ...rule,
+          ufwRuleNumber: ufwNumberByFingerprint.get(rule.fingerprint) ?? null,
         },
         originState,
-        sources: originStateToSources(originState),
-        isDeleted: rule.isDeleted,
-      };
+        originStateToSources(originState),
+      );
     });
 }
 

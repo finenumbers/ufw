@@ -16,7 +16,7 @@ Para reportar vulnerabilidades, veja [SECURITY.md](../../../SECURITY.md) (inglê
 Senhas SSH e chaves privadas são criptografadas com **AES-256-GCM** antes do armazenamento.
 
 | Segredo | Finalidade |
-|--------|---------|
+|--------|------------|
 | `APP_ENCRYPTION_KEY` | Criptografa/descriptografa segredos de identidade (32 bytes, base64) |
 | `BETTER_AUTH_SECRET` | Assina tokens de sessão |
 
@@ -27,8 +27,10 @@ Senhas SSH e chaves privadas são criptografadas com **AES-256-GCM** antes do ar
 - Validação de host bloqueia SSRF para endereços privados/de metadados no momento de salvar
 - **Verificação de resolução DNS:** antes de cada conexão SSH e varredura de portas, o IP resolvido é validado novamente — bloqueia DNS rebinding para endereços privados/de metadados mesmo quando o hostname parecia seguro ao salvar
 - `SSH_ALLOWED_CIDRS` opcional para redes internas
-- Fixação de chave host na primeira conexão bem-sucedida
-- Chaves importadas marcadas como não verificadas até o teste SSH ter sucesso
+- Fixação de chave host na primeira **Atualizar status** bem-sucedida (conexão SSH), ou ao salvar com sucesso ao criar/atualizar um servidor
+- A importação de configuração **não** fixa automaticamente as chaves host — servidores importados permanecem `sshHostKeyVerified: false` até que o operador execute Atualizar status
+- Apply e instalação de UFW ficam bloqueados até que a chave host seja verificada
+- **Risco residual TOFU:** a primeira Atualizar status confia na chave apresentada nesse momento (TOFU SSH padrão). Um atacante que controla o caminho de rede na primeira conexão poderia fixar uma chave maliciosa; para hosts de alto risco, verifique a impressão digital fora de banda
 - Injeção de comando prevenida via enums em lista de permissão e construção sanitizada de comandos UFW
 
 ## Varredura de portas externa (opcional)
@@ -36,7 +38,7 @@ Senhas SSH e chaves privadas são criptografadas com **AES-256-GCM** antes do ar
 Quando `PORT_SCAN_ENABLED=true`:
 
 - Varreduras rodam **somente** em direção a registros `Server.host` já presentes no banco de dados
-- Hostnames são resolvidos para IPv4 e validados com as mesmas regras do SSH (**sem varredura sem IP validado**)
+- Hostnames são resolvidos para IPv4 e validados com as mesmas regras do SSH (**sem varredura sem IP resolvido validado**)
 - Naabu + Nmap executam dentro de `ufw-app` (connect scans, sem alvos arbitrários)
 - Limitação de taxa por servidor; eventos de auditoria registrados
 - Exige **egress de rede** do container da aplicação para os hosts gerenciados nas portas varridas — veja [Varredura de portas](../deployment/port-scan.md)
@@ -53,7 +55,9 @@ Quando `DOCKER_MONITOR_ENABLED=true`:
 ## Salvaguardas de aplicação e exportação
 
 - Alterações UFW exigem **visualização + confirmação explícita**
+- Impressões digitais de regras são **recalculadas no servidor** na visualização de apply — impressões digitais de cliente alteradas não podem remapear itens do plano
 - Exportação de configuração exige **reentrada de senha** e registra evento de auditoria `CONFIG_EXPORT`
+- Importação de configuração exige **reentrada de senha** (mesmos limites de taxa da exportação)
 - Arquivos de exportação contêm **segredos em texto plano** — responsabilidade do operador
 
 ## Cabeçalhos de segurança HTTP (produção)
