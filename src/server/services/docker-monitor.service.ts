@@ -161,6 +161,23 @@ export async function getDockerInventoryById(
   return snapshot ? toInventoryView(snapshot) : null;
 }
 
+export async function getRecentDockerInventorySnapshot(
+  serverId: string,
+  windowMs: number,
+): Promise<{ id: string; operationLogId: string | null } | null> {
+  const since = new Date(Date.now() - windowMs);
+  const snapshot = await db.dockerInventorySnapshot.findFirst({
+    where: {
+      serverId,
+      capturedAt: { gte: since },
+    },
+    orderBy: { capturedAt: "desc" },
+    select: { id: true, operationLogId: true },
+  });
+
+  return snapshot ? { id: snapshot.id, operationLogId: snapshot.operationLogId } : null;
+}
+
 export async function runDockerInventoryRefresh(
   snapshotId: string,
   tracker: OperationTracker,

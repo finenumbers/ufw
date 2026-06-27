@@ -65,6 +65,8 @@ export function ServerDetailView({
   const [activeView, setActiveView] = useState<ServerWorkspaceView>("ufw");
   const [portScanSessionKey, setPortScanSessionKey] = useState(0);
   const [dockerSessionKey, setDockerSessionKey] = useState(0);
+  const [portScanId, setPortScanId] = useState<string | null>(null);
+  const [dockerSnapshotId, setDockerSnapshotId] = useState<string | null>(null);
   const [rows, setRows] = useState(() => sortRows(initialRows));
   const [total, setTotal] = useState(initialTotal);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -227,11 +229,21 @@ export function ServerDetailView({
       ) : null}
 
       {activeView === "portScan" && portScanEnabled ? (
-        <PortScanPanel key={portScanSessionKey} serverId={server.id} autoStart />
+        <PortScanPanel
+          key={portScanSessionKey}
+          serverId={server.id}
+          cachedScanId={portScanId}
+          onScanId={setPortScanId}
+        />
       ) : null}
 
       {activeView === "docker" && dockerMonitorEnabled ? (
-        <DockerMonitorPanel key={dockerSessionKey} serverId={server.id} autoStart />
+        <DockerMonitorPanel
+          key={dockerSessionKey}
+          serverId={server.id}
+          cachedSnapshotId={dockerSnapshotId}
+          onSnapshotId={setDockerSnapshotId}
+        />
       ) : null}
     </div>
   );

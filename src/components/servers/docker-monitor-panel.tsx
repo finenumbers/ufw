@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { DockerContainerDrawer } from "@/components/servers/docker-container-drawer";
@@ -21,10 +21,15 @@ import {
 
 type DockerMonitorPanelProps = {
   serverId: string;
-  autoStart?: boolean;
+  cachedSnapshotId?: string | null;
+  onSnapshotId?: (snapshotId: string) => void;
 };
 
-export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonitorPanelProps) {
+export function DockerMonitorPanel({
+  serverId,
+  cachedSnapshotId = null,
+  onSnapshotId,
+}: DockerMonitorPanelProps) {
   const t = useTranslations("dockerMonitor");
   const [inventory, setInventory] = useState<DockerInventoryView | null>(null);
   const [snapshotId, setSnapshotId] = useState<string | null>(null);
@@ -37,7 +42,6 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
   const [pendingAction, setPendingAction] = useState<DockerContainerAction | null>(null);
   const [confirmAction, setConfirmAction] = useState<DockerContainerAction | null>(null);
   const [confirmContainer, setConfirmContainer] = useState<DockerContainerView | null>(null);
-  const startedRef = useRef(false);
 
   const refreshById = useCallback(async (id: string) => {
     const latest = await getDockerInventoryByIdAction(id);
@@ -62,18 +66,32 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
     }
 
     setSnapshotId(result.snapshotId);
-    notifyOperationStarted(serverId);
+    onSnapshotId?.(result.snapshotId);
+    if (!result.reused) {
+      notifyOperationStarted(serverId);
+    }
     await refreshById(result.snapshotId);
-  }, [refreshById, serverId]);
+  }, [onSnapshotId, refreshById, serverId]);
+
+  const loadCachedSnapshot = useCallback(
+    async (id: string) => {
+      setError(null);
+      setSnapshotId(id);
+      await refreshById(id);
+    },
+    [refreshById],
+  );
 
   useEffect(() => {
-    if (!autoStart || startedRef.current) {
+    if (cachedSnapshotId) {
+      void loadCachedSnapshot(cachedSnapshotId);
       return;
     }
 
-    startedRef.current = true;
     void startRefresh();
-  }, [autoStart, startRefresh]);
+    // Remount via key; avoid re-running when callback identities change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!snapshotId) {
@@ -128,6 +146,7 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
     }
 
     notifyOperationStarted(serverId);
+    onSnapshotId?.(result.followUpSnapshotId);
     setSnapshotId(result.followUpSnapshotId);
     await refreshById(result.followUpSnapshotId);
   }

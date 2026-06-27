@@ -18,6 +18,7 @@ import {
   getDockerContainerInspect,
   getDockerInventoryById,
   getLatestDockerInventory,
+  getRecentDockerInventorySnapshot,
   startDockerInventoryRefresh,
 } from "@/server/services/docker-monitor.service";
 import { getServerById } from "@/server/services/server.service";
@@ -33,7 +34,7 @@ async function requireUserId(): Promise<string> {
 export async function refreshDockerInventoryAction(
   serverId: string,
 ): Promise<
-  | { success: true; snapshotId: string; operationId: string }
+  | { success: true; snapshotId: string; operationId: string; reused?: boolean }
   | { success: false; error: string }
 > {
   if (!isDockerMonitorEnabled()) {
@@ -41,15 +42,27 @@ export async function refreshDockerInventoryAction(
   }
 
   const userId = await requireUserId();
+  const windowMs = getDockerRefreshRateLimitWindowMs();
   const rateLimit = assertRateLimit(`docker-refresh:${serverId}`, {
     limit: 1,
-    windowMs: getDockerRefreshRateLimitWindowMs(),
+    windowMs,
   });
 
   if (!rateLimit.allowed) {
+    const recent = await getRecentDockerInventorySnapshot(serverId, windowMs);
+    if (recent) {
+      return {
+        success: true,
+        snapshotId: recent.id,
+        operationId: recent.operationLogId ?? "",
+        reused: true,
+      };
+    }
+
+    const retrySeconds = Math.ceil(rateLimit.retryAfterMs / 1000);
     return {
       success: false,
-      error: "Docker inventory was refreshed recently for this server. Please wait before refreshing again.",
+      error: `Docker inventory was refreshed recently for this server. Please wait ${retrySeconds}s before refreshing again.`,
     };
   }
 
