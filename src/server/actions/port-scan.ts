@@ -4,9 +4,8 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
-import { getPortScanRateLimitWindowMs, isPortScanEnabled } from "@/lib/port-scan/config";
-import { createRateLimitedFailure } from "@/lib/operation-rate-limit";
-import { assertRateLimit } from "@/lib/rate-limit";
+import { checkOperationRateLimit, createRateLimitedFailure } from "@/lib/operation-rate-limit";
+import { isPortScanEnabled } from "@/lib/port-scan/config";
 import { getServerPath } from "@/lib/server-path";
 import type { ActionFailureResult } from "@/types/action-result";
 import {
@@ -35,11 +34,7 @@ export async function startPortScanAction(
   }
 
   const userId = await requireUserId();
-  const windowMs = getPortScanRateLimitWindowMs();
-  const rateLimit = assertRateLimit(`port-scan:${serverId}`, {
-    limit: 1,
-    windowMs,
-  });
+  const rateLimit = checkOperationRateLimit(`port-scan:${serverId}`);
 
   if (!rateLimit.allowed) {
     return createRateLimitedFailure(rateLimit.retryAfterMs);

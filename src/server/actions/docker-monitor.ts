@@ -5,13 +5,10 @@ import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
 import {
-  getDockerControlRateLimitWindowMs,
-  getDockerRefreshRateLimitWindowMs,
   isDockerMonitorEnabled,
 } from "@/lib/docker/config";
 import { assertValidContainerRef } from "@/lib/docker/container-ref";
-import { createRateLimitedFailure } from "@/lib/operation-rate-limit";
-import { assertRateLimit } from "@/lib/rate-limit";
+import { checkOperationRateLimit, createRateLimitedFailure } from "@/lib/operation-rate-limit";
 import { getServerPath } from "@/lib/server-path";
 import type { ActionFailureResult } from "@/types/action-result";
 import type { DockerContainerAction } from "@/types/docker-monitor";
@@ -43,11 +40,7 @@ export async function refreshDockerInventoryAction(
   }
 
   const userId = await requireUserId();
-  const windowMs = getDockerRefreshRateLimitWindowMs();
-  const rateLimit = assertRateLimit(`docker-refresh:${serverId}`, {
-    limit: 1,
-    windowMs,
-  });
+  const rateLimit = checkOperationRateLimit(`docker-refresh:${serverId}`);
 
   if (!rateLimit.allowed) {
     return createRateLimitedFailure(rateLimit.retryAfterMs);
@@ -104,10 +97,7 @@ export async function controlDockerContainerAction(
   }
 
   const userId = await requireUserId();
-  const rateLimit = assertRateLimit(`docker-control:${serverId}`, {
-    limit: 1,
-    windowMs: getDockerControlRateLimitWindowMs(),
-  });
+  const rateLimit = checkOperationRateLimit(`docker-control:${serverId}`);
 
   if (!rateLimit.allowed) {
     return createRateLimitedFailure(rateLimit.retryAfterMs);

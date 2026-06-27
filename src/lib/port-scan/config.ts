@@ -1,5 +1,3 @@
-import { OPERATION_REPEAT_LIMIT_MS } from "@/lib/operation-rate-limit";
-
 function readInt(name: string, fallback: number): number {
   const raw = process.env[name]?.trim();
   if (!raw) return fallback;
@@ -26,10 +24,6 @@ export function getPortScanNmapTimeoutMs(): number {
 
 export function getPortScanHistoryLimit(): number {
   return readInt("PORT_SCAN_HISTORY_LIMIT", 10);
-}
-
-export function getPortScanRateLimitWindowMs(): number {
-  return readInt("PORT_SCAN_RATE_LIMIT_WINDOW_MS", OPERATION_REPEAT_LIMIT_MS);
 }
 
 export function resolveNaabuPortArg(): string[] {
