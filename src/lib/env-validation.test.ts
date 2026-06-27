@@ -56,6 +56,12 @@ test("validateProductionEnv rejects HTTP APP_URL in production", () => {
   });
 });
 
+test("validateProductionEnv allows HTTP APP_URL on localhost for docker dev and CI", () => {
+  withProductionEnv({ APP_URL: "http://localhost:8088" }, () => {
+    assert.doesNotThrow(() => validateProductionEnv());
+  });
+});
+
 test("validateProductionEnv rejects short BETTER_AUTH_SECRET", () => {
   withProductionEnv({ BETTER_AUTH_SECRET: "short" }, () => {
     assert.throws(() => validateProductionEnv(), /BETTER_AUTH_SECRET must be at least/);

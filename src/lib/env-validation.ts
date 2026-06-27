@@ -45,6 +45,10 @@ export function validateProductionEnv(): void {
   }
 
   if (parsedUrl.protocol !== "https:") {
-    throw new Error("APP_URL must use HTTPS in production");
+    const host = parsedUrl.hostname.toLowerCase();
+    const localDevHost = host === "localhost" || host === "127.0.0.1";
+    if (!localDevHost) {
+      throw new Error("APP_URL must use HTTPS in production");
+    }
   }
 }
