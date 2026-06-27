@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { assertConfigEntryCounts } from "@/lib/imports/import-limits";
 import { authMethodSchema, refineAuthSecrets } from "@/lib/validations/auth-secrets";
 import { validateSshHost } from "@/lib/validations/ssh-host";
 
@@ -289,5 +290,7 @@ export function parseServersConfigFile(content: string): ServersConfigFile {
 }
 
 export function parseNormalizedServersConfigFile(content: string): NormalizedServersConfig {
-  return normalizeServersConfigFile(parseServersConfigFile(content));
+  const parsed = parseServersConfigFile(content);
+  assertConfigEntryCounts(parsed.identities.length, parsed.servers.length);
+  return normalizeServersConfigFile(parsed);
 }

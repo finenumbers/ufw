@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   dismissOperation,
   isOperationDismissed,
+  notifyOperationEnded,
   OPERATION_STARTED_EVENT,
 } from "@/lib/operations/events";
 import { resolveOperationText, resolveStepLabel } from "@/lib/i18n/operations";
@@ -87,6 +88,9 @@ export function OperationBanner({ serverId }: OperationBannerProps) {
     };
 
     setOperation(parsed);
+    if (parsed.status === "SUCCESS" || parsed.status === "FAILED" || parsed.status === "PARTIAL") {
+      notifyOperationEnded(serverId);
+    }
     return parsed;
   }, [serverId]);
 

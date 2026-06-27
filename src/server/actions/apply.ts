@@ -20,6 +20,17 @@ export async function previewApplyAction(
   }
 
   try {
+    const rateLimit = assertRateLimit(`apply-preview:${auth.userId}:${serverId}`, {
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return {
+        success: false,
+        error: "Too many apply preview attempts. Please try again later.",
+      };
+    }
+
     const data = await previewApply(serverId, auth.userId, desired);
     return { success: true, data };
   } catch (error) {
@@ -50,16 +61,20 @@ export async function confirmApplyAction(
   }
 
   const result = await confirmApply(sessionId, auth.userId);
-  if (result.success) {
-    const session = await getApplySession(sessionId);
-    if (session) {
-      const server = await getServerById(session.serverId);
-      if (server) {
-        revalidatePath(getServerPath(server.host));
-      }
+
+  const session = await getApplySession(sessionId);
+  const server = session ? await getServerById(session.serverId) : null;
+
+  if (result.success || result.needsResync || result.partial) {
+    if (server) {
+      revalidatePath(getServerPath(server.host));
     }
     revalidatePath("/servers");
     revalidatePath("/operations");
+  }
+
+  if (result.success) {
+    return result;
   }
 
   if (!result.success && result.error && !result.needsRePreview) {

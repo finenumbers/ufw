@@ -12,7 +12,7 @@ import { RulesToolbar } from "@/components/rules/rules-toolbar";
 import { ServerInitialSync } from "@/components/servers/server-initial-sync";
 import { UfwDashboard } from "@/components/servers/ufw-dashboard";
 import { Button } from "@/components/ui/button";
-import { OPERATION_STARTED_EVENT } from "@/lib/operations/events";
+import { OPERATION_ENDED_EVENT, OPERATION_STARTED_EVENT } from "@/lib/operations/events";
 import type { DockerInventoryView } from "@/types/docker-monitor";
 import type { PortScanView } from "@/types/port-scan";
 import type { UnifiedRuleRow } from "@/types/rule";
@@ -32,6 +32,7 @@ const PortScanPanel = dynamic(
     import("@/components/servers/port-scan-panel").then((module) => ({
       default: module.PortScanPanel,
     })),
+  { ssr: false },
 );
 
 const DockerMonitorPanel = dynamic(
@@ -39,6 +40,7 @@ const DockerMonitorPanel = dynamic(
     import("@/components/servers/docker-monitor-panel").then((module) => ({
       default: module.DockerMonitorPanel,
     })),
+  { ssr: false },
 );
 
 type ServerDetailViewProps = {
@@ -115,8 +117,16 @@ export function ServerDetailView({
       operationActiveRef.current = true;
     }
 
+    function handleOperationEnded() {
+      operationActiveRef.current = false;
+    }
+
     window.addEventListener(OPERATION_STARTED_EVENT, handleOperationStarted);
-    return () => window.removeEventListener(OPERATION_STARTED_EVENT, handleOperationStarted);
+    window.addEventListener(OPERATION_ENDED_EVENT, handleOperationEnded);
+    return () => {
+      window.removeEventListener(OPERATION_STARTED_EVENT, handleOperationStarted);
+      window.removeEventListener(OPERATION_ENDED_EVENT, handleOperationEnded);
+    };
   }, []);
 
   useEffect(() => {

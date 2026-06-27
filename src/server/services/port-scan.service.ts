@@ -232,7 +232,7 @@ async function runPortScanPipeline(scanId: string, tracker: OperationTracker): P
         throw new Error("Scan target mismatch");
       }
 
-      const scanAddress = resolved.ip ?? resolved.host;
+      const scanAddress = resolved.ip;
 
       await db.portScan.update({
         where: { id: scanId },

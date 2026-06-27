@@ -1,26 +1,23 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  assertImportFileSize,
-  assertImportRowCount,
-  MAX_IMPORT_FILE_BYTES,
-} from "@/lib/imports/import-limits";
+import { assertConfigEntryCounts } from "@/lib/imports/import-limits";
+import { validateImportedRuleRows } from "@/lib/validations/import";
 
-test("assertImportFileSize accepts files within limit", () => {
-  assert.doesNotThrow(() => assertImportFileSize(MAX_IMPORT_FILE_BYTES));
+test("validateImportedRuleRows rejects invalid port values", () => {
+  const error = validateImportedRuleRows([
+    {
+      action: "ALLOW",
+      toPort: "any",
+    },
+  ]);
+
+  assert.match(error ?? "", /Row 1:/);
 });
 
-test("assertImportFileSize rejects oversized files", () => {
+test("assertConfigEntryCounts rejects oversized server lists", () => {
   assert.throws(
-    () => assertImportFileSize(MAX_IMPORT_FILE_BYTES + 1),
-    /too large/i,
-  );
-});
-
-test("assertImportRowCount rejects oversized row sets", () => {
-  assert.throws(
-    () => assertImportRowCount(10_001),
-    /too many rows/i,
+    () => assertConfigEntryCounts(0, 501),
+    /too many servers/,
   );
 });

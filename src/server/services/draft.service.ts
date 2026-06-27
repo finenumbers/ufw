@@ -2,9 +2,12 @@ import { db } from "@/lib/db";
 import { computeFingerprint } from "@/lib/ufw/fingerprint";
 import { resolveRuleOriginState } from "@/lib/ufw/origin-state";
 import { generateId } from "@/lib/utils";
+import type { DraftRule, DraftSession } from "@prisma/client";
 import type { RuleDraftInput } from "@/types/rule";
 import { createAuditEvent } from "@/server/services/audit.service";
 import { getLatestSnapshot, syncRuleRecordsFromDraft } from "@/server/services/snapshot.service";
+
+type DraftSessionWithRules = DraftSession & { rules: DraftRule[] };
 
 function resolveDraftOriginState(
   row: RuleDraftInput,
@@ -15,13 +18,31 @@ function resolveDraftOriginState(
   return resolveRuleOriginState(fingerprint, remoteFingerprints, localFingerprints);
 }
 
-export async function getOrCreateDraftSession(serverId: string, userId: string) {
+export async function getOrCreateDraftSession(
+  serverId: string,
+  userId: string,
+  options?: { includeRules?: true },
+): Promise<DraftSessionWithRules>;
+export async function getOrCreateDraftSession(
+  serverId: string,
+  userId: string,
+  options: { includeRules: false },
+): Promise<DraftSession>;
+export async function getOrCreateDraftSession(
+  serverId: string,
+  userId: string,
+  options?: { includeRules?: boolean },
+): Promise<DraftSessionWithRules | DraftSession> {
+  const includeRules = options?.includeRules ?? true;
+
   return db.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`${serverId}:${userId}`}))`;
 
     const existing = await tx.draftSession.findFirst({
       where: { serverId, userId, isActive: true },
-      include: { rules: { orderBy: { sortOrder: "asc" } } },
+      include: includeRules
+        ? { rules: { orderBy: { sortOrder: "asc" } } }
+        : undefined,
     });
 
     if (existing) {
@@ -30,7 +51,9 @@ export async function getOrCreateDraftSession(serverId: string, userId: string) 
 
     return tx.draftSession.create({
       data: { serverId, userId, isActive: true },
-      include: { rules: { orderBy: { sortOrder: "asc" } } },
+      include: includeRules
+        ? { rules: { orderBy: { sortOrder: "asc" } } }
+        : undefined,
     });
   });
 }
@@ -41,46 +64,48 @@ export async function seedDraftFromUnifiedRules(
   rows: RuleDraftInput[],
   options?: { savedAt?: Date | null },
 ) {
-  await db.draftSession.updateMany({
-    where: { serverId, userId, isActive: true },
-    data: { isActive: false },
-  });
+  return db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`${serverId}:${userId}`}))`;
 
-  const session = await db.draftSession.create({
-    data: {
-      serverId,
-      userId,
-      isActive: true,
-      savedAt: options?.savedAt !== undefined ? options.savedAt : null,
-      rules: {
-        create: rows.map((row, index) => ({
-          clientRowId: row.clientRowId || generateId(),
-          fingerprint: row.fingerprint || computeFingerprint(row.core),
-          sortOrder: row.sortOrder ?? index,
-          action: row.core.action,
-          direction: row.core.direction ?? null,
-          interface: row.core.interface ?? null,
-          protocol: row.core.protocol ?? null,
-          fromAddress: row.core.fromAddress ?? null,
-          fromPort: row.core.fromPort ?? null,
-          toAddress: row.core.toAddress ?? null,
-          toPort: row.core.toPort ?? null,
-          appName: row.core.appName ?? null,
-          logMode: row.core.logMode,
-          ruleComment: row.core.ruleComment ?? null,
-          ipv6: row.core.ipv6,
-          group: row.ui.group ?? null,
-          name: row.ui.name ?? null,
-          notes: row.ui.notes ?? null,
-          originState: row.originState,
-          isDeleted: row.isDeleted ?? false,
-        })),
+    await tx.draftSession.updateMany({
+      where: { serverId, userId, isActive: true },
+      data: { isActive: false },
+    });
+
+    return tx.draftSession.create({
+      data: {
+        serverId,
+        userId,
+        isActive: true,
+        savedAt: options?.savedAt !== undefined ? options.savedAt : null,
+        rules: {
+          create: rows.map((row, index) => ({
+            clientRowId: row.clientRowId || generateId(),
+            fingerprint: row.fingerprint || computeFingerprint(row.core),
+            sortOrder: row.sortOrder ?? index,
+            action: row.core.action,
+            direction: row.core.direction ?? null,
+            interface: row.core.interface ?? null,
+            protocol: row.core.protocol ?? null,
+            fromAddress: row.core.fromAddress ?? null,
+            fromPort: row.core.fromPort ?? null,
+            toAddress: row.core.toAddress ?? null,
+            toPort: row.core.toPort ?? null,
+            appName: row.core.appName ?? null,
+            logMode: row.core.logMode,
+            ruleComment: row.core.ruleComment ?? null,
+            ipv6: row.core.ipv6,
+            group: row.ui.group ?? null,
+            name: row.ui.name ?? null,
+            notes: row.ui.notes ?? null,
+            originState: row.originState,
+            isDeleted: row.isDeleted ?? false,
+          })),
+        },
       },
-    },
-    include: { rules: { orderBy: { sortOrder: "asc" } } },
+      include: { rules: { orderBy: { sortOrder: "asc" } } },
+    });
   });
-
-  return session;
 }
 
 export async function replaceDraftSessionRules(

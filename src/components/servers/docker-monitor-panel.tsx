@@ -18,6 +18,7 @@ import {
   getDockerContainerInspectAction,
   getDockerInventoryByIdAction,
   getDockerInventoryStatusByIdAction,
+  getLatestDockerInventoryForServerAction,
   refreshDockerInventoryAction,
 } from "@/server/actions/docker-monitor";
 
@@ -58,8 +59,29 @@ export function DockerMonitorPanel({
   const [confirmAction, setConfirmAction] = useState<DockerContainerAction | null>(null);
   const [confirmContainer, setConfirmContainer] = useState<DockerContainerView | null>(null);
   const pollAttemptRef = useRef(0);
+  const loadedLatestRef = useRef(false);
 
   useEffect(() => {
+    if (loadedLatestRef.current || initialInventory) {
+      return;
+    }
+
+    loadedLatestRef.current = true;
+    void getLatestDockerInventoryForServerAction(serverId).then((latest) => {
+      if (latest) {
+        setInventory(latest);
+        setSnapshotId(latest.id);
+        if (latest.status === "SUCCESS") {
+          onInventoryUpdated?.(latest);
+        }
+      }
+    });
+  }, [initialInventory, onInventoryUpdated, serverId]);
+
+  useEffect(() => {
+    if (initialInventory == null) {
+      return;
+    }
     if (
       refreshing ||
       inventory?.status === "RUNNING" ||
@@ -68,7 +90,7 @@ export function DockerMonitorPanel({
       return;
     }
     setInventory(initialInventory);
-    setSnapshotId(initialInventory?.id ?? null);
+    setSnapshotId(initialInventory.id);
   }, [initialInventory, refreshing, inventory?.status]);
 
   const notifyInventoryUpdate = useCallback(

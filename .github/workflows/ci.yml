@@ -25,6 +25,10 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Test coverage report
+        continue-on-error: true
+        run: npm run test:coverage
+
       - name: i18n check
         run: npm run i18n:check
 

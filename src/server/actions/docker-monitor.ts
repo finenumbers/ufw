@@ -16,6 +16,7 @@ import {
   getDockerContainerInspect,
   getDockerInventoryById,
   getDockerInventoryStatusById,
+  getLatestDockerInventory,
   startDockerInventoryRefresh,
 } from "@/server/services/docker-monitor.service";
 import { getServerById } from "@/server/services/server.service";
@@ -129,4 +130,9 @@ export async function controlDockerContainerAction(
     const message = error instanceof Error ? error.message : "Docker control failed";
     return { success: false, error: message };
   }
+}
+
+export async function getLatestDockerInventoryForServerAction(serverId: string) {
+  await requireUserId();
+  return getLatestDockerInventory(serverId);
 }

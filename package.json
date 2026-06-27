@@ -1,6 +1,6 @@
 {
   "name": "ufw-remote-manager",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 8088",
@@ -17,7 +17,8 @@
     "docs:check": "npx tsx scripts/docs-check.ts",
     "deadcode:check": "knip --include files,dependencies,exports,types",
     "analyze": "ANALYZE=true npm run build",
-    "test": "npx tsx --test src/lib/**/*.test.ts src/lib/*.test.ts src/server/**/*.test.ts"
+    "test": "npx tsx --test src/lib/**/*.test.ts src/lib/*.test.ts src/server/**/*.test.ts",
+    "test:coverage": "npx tsx --test --experimental-test-coverage src/lib/**/*.test.ts src/lib/*.test.ts src/server/**/*.test.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

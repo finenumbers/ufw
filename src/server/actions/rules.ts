@@ -16,6 +16,7 @@ import {
   parseImportFile,
 } from "@/lib/imports/normalize-import";
 import { assertImportFileSize } from "@/lib/imports/import-limits";
+import { validateImportedRuleRows } from "@/lib/validations/import";
 import { TABLE_PAGE_SIZE } from "@/lib/pagination/table-page-size";
 
 async function revalidateServerPaths(serverId: string) {
@@ -89,6 +90,11 @@ export async function importRulesAction(
         : await file.text();
 
     const imported = await parseImportFile(content, format);
+    const validationError = validateImportedRuleRows(imported);
+    if (validationError) {
+      return { success: false, error: validationError };
+    }
+
     const { rows, duplicateCount } = await importRulesToDraft(serverId, auth.userId, imported);
     await revalidateServerPaths(serverId);
     return { success: true, rows, duplicateCount };

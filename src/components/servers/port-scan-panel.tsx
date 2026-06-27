@@ -8,6 +8,7 @@ import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { notifyOperationStarted } from "@/lib/operations/events";
 import type { PortScanView } from "@/types/port-scan";
 import {
+  getLatestPortScanForServerAction,
   getPortScanByIdAction,
   getPortScanStatusByIdAction,
   startPortScanAction,
@@ -42,8 +43,28 @@ export function PortScanPanel({
   const [loading, setLoading] = useState(false);
   const { message: error, showFailure, clearMessage } = useActionFailureState();
   const pollAttemptRef = useRef(0);
+  const loadedLatestRef = useRef(false);
 
   useEffect(() => {
+    if (loadedLatestRef.current || initialScan) {
+      return;
+    }
+
+    loadedLatestRef.current = true;
+    void getLatestPortScanForServerAction(serverId).then((latest) => {
+      if (latest) {
+        setScan(latest);
+        if (latest.status === "SUCCESS") {
+          onScanUpdated?.(latest);
+        }
+      }
+    });
+  }, [initialScan, onScanUpdated, serverId]);
+
+  useEffect(() => {
+    if (initialScan == null) {
+      return;
+    }
     if (loading || scan?.status === "RUNNING" || scan?.status === "PENDING") {
       return;
     }

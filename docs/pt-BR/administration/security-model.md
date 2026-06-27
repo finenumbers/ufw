@@ -36,6 +36,7 @@ Senhas SSH e chaves privadas são criptografadas com **AES-256-GCM** antes do ar
 Quando `PORT_SCAN_ENABLED=true`:
 
 - Varreduras rodam **somente** em direção a registros `Server.host` já presentes no banco de dados
+- Hostnames são resolvidos para IPv4 e validados com as mesmas regras do SSH (**sem varredura sem IP validado**)
 - Naabu + Nmap executam dentro de `ufw-app` (connect scans, sem alvos arbitrários)
 - Limitação de taxa por servidor; eventos de auditoria registrados
 - Exige **egress de rede** do container da aplicação para os hosts gerenciados nas portas varridas — veja [Varredura de portas](../deployment/port-scan.md)

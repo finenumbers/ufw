@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import type { AuthMethod, Prisma, Server } from "@prisma/client";
 import { Prisma as PrismaClient } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -28,7 +30,7 @@ async function findServerByConnection(
   });
 }
 
-export async function listServers() {
+export const listServers = cache(async () => {
   return db.server.findMany({
     orderBy: { name: "asc" },
     include: {
@@ -37,7 +39,7 @@ export async function listServers() {
       },
     },
   });
-}
+});
 
 export async function listServersWithInventoryStats() {
   const servers = await listServers();

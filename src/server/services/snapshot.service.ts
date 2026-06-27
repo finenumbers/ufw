@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { db } from "@/lib/db";
 import { computeFingerprint } from "@/lib/ufw/fingerprint";
 import type { RuleCore } from "@/types/rule";
@@ -99,13 +101,13 @@ export async function captureSnapshot(
   return persistSnapshotFromDetection(serverId, userId, detection);
 }
 
-export async function getLatestSnapshot(serverId: string) {
+export const getLatestSnapshot = cache(async (serverId: string) => {
   return db.serverSnapshot.findFirst({
     where: { serverId },
     orderBy: { capturedAt: "desc" },
     include: { rules: { orderBy: { sortOrder: "asc" } } },
   });
-}
+});
 
 export function detectionFromSnapshot(
   snapshot: NonNullable<Awaited<ReturnType<typeof getLatestSnapshot>>>,

@@ -36,6 +36,7 @@ Password SSH e chiavi private sono crittografate con **AES-256-GCM** prima dell'
 Quando `PORT_SCAN_ENABLED=true`:
 
 - Le scansioni vengono eseguite **solo** verso record `Server.host` già presenti nel database
+- I hostname vengono risolti in IPv4 e validati con le stesse regole di SSH (**nessuna scansione senza IP validato**)
 - Naabu + Nmap vengono eseguiti dentro `ufw-app` (connect scan, nessun target arbitrario)
 - Limitazione frequenza per server; eventi di audit registrati
 - Richiede **egress di rete** dal container app verso gli host gestiti sulle porte scansionate — vedi [Scansione porte](../deployment/port-scan.md)

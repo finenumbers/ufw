@@ -36,6 +36,7 @@ Les mots de passe SSH et clés privées sont chiffrés avec **AES-256-GCM** avan
 Lorsque `PORT_SCAN_ENABLED=true` :
 
 - Les scans s'exécutent **uniquement** vers les enregistrements `Server.host` déjà en base de données
+- Les noms d'hôte sont résolus en IPv4 et validés avec les mêmes règles que SSH (**pas de scan sans IP validée**)
 - Naabu + Nmap s'exécutent dans `ufw-app` (scans connect, pas de cibles arbitraires)
 - Limité par serveur ; événements d'audit enregistrés
 - Nécessite une **sortie réseau** du conteneur application vers les hôtes gérés sur les ports scannés — voir [Scan de ports](../deployment/port-scan.md)

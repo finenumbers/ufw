@@ -29,6 +29,7 @@ import {
 import {
   buildPostApplyRuleRecords,
   resolveApplyClaimError,
+  storedPlanItemsMatchPlan,
   storedSummaryMatchesPlan,
 } from "@/server/services/apply-sync";
 import type { UnifiedRuleRow } from "@/types/rule";
@@ -385,7 +386,10 @@ export async function confirmApply(
         const initialDetection = await buildDetectionFromClient(client, config.password);
         const plan = rebuildApplyPlanAtConfirm(desiredRows, initialDetection.rules);
 
-        if (!storedSummaryMatchesPlan(summary, plan)) {
+        if (
+          !storedSummaryMatchesPlan(summary, plan) ||
+          !storedPlanItemsMatchPlan(session.items, plan)
+        ) {
           throw new Error(APPLY_REMOTE_CHANGED);
         }
 

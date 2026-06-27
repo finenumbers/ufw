@@ -5,18 +5,16 @@ import { ServerDetailView } from "@/components/servers/server-detail-view";
 import { isPortScanEnabled } from "@/lib/port-scan/config";
 import { isDockerMonitorEnabled } from "@/lib/docker/config";
 import { getServerPath } from "@/lib/server-path";
+import { getSession } from "@/lib/session";
 import { getServerByAddressAction } from "@/server/actions/servers";
 import { getRulesViewPageAction } from "@/server/actions/rules";
-import { getLatestDockerInventory } from "@/server/services/docker-monitor.service";
-import { getLatestSuccessfulPortScan } from "@/server/services/port-scan.service";
 import {
   detectionFromSnapshot,
   getLatestSnapshot,
   persistSnapshotInterfaceOptions,
 } from "@/server/services/snapshot.service";
+import { getServerInventoryStatsMap } from "@/server/services/server-stats.service";
 import type { UfwDetectionResult } from "@/types/ufw";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 
 const emptyUfwState: UfwDetectionResult = {
   installed: false,
@@ -39,7 +37,7 @@ export default async function ServerDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   const userId = session?.user?.id;
 
   const latestSnapshot = await getLatestSnapshot(server.id);
@@ -60,20 +58,18 @@ export default async function ServerDetailPage({ params }: PageProps) {
   const portScanEnabled = isPortScanEnabled();
   const dockerMonitorEnabled = isDockerMonitorEnabled();
 
-  const [rulesPage, initialPortScan, initialDockerInventory] = await Promise.all([
+  const [rulesPage, inventoryStats] = await Promise.all([
     userId
       ? getRulesViewPageAction(server.id, 0)
       : Promise.resolve({ rows: [], total: 0, hasMore: false, nextOffset: 0 }),
-    portScanEnabled ? getLatestSuccessfulPortScan(server.id) : Promise.resolve(null),
-    dockerMonitorEnabled ? getLatestDockerInventory(server.id) : Promise.resolve(null),
+    getServerInventoryStatsMap([server.id]),
   ]);
 
+  const stats = inventoryStats.get(server.id);
   const rulesAvailable = ufwState.installed && ufwState.active;
   const dbRulesCount = rulesPage.total;
-  const portFindingCount =
-    initialPortScan?.summary?.openCount ?? initialPortScan?.findings.length ?? 0;
-  const containerCount =
-    initialDockerInventory?.summary?.containerCount ?? 0;
+  const portFindingCount = stats?.portFindingCount ?? 0;
+  const containerCount = stats?.containerCount ?? 0;
 
   return (
     <ServerDetailView
@@ -90,8 +86,8 @@ export default async function ServerDetailPage({ params }: PageProps) {
       dbRulesCount={dbRulesCount}
       portFindingCount={portFindingCount}
       containerCount={containerCount}
-      initialPortScan={initialPortScan}
-      initialDockerInventory={initialDockerInventory}
+      initialPortScan={null}
+      initialDockerInventory={null}
       initialRows={rulesPage.rows}
       initialTotal={rulesPage.total}
       initialHasMore={rulesPage.hasMore}

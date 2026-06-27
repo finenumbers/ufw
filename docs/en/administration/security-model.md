@@ -36,6 +36,7 @@ SSH passwords and private keys are encrypted with **AES-256-GCM** before storage
 When `PORT_SCAN_ENABLED=true`:
 
 - Scans run **only** toward `Server.host` records already in the database
+- Hostnames are resolved to IPv4 and validated with the same rules as SSH (**no scan without a validated resolved IP**)
 - Naabu + Nmap execute inside `ufw-app` (connect scans, no arbitrary targets)
 - Rate-limited per server; audit events recorded
 - Requires **network egress** from the app container to managed hosts on scanned ports — see [Port scanning](../deployment/port-scan.md)

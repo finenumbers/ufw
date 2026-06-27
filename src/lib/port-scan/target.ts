@@ -4,8 +4,11 @@ import { validateResolvedIp, validateSshHost } from "@/lib/validations/ssh-host"
 
 export type ResolvedScanTarget = {
   host: string;
-  ip: string | null;
+  ip: string;
 };
+
+const IPV4_PATTERN =
+  /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d?\d)){3})$/;
 
 export async function resolveScanTarget(host: string): Promise<ResolvedScanTarget> {
   const trimmed = host.trim();
@@ -14,10 +17,12 @@ export async function resolveScanTarget(host: string): Promise<ResolvedScanTarge
     throw new Error(validationError);
   }
 
-  const ipv4Pattern =
-    /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d?\d)){3})$/;
+  if (IPV4_PATTERN.test(trimmed)) {
+    const resolvedError = validateResolvedIp(trimmed);
+    if (resolvedError) {
+      throw new Error(resolvedError);
+    }
 
-  if (ipv4Pattern.test(trimmed)) {
     return { host: trimmed, ip: trimmed };
   }
 
@@ -34,6 +39,8 @@ export async function resolveScanTarget(host: string): Promise<ResolvedScanTarge
       throw error;
     }
 
-    return { host: trimmed, ip: null };
+    const message =
+      error instanceof Error ? error.message : "DNS lookup failed";
+    throw new Error(`Failed to resolve scan target "${trimmed}": ${message}`);
   }
 }

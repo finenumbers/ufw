@@ -274,10 +274,15 @@ async function ensureDraftRulesViewContext(serverId: string, userId: string) {
   const localRecords = await db.ruleRecord.findMany({
     where: { serverId },
     orderBy: { sortOrder: "asc" },
+    select: { fingerprint: true },
   });
 
-  const session = await getOrCreateDraftSession(serverId, userId);
-  if (session.rules.length === 0) {
+  const session = await getOrCreateDraftSession(serverId, userId, { includeRules: false });
+  const draftCount = await db.draftRule.count({
+    where: { draftSessionId: session.id, isDeleted: false },
+  });
+
+  if (draftCount === 0) {
     await rebuildTableFromSources(serverId, userId);
   }
 
@@ -287,7 +292,12 @@ async function ensureDraftRulesViewContext(serverId: string, userId: string) {
     (snapshot?.rules ?? []).map((rule) => [rule.fingerprint, rule.sortOrder + 1]),
   );
 
-  return { remoteFingerprints, localFingerprints, ufwNumberByFingerprint };
+  return {
+    sessionId: session.id,
+    remoteFingerprints,
+    localFingerprints,
+    ufwNumberByFingerprint,
+  };
 }
 
 export async function buildUnifiedRulesViewPage(
@@ -297,8 +307,7 @@ export async function buildUnifiedRulesViewPage(
   limit: number = TABLE_PAGE_SIZE,
 ): Promise<RulesViewPage> {
   const context = await ensureDraftRulesViewContext(serverId, userId);
-  const session = await getOrCreateDraftSession(serverId, userId);
-  const where = { draftSessionId: session.id, isDeleted: false };
+  const where = { draftSessionId: context.sessionId, isDeleted: false };
 
   const [draftRules, total] = await Promise.all([
     db.draftRule.findMany({

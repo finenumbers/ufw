@@ -62,6 +62,35 @@ export function buildPostApplyRuleRecords(
   });
 }
 
+type StoredPlanItem = {
+  action: ApplyPlan["items"][number]["action"];
+  fingerprint: string;
+  sortOrder: number;
+};
+
+export function storedPlanItemsMatchPlan(
+  storedItems: StoredPlanItem[],
+  plan: ApplyPlan,
+): boolean {
+  if (storedItems.length !== plan.items.length) {
+    return false;
+  }
+
+  for (let index = 0; index < plan.items.length; index += 1) {
+    const stored = storedItems[index];
+    const item = plan.items[index];
+    if (
+      stored.action !== item.action ||
+      stored.fingerprint !== item.fingerprint ||
+      stored.sortOrder !== item.sortOrder
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function storedSummaryMatchesPlan(
   stored: ApplyPreviewResult["plan"]["summary"],
   plan: ApplyPlan,

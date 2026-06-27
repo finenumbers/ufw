@@ -405,8 +405,10 @@ model OperationLog {
   message   String?
   metadata  Json?
   createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
   @@index([status])
+  @@index([createdAt(sort: Desc)])
   @@index([serverId, createdAt(sort: Desc)])
   @@index([serverId, status, createdAt(sort: Desc)])
   @@map("operation_log")
