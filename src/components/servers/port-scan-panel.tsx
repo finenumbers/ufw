@@ -6,11 +6,11 @@ import { useTranslations } from "next-intl";
 import { PortScanTable } from "@/components/servers/port-scan-table";
 import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { notifyOperationStarted } from "@/lib/operations/events";
+import { useActiveOperationPoll } from "@/lib/operations/use-active-operation-poll";
 import type { PortScanView } from "@/types/port-scan";
 import {
   getLatestPortScanForServerAction,
-  getPortScanByIdAction,
-  getPortScanStatusByIdAction,
+  pollPortScanAction,
   startPortScanAction,
 } from "@/server/actions/port-scan";
 
@@ -20,16 +20,6 @@ type PortScanPanelProps = {
   startToken?: number;
   onScanUpdated?: (scan: PortScanView) => void;
 };
-
-function pollDelayMs(attempt: number): number {
-  if (attempt < 5) {
-    return 3000;
-  }
-  if (attempt < 15) {
-    return 5000;
-  }
-  return 10000;
-}
 
 export function PortScanPanel({
   serverId,
@@ -42,7 +32,6 @@ export function PortScanPanel({
   const [scan, setScan] = useState<PortScanView | null>(initialScan);
   const [loading, setLoading] = useState(false);
   const { message: error, showFailure, clearMessage } = useActionFailureState();
-  const pollAttemptRef = useRef(0);
   const loadedLatestRef = useRef(false);
   const lastStartTokenRef = useRef(0);
 
@@ -84,34 +73,37 @@ export function PortScanPanel({
 
   const pollScan = useCallback(
     async (scanId: string) => {
-      const status = await getPortScanStatusByIdAction(scanId);
-      if (!status) {
+      const result = await pollPortScanAction(scanId);
+      if (!result) {
         return null;
       }
 
-      if (status.status === "SUCCESS" || status.status === "FAILED") {
-        pollAttemptRef.current = 0;
-        const full = await getPortScanByIdAction(scanId);
-        if (full) {
-          notifyScanUpdate(full);
-        }
-        return full;
+      if (result.status === "SUCCESS" || result.status === "FAILED") {
+        notifyScanUpdate(result);
+        return result;
       }
 
       setScan((previous) =>
         previous?.id === scanId
-          ? { ...previous, status: status.status, errorMessage: status.errorMessage }
-          : status,
+          ? { ...previous, status: result.status, errorMessage: result.errorMessage }
+          : result,
       );
-      return status;
+      return result;
     },
     [notifyScanUpdate],
   );
 
+  useActiveOperationPoll({
+    serverId,
+    targetId: scan?.id,
+    active: scan?.status === "RUNNING" || scan?.status === "PENDING",
+    operationTypes: ["port.scan"],
+    poll: pollScan,
+  });
+
   const startScan = useCallback(async () => {
     setLoading(true);
     clearMessage();
-    pollAttemptRef.current = 0;
 
     const result = await startPortScanAction(serverId);
     if (!result.success) {
@@ -140,37 +132,10 @@ export function PortScanPanel({
   }, [startToken, startScan, serverId]);
 
   useEffect(() => {
-    const scanId = scan?.id;
-    if (!scanId || (scan.status !== "RUNNING" && scan.status !== "PENDING")) {
-      if (scan && scan.status !== "RUNNING" && scan.status !== "PENDING") {
-        setLoading(false);
-      }
-      return;
+    if (scan && scan.status !== "RUNNING" && scan.status !== "PENDING") {
+      setLoading(false);
     }
-
-    let cancelled = false;
-    let timer: number | undefined;
-
-    const schedulePoll = () => {
-      timer = window.setTimeout(() => {
-        void pollScan(scanId).finally(() => {
-          if (!cancelled) {
-            pollAttemptRef.current += 1;
-            schedulePoll();
-          }
-        });
-      }, pollDelayMs(pollAttemptRef.current));
-    };
-
-    schedulePoll();
-
-    return () => {
-      cancelled = true;
-      if (timer !== undefined) {
-        window.clearTimeout(timer);
-      }
-    };
-  }, [pollScan, scan]);
+  }, [scan]);
 
   return (
     <div className="space-y-4">

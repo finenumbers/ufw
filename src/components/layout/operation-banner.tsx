@@ -13,6 +13,7 @@ import {
   OPERATION_STARTED_EVENT,
 } from "@/lib/operations/events";
 import { resolveOperationText, resolveStepLabel } from "@/lib/i18n/operations";
+import { activeOperationPollDelayMs } from "@/lib/operations/poll-interval";
 import {
   operationTypeToKey,
   parseOperationMetadata,
@@ -89,7 +90,7 @@ export function OperationBanner({ serverId }: OperationBannerProps) {
 
     setOperation(parsed);
     if (parsed.status === "SUCCESS" || parsed.status === "FAILED" || parsed.status === "PARTIAL") {
-      notifyOperationEnded(serverId);
+      notifyOperationEnded(serverId, parsed.type);
     }
     return parsed;
   }, [serverId]);
@@ -105,21 +106,22 @@ export function OperationBanner({ serverId }: OperationBannerProps) {
       timer = setTimeout(async () => {
         if (!active) return;
         const current = await load();
-        const nextDelay = current?.status === "RUNNING" ? 1000 : 5000;
+        const nextDelay =
+          current?.status === "RUNNING" ? activeOperationPollDelayMs(0) : 5000;
         schedule(nextDelay);
       }, delayMs);
     };
 
     void load().then((current) => {
       if (!active) return;
-      schedule(current?.status === "RUNNING" ? 1000 : 5000);
+      schedule(current?.status === "RUNNING" ? activeOperationPollDelayMs(0) : 5000);
     });
 
     const onStarted = (event: Event) => {
       const detail = (event as CustomEvent<{ serverId?: string }>).detail;
       if (detail?.serverId && detail.serverId !== serverId) return;
       if (timer) clearTimeout(timer);
-      void load().then(() => schedule(1000));
+      void load().then(() => schedule(activeOperationPollDelayMs(0)));
     };
 
     window.addEventListener(OPERATION_STARTED_EVENT, onStarted);

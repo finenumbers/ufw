@@ -10,11 +10,11 @@ export function notifyOperationStarted(serverId?: string) {
   );
 }
 
-export function notifyOperationEnded(serverId?: string) {
+export function notifyOperationEnded(serverId?: string, operationType?: string) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(
     new CustomEvent(OPERATION_ENDED_EVENT, {
-      detail: { serverId },
+      detail: { serverId, operationType },
     }),
   );
 }

@@ -7,6 +7,7 @@ import { DockerContainerDrawer } from "@/components/servers/docker-container-dra
 import { DockerContainersTable } from "@/components/servers/docker-containers-table";
 import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { notifyOperationStarted } from "@/lib/operations/events";
+import { useActiveOperationPoll } from "@/lib/operations/use-active-operation-poll";
 import type {
   DockerContainerAction,
   DockerContainerView,
@@ -16,9 +17,8 @@ import type {
 import {
   controlDockerContainerAction,
   getDockerContainerInspectAction,
-  getDockerInventoryByIdAction,
-  getDockerInventoryStatusByIdAction,
   getLatestDockerInventoryForServerAction,
+  pollDockerInventoryAction,
   refreshDockerInventoryAction,
 } from "@/server/actions/docker-monitor";
 
@@ -28,16 +28,6 @@ type DockerMonitorPanelProps = {
   startToken?: number;
   onInventoryUpdated?: (inventory: DockerInventoryView) => void;
 };
-
-function pollDelayMs(attempt: number): number {
-  if (attempt < 5) {
-    return 3000;
-  }
-  if (attempt < 15) {
-    return 5000;
-  }
-  return 10000;
-}
 
 export function DockerMonitorPanel({
   serverId,
@@ -58,7 +48,6 @@ export function DockerMonitorPanel({
   const [pendingAction, setPendingAction] = useState<DockerContainerAction | null>(null);
   const [confirmAction, setConfirmAction] = useState<DockerContainerAction | null>(null);
   const [confirmContainer, setConfirmContainer] = useState<DockerContainerView | null>(null);
-  const pollAttemptRef = useRef(0);
   const loadedLatestRef = useRef(false);
   const lastStartTokenRef = useRef(0);
 
@@ -106,39 +95,46 @@ export function DockerMonitorPanel({
 
   const pollInventory = useCallback(
     async (id: string) => {
-      const status = await getDockerInventoryStatusByIdAction(id);
-      if (!status) {
+      const result = await pollDockerInventoryAction(id);
+      if (!result) {
         return null;
       }
 
-      if (status.status === "SUCCESS" || status.status === "FAILED") {
-        pollAttemptRef.current = 0;
-        const full = await getDockerInventoryByIdAction(id);
-        if (full) {
-          notifyInventoryUpdate(full);
-        }
-        return full;
+      if (result.status === "SUCCESS" || result.status === "FAILED") {
+        notifyInventoryUpdate(result);
+        return result;
       }
 
       setInventory((previous) =>
         previous?.id === id
           ? {
               ...previous,
-              status: status.status,
-              errorMessage: status.errorMessage,
-              summary: status.summary,
+              status: result.status,
+              errorMessage: result.errorMessage,
+              summary: result.summary,
             }
-          : status,
+          : result,
       );
-      return status;
+      return result;
     },
     [notifyInventoryUpdate],
   );
 
+  useActiveOperationPoll({
+    serverId,
+    targetId: snapshotId,
+    active:
+      Boolean(snapshotId) &&
+      (!inventory ||
+        inventory.status === "RUNNING" ||
+        inventory.status === "PENDING"),
+    operationTypes: ["docker.inventory", "docker.control"],
+    poll: pollInventory,
+  });
+
   const startRefresh = useCallback(async () => {
     setRefreshing(true);
     clearMessage();
-    pollAttemptRef.current = 0;
 
     const result = await refreshDockerInventoryAction(serverId);
     if (!result.success) {
@@ -166,43 +162,6 @@ export function DockerMonitorPanel({
     lastStartTokenRef.current = startToken;
     void startRefresh();
   }, [startToken, startRefresh, serverId]);
-
-  useEffect(() => {
-    if (!snapshotId) {
-      return;
-    }
-
-    if (
-      inventory &&
-      inventory.status !== "PENDING" &&
-      inventory.status !== "RUNNING"
-    ) {
-      return;
-    }
-
-    let cancelled = false;
-    let timer: number | undefined;
-
-    const schedulePoll = () => {
-      timer = window.setTimeout(() => {
-        void pollInventory(snapshotId).finally(() => {
-          if (!cancelled) {
-            pollAttemptRef.current += 1;
-            schedulePoll();
-          }
-        });
-      }, pollDelayMs(pollAttemptRef.current));
-    };
-
-    schedulePoll();
-
-    return () => {
-      cancelled = true;
-      if (timer !== undefined) {
-        window.clearTimeout(timer);
-      }
-    };
-  }, [inventory, pollInventory, snapshotId]);
 
   async function handleDetails(container: DockerContainerView) {
     setDrawerOpen(true);

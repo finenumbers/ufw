@@ -49,14 +49,17 @@ export async function startPortScanAction(
   }
 }
 
-export async function getPortScanByIdAction(scanId: string) {
+/** Single round-trip poll: lightweight status while running, full scan when finished. */
+export async function pollPortScanAction(scanId: string) {
   await requireUserId();
-  return getPortScanById(scanId);
-}
-
-export async function getPortScanStatusByIdAction(scanId: string) {
-  await requireUserId();
-  return getPortScanStatusById(scanId);
+  const status = await getPortScanStatusById(scanId);
+  if (!status) {
+    return null;
+  }
+  if (status.status === "SUCCESS" || status.status === "FAILED") {
+    return getPortScanById(scanId);
+  }
+  return status;
 }
 
 export async function getLatestPortScanForServerAction(serverId: string) {

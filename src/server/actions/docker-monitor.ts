@@ -57,14 +57,17 @@ export async function refreshDockerInventoryAction(
   }
 }
 
-export async function getDockerInventoryByIdAction(snapshotId: string) {
+/** Single round-trip poll: lightweight status while running, full inventory when finished. */
+export async function pollDockerInventoryAction(snapshotId: string) {
   await requireUserId();
-  return getDockerInventoryById(snapshotId);
-}
-
-export async function getDockerInventoryStatusByIdAction(snapshotId: string) {
-  await requireUserId();
-  return getDockerInventoryStatusById(snapshotId);
+  const status = await getDockerInventoryStatusById(snapshotId);
+  if (!status) {
+    return null;
+  }
+  if (status.status === "SUCCESS" || status.status === "FAILED") {
+    return getDockerInventoryById(snapshotId);
+  }
+  return status;
 }
 
 export async function getDockerContainerInspectAction(serverId: string, containerRef: string) {
