@@ -194,6 +194,8 @@ async function runPortScanPipeline(scanId: string, tracker: OperationTracker): P
         throw new Error("Scan target mismatch");
       }
 
+      const scanAddress = resolved.ip ?? resolved.host;
+
       await db.portScan.update({
         where: { id: scanId },
         data: {
@@ -206,13 +208,13 @@ async function runPortScanPipeline(scanId: string, tracker: OperationTracker): P
       await tracker.startStep("discovery", semanticStep("discovery", "steps.port_scan_discovery"));
       await tracker.setProgress(1, 4, { key: "messages.port_scan_discovery" });
 
-      const discovery = await runNaabuDiscovery(resolved.host);
+      const discovery = await runNaabuDiscovery(scanAddress);
 
       await tracker.completeStep("discovery");
       await tracker.startStep("enrichment", semanticStep("enrichment", "steps.port_scan_enrichment"));
       await tracker.setProgress(2, 4, { key: "messages.port_scan_enrichment" });
 
-      const enrichment = await runNmapEnrichment(resolved.host, discovery.rows);
+      const enrichment = await runNmapEnrichment(scanAddress, discovery.rows);
 
       await tracker.completeStep("enrichment");
       await tracker.startStep("normalize", semanticStep("normalize", "steps.port_scan_normalize"));

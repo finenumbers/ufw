@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { validateSshHost } from "@/lib/validations/ssh-host";
+import { validateResolvedIp, validateSshHost } from "@/lib/validations/ssh-host";
 
 test("validateSshHost blocks private and metadata addresses", () => {
   assert.equal(validateSshHost("127.0.0.1"), "Host IP is not allowed");
@@ -24,6 +24,16 @@ test("validateSshHost blocks IPv4-mapped private addresses", () => {
 
 test("validateSshHost allows public IPv4-mapped addresses", () => {
   assert.equal(validateSshHost("::ffff:8.8.8.8"), null);
+});
+
+test("validateResolvedIp blocks private and metadata addresses", () => {
+  assert.equal(validateResolvedIp("127.0.0.1"), "Resolved IP is not allowed");
+  assert.equal(validateResolvedIp("10.0.0.5"), "Resolved IP is not allowed");
+  assert.equal(validateResolvedIp("169.254.169.254"), "Resolved IP is not allowed");
+});
+
+test("validateResolvedIp allows public addresses", () => {
+  assert.equal(validateResolvedIp("8.8.8.8"), null);
 });
 
 test("validateSshHost honors SSH_ALLOWED_CIDRS allowlist", () => {

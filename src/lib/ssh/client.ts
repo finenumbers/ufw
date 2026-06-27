@@ -1,6 +1,7 @@
 import { Client, type ConnectConfig } from "ssh2";
 
 import { createChildLogger } from "@/lib/logger";
+import { resolveSshConnectHost } from "@/lib/ssh/resolve-host";
 import { createHostKeyVerifier } from "@/lib/ssh/host-key";
 
 const log = createChildLogger("ssh-client");
@@ -205,9 +206,10 @@ export async function withSshConnection<T>(
   config: SshConnectionConfig,
   fn: (client: SshClient) => Promise<T>,
 ): Promise<{ result: T; hostKeyFingerprint: string | null }> {
+  const connectHost = await resolveSshConnectHost(config.host);
   const client = new SshClient();
   try {
-    const connectResult = await client.connect(config);
+    const connectResult = await client.connect({ ...config, host: connectHost });
     const result = await fn(client);
     return {
       result,

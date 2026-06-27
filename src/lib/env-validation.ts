@@ -1,5 +1,7 @@
 import { isProductionRuntime } from "@/lib/env-runtime";
 
+const MIN_AUTH_SECRET_LENGTH = 32;
+
 export function validateProductionEnv(): void {
   if (!isProductionRuntime()) {
     return;
@@ -8,6 +10,12 @@ export function validateProductionEnv(): void {
   if (!process.env.BETTER_AUTH_SECRET) {
     throw new Error(
       "BETTER_AUTH_SECRET is required in production. Generate with: openssl rand -base64 32",
+    );
+  }
+
+  if (process.env.BETTER_AUTH_SECRET.length < MIN_AUTH_SECRET_LENGTH) {
+    throw new Error(
+      `BETTER_AUTH_SECRET must be at least ${MIN_AUTH_SECRET_LENGTH} characters in production.`,
     );
   }
 
@@ -29,9 +37,14 @@ export function validateProductionEnv(): void {
     );
   }
 
+  let parsedUrl: URL;
   try {
-    new URL(appUrl);
+    parsedUrl = new URL(appUrl);
   } catch {
     throw new Error("APP_URL must be a valid absolute URL (e.g. https://ufw.example.com)");
+  }
+
+  if (parsedUrl.protocol !== "https:") {
+    throw new Error("APP_URL must use HTTPS in production");
   }
 }

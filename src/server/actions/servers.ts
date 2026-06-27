@@ -384,8 +384,17 @@ export async function previewImportServersConfigAction(
     }
   | { success: false; error: string }
 > {
+  const userId = await requireUserId();
+  const rateLimit = assertRateLimit(`servers-config-import-preview:${userId}`, {
+    limit: 10,
+    windowMs: 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return { success: false, error: "Too many import preview attempts. Please try again later." };
+  }
+
   try {
-    await requireUserId();
     const content = await readConfigFile(formData);
     const diff = await diffServersConfigImport(content);
     return { success: true, diff };

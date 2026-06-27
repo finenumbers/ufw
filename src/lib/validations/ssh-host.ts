@@ -131,6 +131,51 @@ function isAllowedByCidr(ip: string, allowedCidrs: string[]): boolean {
   return allowedCidrs.some((cidr) => isIpv4InCidr(ip, cidr));
 }
 
+/** Validate a resolved IP address against blocked ranges and optional allowlist. */
+export function validateResolvedIp(ip: string): string | null {
+  const trimmed = ip.trim();
+  if (!trimmed) {
+    return "Resolved IP is empty";
+  }
+
+  if (isIpv4(trimmed)) {
+    const allowedCidrs = parseAllowedCidrs();
+    if (isAllowedByCidr(trimmed, allowedCidrs)) {
+      return null;
+    }
+
+    if (isBlockedIpv4(trimmed)) {
+      return "Resolved IP is not allowed";
+    }
+
+    return null;
+  }
+
+  if (isIpv6(trimmed)) {
+    const mappedIpv4 = extractIpv4FromMappedIpv6(trimmed);
+    if (mappedIpv4) {
+      const allowedCidrs = parseAllowedCidrs();
+      if (isAllowedByCidr(mappedIpv4, allowedCidrs)) {
+        return null;
+      }
+
+      if (isBlockedIpv4(mappedIpv4)) {
+        return "Resolved IP is not allowed";
+      }
+
+      return null;
+    }
+
+    if (isBlockedIpv6(trimmed)) {
+      return "Resolved IP is not allowed";
+    }
+
+    return null;
+  }
+
+  return "Resolved IP is not valid";
+}
+
 export function validateSshHost(host: string): string | null {
   const trimmed = host.trim();
   if (!trimmed) {

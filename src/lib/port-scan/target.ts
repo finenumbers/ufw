@@ -1,6 +1,6 @@
 import dns from "node:dns/promises";
 
-import { validateSshHost } from "@/lib/validations/ssh-host";
+import { validateResolvedIp, validateSshHost } from "@/lib/validations/ssh-host";
 
 export type ResolvedScanTarget = {
   host: string;
@@ -23,8 +23,17 @@ export async function resolveScanTarget(host: string): Promise<ResolvedScanTarge
 
   try {
     const result = await dns.lookup(trimmed, { family: 4 });
+    const resolvedError = validateResolvedIp(result.address);
+    if (resolvedError) {
+      throw new Error(resolvedError);
+    }
+
     return { host: trimmed, ip: result.address };
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("not allowed")) {
+      throw error;
+    }
+
     return { host: trimmed, ip: null };
   }
 }

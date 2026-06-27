@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
+import { z } from "zod";
+
 import { auth } from "@/lib/auth";
 import {
   isDockerMonitorEnabled,
@@ -19,6 +21,8 @@ import {
   startDockerInventoryRefresh,
 } from "@/server/services/docker-monitor.service";
 import { getServerById } from "@/server/services/server.service";
+
+const dockerContainerActionSchema = z.enum(["START", "STOP", "RESTART"]);
 
 async function requireUserId(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -91,6 +95,11 @@ export async function controlDockerContainerAction(
   }
 
   const userId = await requireUserId();
+  const parsedAction = dockerContainerActionSchema.safeParse(action);
+  if (!parsedAction.success) {
+    return { success: false, error: "Invalid container action" };
+  }
+
   const rateLimit = checkOperationRateLimit(`docker-control:${serverId}`);
 
   if (!rateLimit.allowed) {
@@ -104,7 +113,7 @@ export async function controlDockerContainerAction(
       userId,
       containerRef,
       containerName,
-      action,
+      action: parsedAction.data,
     });
 
     const server = await getServerById(serverId);

@@ -1,9 +1,15 @@
 import { parseCsvRules } from "@/lib/imports/csv";
+import { assertImportRowCount } from "@/lib/imports/import-limits";
 import { parseJsonRules } from "@/lib/imports/json";
 import { parseXlsxRules } from "@/lib/imports/xlsx";
 import type { ImportRuleRow } from "@/lib/validations/import";
 
 export type ImportFormat = "csv" | "xlsx" | "json";
+
+function finalizeImportRows(rows: ImportRuleRow[]): ImportRuleRow[] {
+  assertImportRowCount(rows.length);
+  return rows;
+}
 
 export async function parseImportFile(
   content: string | ArrayBuffer,
@@ -11,11 +17,11 @@ export async function parseImportFile(
 ): Promise<ImportRuleRow[]> {
   switch (format) {
     case "csv":
-      return parseCsvRules(content as string);
+      return finalizeImportRows(parseCsvRules(content as string));
     case "json":
-      return parseJsonRules(content as string);
+      return finalizeImportRows(parseJsonRules(content as string));
     case "xlsx":
-      return parseXlsxRules(content as ArrayBuffer);
+      return finalizeImportRows(parseXlsxRules(content as ArrayBuffer));
     default:
       throw new Error(`Unsupported import format: ${format}`);
   }
