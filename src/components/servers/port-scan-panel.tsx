@@ -44,6 +44,7 @@ export function PortScanPanel({
   const { message: error, showFailure, clearMessage } = useActionFailureState();
   const pollAttemptRef = useRef(0);
   const loadedLatestRef = useRef(false);
+  const lastStartTokenRef = useRef(0);
 
   useEffect(() => {
     if (loadedLatestRef.current || initialScan) {
@@ -119,19 +120,24 @@ export function PortScanPanel({
       return;
     }
 
-    setScan(null);
     notifyOperationStarted(serverId);
+    setScan((previous) =>
+      previous
+        ? { ...previous, id: result.scanId, status: "PENDING" }
+        : null,
+    );
     await pollScan(result.scanId);
     setLoading(false);
   }, [clearMessage, pollScan, serverId, showFailure, tCommon]);
 
   useEffect(() => {
-    if (startToken <= 0) {
+    if (startToken <= 0 || startToken === lastStartTokenRef.current) {
       return;
     }
 
+    lastStartTokenRef.current = startToken;
     void startScan();
-  }, [startToken, startScan]);
+  }, [startToken, startScan, serverId]);
 
   useEffect(() => {
     const scanId = scan?.id;

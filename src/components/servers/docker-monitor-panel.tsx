@@ -60,6 +60,7 @@ export function DockerMonitorPanel({
   const [confirmContainer, setConfirmContainer] = useState<DockerContainerView | null>(null);
   const pollAttemptRef = useRef(0);
   const loadedLatestRef = useRef(false);
+  const lastStartTokenRef = useRef(0);
 
   useEffect(() => {
     if (loadedLatestRef.current || initialInventory) {
@@ -146,20 +147,25 @@ export function DockerMonitorPanel({
       return;
     }
 
-    setInventory(null);
     setSnapshotId(result.snapshotId);
+    setInventory((previous) =>
+      previous
+        ? { ...previous, id: result.snapshotId, status: "PENDING" }
+        : null,
+    );
     notifyOperationStarted(serverId);
     await pollInventory(result.snapshotId);
     setRefreshing(false);
   }, [clearMessage, pollInventory, serverId, showFailure, tCommon]);
 
   useEffect(() => {
-    if (startToken <= 0) {
+    if (startToken <= 0 || startToken === lastStartTokenRef.current) {
       return;
     }
 
+    lastStartTokenRef.current = startToken;
     void startRefresh();
-  }, [startToken, startRefresh]);
+  }, [startToken, startRefresh, serverId]);
 
   useEffect(() => {
     if (!snapshotId) {
@@ -232,6 +238,11 @@ export function DockerMonitorPanel({
 
     notifyOperationStarted(serverId);
     setSnapshotId(result.followUpSnapshotId);
+    setInventory((previous) =>
+      previous
+        ? { ...previous, id: result.followUpSnapshotId, status: "PENDING" }
+        : null,
+    );
     await pollInventory(result.followUpSnapshotId);
   }
 

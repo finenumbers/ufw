@@ -209,6 +209,14 @@ export function ServerDetailView({
     return sortRows(result);
   }, [server.id, nextOffset, hasMore]);
 
+  const handlePortScanUpdated = useCallback((scan: PortScanView) => {
+    setPortFindingCount(scan.summary?.openCount ?? scan.findings.length);
+  }, []);
+
+  const handleDockerInventoryUpdated = useCallback((inventory: DockerInventoryView) => {
+    setContainerCount(inventory.summary?.containerCount ?? 0);
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -284,7 +292,7 @@ export function ServerDetailView({
           serverId={server.id}
           initialScan={initialPortScan}
           startToken={portScanStartToken}
-          onScanUpdated={(scan) => setPortFindingCount(scan.findings.length)}
+          onScanUpdated={handlePortScanUpdated}
         />
       ) : null}
 
@@ -293,9 +301,7 @@ export function ServerDetailView({
           serverId={server.id}
           initialInventory={initialDockerInventory}
           startToken={dockerStartToken}
-          onInventoryUpdated={(inventory) =>
-            setContainerCount(inventory.summary?.containerCount ?? 0)
-          }
+          onInventoryUpdated={handleDockerInventoryUpdated}
         />
       ) : null}
     </div>
