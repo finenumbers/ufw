@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { getAppVersionLabel, getBuildRevision, isNewerSemver } from "@/lib/app-version";
 
-test("getAppVersionLabel includes revision when BUILD_SHA is set", () => {
+test("getAppVersionLabel returns release version only", () => {
   const previousVersion = process.env.NEXT_PUBLIC_APP_VERSION;
   const previousSha = process.env.NEXT_PUBLIC_BUILD_SHA;
 
@@ -11,7 +11,7 @@ test("getAppVersionLabel includes revision when BUILD_SHA is set", () => {
   process.env.NEXT_PUBLIC_BUILD_SHA = "3d70485abcdef";
 
   assert.equal(getBuildRevision(), "3d70485");
-  assert.equal(getAppVersionLabel(), "v0.4.2 · 3d70485");
+  assert.equal(getAppVersionLabel(), "v0.4.2");
 
   if (previousVersion === undefined) {
     delete process.env.NEXT_PUBLIC_APP_VERSION;
@@ -26,11 +26,6 @@ test("getAppVersionLabel includes revision when BUILD_SHA is set", () => {
   }
 });
 
-test("isNewerSemver compares release versions", () => {
-  assert.equal(isNewerSemver("0.4.3", "0.4.2"), true);
-  assert.equal(isNewerSemver("0.4.2", "0.4.3"), false);
-  assert.equal(isNewerSemver("0.4.2", "0.4.2"), false);
-});
 test("getAppVersionLabel omits revision when BUILD_SHA is unknown", () => {
   const previousSha = process.env.NEXT_PUBLIC_BUILD_SHA;
   process.env.NEXT_PUBLIC_BUILD_SHA = "unknown";

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { notifyOperationStarted } from "@/lib/operations/events";
+import { RateLimitError } from "@/lib/operation-rate-limit";
 import { appendEmptyRule } from "@/lib/rules/add-rule";
 import { cn } from "@/lib/utils";
 import type { UnifiedRuleRow } from "@/types/rule";
@@ -88,11 +89,20 @@ export function UfwDashboard({
   async function refresh() {
     onShowUfwView();
     setLoading(true);
+    setOperationError(null);
     notifyOperationStarted(serverId);
-    const next = await loadUfwStateAction(serverId);
-    setState(next);
-    await onRulesRefresh();
-    router.refresh();
+    try {
+      const next = await loadUfwStateAction(serverId);
+      setState(next);
+      await onRulesRefresh();
+      router.refresh();
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        setOperationError(tc("rateLimitRetry", { seconds: error.retryAfterSeconds }));
+      } else {
+        setOperationError(error instanceof Error ? error.message : "Unknown error");
+      }
+    }
     setLoading(false);
   }
 

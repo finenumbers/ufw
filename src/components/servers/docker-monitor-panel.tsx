@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { DockerContainerDrawer } from "@/components/servers/docker-container-drawer";
 import { DockerContainersTable } from "@/components/servers/docker-containers-table";
+import { resolveActionFailureMessage } from "@/lib/i18n/action-errors";
 import { notifyOperationStarted } from "@/lib/operations/events";
 import type {
   DockerContainerAction,
@@ -26,6 +27,7 @@ type DockerMonitorPanelProps = {
 
 export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonitorPanelProps) {
   const t = useTranslations("dockerMonitor");
+  const tCommon = useTranslations("common");
   const [inventory, setInventory] = useState<DockerInventoryView | null>(null);
   const [snapshotId, setSnapshotId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,14 +59,14 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
     setRefreshing(false);
 
     if (!result.success) {
-      setError(result.error);
+      setError(resolveActionFailureMessage(result, tCommon));
       return;
     }
 
     setSnapshotId(result.snapshotId);
     notifyOperationStarted(serverId);
     await refreshById(result.snapshotId);
-  }, [refreshById, serverId]);
+  }, [refreshById, serverId, tCommon]);
 
   useEffect(() => {
     if (!autoStart || startedRef.current) {
@@ -123,7 +125,7 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
     setConfirmContainer(null);
 
     if (!result.success) {
-      setError(result.error);
+      setError(resolveActionFailureMessage(result, tCommon));
       return;
     }
 
@@ -154,22 +156,6 @@ export function DockerMonitorPanel({ serverId, autoStart = false }: DockerMonito
 
       {refreshing ? <p className="text-sm text-muted-foreground">{t("refreshing")}</p> : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
-      {inventory?.capturedAt ? (
-        <p className="text-xs text-muted-foreground">
-          {t("lastRefreshAt", { date: new Date(inventory.capturedAt).toLocaleString() })}
-        </p>
-      ) : null}
-
-      {inventory?.summary ? (
-        <p className="text-sm text-muted-foreground">
-          {t("summary", {
-            total: inventory.summary.containerCount,
-            running: inventory.summary.runningCount,
-            stopped: inventory.summary.stoppedCount,
-          })}
-        </p>
-      ) : null}
 
       {inventory?.errorMessage && inventory.status === "FAILED" ? (
         <p className="text-sm text-destructive">{inventory.errorMessage}</p>

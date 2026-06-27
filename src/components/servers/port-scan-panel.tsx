@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { PortScanTable } from "@/components/servers/port-scan-table";
+import { resolveActionFailureMessage } from "@/lib/i18n/action-errors";
 import { notifyOperationStarted } from "@/lib/operations/events";
 import type { PortScanView } from "@/types/port-scan";
 import {
@@ -18,6 +19,7 @@ type PortScanPanelProps = {
 
 export function PortScanPanel({ serverId, autoStart = false }: PortScanPanelProps) {
   const t = useTranslations("portScan");
+  const tCommon = useTranslations("common");
   const [scan, setScan] = useState<PortScanView | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,13 +42,13 @@ export function PortScanPanel({ serverId, autoStart = false }: PortScanPanelProp
     setLoading(false);
 
     if (!result.success) {
-      setError(result.error);
+      setError(resolveActionFailureMessage(result, tCommon));
       return;
     }
 
     notifyOperationStarted(serverId);
     await refreshById(result.scanId);
-  }, [refreshById, serverId]);
+  }, [refreshById, serverId, tCommon]);
 
   useEffect(() => {
     if (!autoStart || startedRef.current) {
@@ -73,7 +75,6 @@ export function PortScanPanel({ serverId, autoStart = false }: PortScanPanelProp
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold">{t("title")}</h3>
-        <p className="text-sm text-muted-foreground">{t("description")}</p>
       </div>
 
       {loading ? <p className="text-sm text-muted-foreground">{t("scanning")}</p> : null}

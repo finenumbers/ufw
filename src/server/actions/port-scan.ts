@@ -5,8 +5,10 @@ import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
 import { getPortScanRateLimitWindowMs, isPortScanEnabled } from "@/lib/port-scan/config";
+import { createRateLimitedFailure } from "@/lib/operation-rate-limit";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { getServerPath } from "@/lib/server-path";
+import type { ActionFailureResult } from "@/types/action-result";
 import {
   getLatestPortScan,
   getPortScanById,
@@ -26,7 +28,7 @@ export async function startPortScanAction(
   serverId: string,
 ): Promise<
   | { success: true; scanId: string; operationId: string }
-  | { success: false; error: string }
+  | ActionFailureResult
 > {
   if (!isPortScanEnabled()) {
     return { success: false, error: "Port scanning is disabled on this installation." };
@@ -40,11 +42,7 @@ export async function startPortScanAction(
   });
 
   if (!rateLimit.allowed) {
-    const retrySeconds = Math.ceil(rateLimit.retryAfterMs / 1000);
-    return {
-      success: false,
-      error: `Port scan was run recently for this server. Please wait ${retrySeconds}s before scanning again.`,
-    };
+    return createRateLimitedFailure(rateLimit.retryAfterMs);
   }
 
   try {

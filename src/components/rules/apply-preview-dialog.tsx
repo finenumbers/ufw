@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { notifyOperationStarted } from "@/lib/operations/events";
+import { resolveActionFailureMessage } from "@/lib/i18n/action-errors";
 import { confirmApplyAction } from "@/server/actions/apply";
 import { forceResyncFromRemoteAction } from "@/server/actions/servers";
 
@@ -73,7 +74,7 @@ export function ApplyPreviewDialog({
     setResyncLoading(false);
 
     if (!result.success) {
-      setError(result.error ?? t("forceResyncFailed"));
+      setError(resolveActionFailureMessage(result, tc));
       return;
     }
 

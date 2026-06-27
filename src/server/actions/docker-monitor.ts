@@ -10,8 +10,10 @@ import {
   isDockerMonitorEnabled,
 } from "@/lib/docker/config";
 import { assertValidContainerRef } from "@/lib/docker/container-ref";
+import { createRateLimitedFailure } from "@/lib/operation-rate-limit";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { getServerPath } from "@/lib/server-path";
+import type { ActionFailureResult } from "@/types/action-result";
 import type { DockerContainerAction } from "@/types/docker-monitor";
 import {
   controlDockerContainer,
@@ -34,7 +36,7 @@ export async function refreshDockerInventoryAction(
   serverId: string,
 ): Promise<
   | { success: true; snapshotId: string; operationId: string }
-  | { success: false; error: string }
+  | ActionFailureResult
 > {
   if (!isDockerMonitorEnabled()) {
     return { success: false, error: "Docker monitoring is disabled on this installation." };
@@ -48,11 +50,7 @@ export async function refreshDockerInventoryAction(
   });
 
   if (!rateLimit.allowed) {
-    const retrySeconds = Math.ceil(rateLimit.retryAfterMs / 1000);
-    return {
-      success: false,
-      error: `Docker inventory was refreshed recently for this server. Please wait ${retrySeconds}s before refreshing again.`,
-    };
+    return createRateLimitedFailure(rateLimit.retryAfterMs);
   }
 
   try {
@@ -99,7 +97,7 @@ export async function controlDockerContainerAction(
   action: DockerContainerAction,
 ): Promise<
   | { success: true; followUpSnapshotId: string }
-  | { success: false; error: string }
+  | ActionFailureResult
 > {
   if (!isDockerMonitorEnabled()) {
     return { success: false, error: "Docker monitoring is disabled on this installation." };
@@ -107,15 +105,12 @@ export async function controlDockerContainerAction(
 
   const userId = await requireUserId();
   const rateLimit = assertRateLimit(`docker-control:${serverId}`, {
-    limit: 10,
+    limit: 1,
     windowMs: getDockerControlRateLimitWindowMs(),
   });
 
   if (!rateLimit.allowed) {
-    return {
-      success: false,
-      error: "Too many Docker control actions for this server. Please wait and try again.",
-    };
+    return createRateLimitedFailure(rateLimit.retryAfterMs);
   }
 
   try {

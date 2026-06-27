@@ -13,9 +13,7 @@ export function getBuildRevision(): string | null {
 }
 
 export function getAppVersionLabel(): string {
-  const version = getAppVersion();
-  const revision = getBuildRevision();
-  return revision ? `v${version} · ${revision}` : `v${version}`;
+  return `v${getAppVersion()}`;
 }
 
 export function parseSemver(version: string): [number, number, number] {

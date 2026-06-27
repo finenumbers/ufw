@@ -12,8 +12,14 @@ import {
   sanitizeGenericClientError,
 } from "@/lib/errors/sanitize";
 import { assertImportFileSize } from "@/lib/imports/import-limits";
+import {
+  checkOperationRateLimit,
+  createRateLimitedFailure,
+  throwIfOperationRateLimited,
+} from "@/lib/operation-rate-limit";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { decodeServerAddress, getServerPath } from "@/lib/server-path";
+import type { ActionFailureResult } from "@/types/action-result";
 import { serverSchema, type ServerInput } from "@/lib/validations/server";
 import {
   applyServersConfigImport,
@@ -40,18 +46,6 @@ import {
   semanticStep,
   startOperation,
 } from "@/server/services/operation-progress.service";
-
-const refreshCooldownMs = 30_000;
-const lastRefreshByServer = new Map<string, number>();
-
-function assertServerRefreshCooldown(serverId: string): void {
-  const now = Date.now();
-  const lastRefresh = lastRefreshByServer.get(serverId) ?? 0;
-  if (now - lastRefresh < refreshCooldownMs) {
-    throw new Error("Refresh recently completed. Please wait before trying again.");
-  }
-  lastRefreshByServer.set(serverId, now);
-}
 
 async function requireUserId(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -187,22 +181,18 @@ export async function syncRemoteRulesAction(
 
 export async function forceResyncFromRemoteAction(
   serverId: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: true } | ActionFailureResult> {
   return runRemoteRulesSync(serverId);
 }
 
 async function runRemoteRulesSync(
   serverId: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: true } | ActionFailureResult> {
   const userId = await requireUserId();
 
-  try {
-    assertServerRefreshCooldown(serverId);
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Refresh cooldown active",
-    };
+  const rateLimit = checkOperationRateLimit(`ufw-refresh:${serverId}`);
+  if (!rateLimit.allowed) {
+    return createRateLimitedFailure(rateLimit.retryAfterMs);
   }
 
   const tracker = await startOperation({
@@ -231,19 +221,7 @@ async function runRemoteRulesSync(
 export async function loadUfwStateAction(serverId: string) {
   const userId = await requireUserId();
 
-  try {
-    assertServerRefreshCooldown(serverId);
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : "Refresh cooldown active");
-  }
-
-  const rateLimit = assertRateLimit(`ufw-refresh:${serverId}`, {
-    limit: 1,
-    windowMs: refreshCooldownMs,
-  });
-  if (!rateLimit.allowed) {
-    throw new Error("Refresh recently completed. Please wait before trying again.");
-  }
+  throwIfOperationRateLimited(`ufw-refresh:${serverId}`);
 
   const tracker = await startOperation({
     serverId,
