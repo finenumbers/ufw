@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { PortScanTable } from "@/components/servers/port-scan-table";
@@ -13,19 +13,15 @@ import {
 
 type PortScanPanelProps = {
   serverId: string;
-  cachedScanId?: string | null;
-  onScanId?: (scanId: string) => void;
+  autoStart?: boolean;
 };
 
-export function PortScanPanel({
-  serverId,
-  cachedScanId = null,
-  onScanId,
-}: PortScanPanelProps) {
+export function PortScanPanel({ serverId, autoStart = false }: PortScanPanelProps) {
   const t = useTranslations("portScan");
   const [scan, setScan] = useState<PortScanView | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const startedRef = useRef(false);
 
   const refreshById = useCallback(async (scanId: string) => {
     const latest = await getPortScanByIdAction(scanId);
@@ -48,30 +44,18 @@ export function PortScanPanel({
       return;
     }
 
-    onScanId?.(result.scanId);
-    if (!result.reused) {
-      notifyOperationStarted(serverId);
-    }
+    notifyOperationStarted(serverId);
     await refreshById(result.scanId);
-  }, [onScanId, refreshById, serverId]);
-
-  const loadCachedScan = useCallback(
-    async (scanId: string) => {
-      setError(null);
-      await refreshById(scanId);
-    },
-    [refreshById],
-  );
+  }, [refreshById, serverId]);
 
   useEffect(() => {
-    if (cachedScanId) {
-      void loadCachedScan(cachedScanId);
+    if (!autoStart || startedRef.current) {
       return;
     }
 
+    startedRef.current = true;
     void startScan();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [autoStart, startScan]);
 
   useEffect(() => {
     if (!scan?.id || (scan.status !== "RUNNING" && scan.status !== "PENDING")) {

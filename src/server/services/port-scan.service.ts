@@ -140,23 +140,6 @@ export async function getPortScanById(scanId: string): Promise<PortScanView | nu
   return scan ? toPortScanView(scan) : null;
 }
 
-export async function getRecentPortScan(
-  serverId: string,
-  windowMs: number,
-): Promise<{ id: string; operationId: string | null } | null> {
-  const since = new Date(Date.now() - windowMs);
-  const scan = await db.portScan.findFirst({
-    where: {
-      serverId,
-      startedAt: { gte: since },
-    },
-    orderBy: { startedAt: "desc" },
-    select: { id: true, operationLogId: true },
-  });
-
-  return scan ? { id: scan.id, operationId: scan.operationLogId } : null;
-}
-
 export async function createPortScanJob(params: {
   serverId: string;
   userId: string;

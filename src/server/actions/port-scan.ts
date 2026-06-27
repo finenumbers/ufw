@@ -10,7 +10,6 @@ import { getServerPath } from "@/lib/server-path";
 import {
   getLatestPortScan,
   getPortScanById,
-  getRecentPortScan,
   startPortScan,
 } from "@/server/services/port-scan.service";
 import { getServerById } from "@/server/services/server.service";
@@ -26,7 +25,7 @@ async function requireUserId(): Promise<string> {
 export async function startPortScanAction(
   serverId: string,
 ): Promise<
-  | { success: true; scanId: string; operationId: string; reused?: boolean }
+  | { success: true; scanId: string; operationId: string }
   | { success: false; error: string }
 > {
   if (!isPortScanEnabled()) {
@@ -41,16 +40,6 @@ export async function startPortScanAction(
   });
 
   if (!rateLimit.allowed) {
-    const recent = await getRecentPortScan(serverId, windowMs);
-    if (recent) {
-      return {
-        success: true,
-        scanId: recent.id,
-        operationId: recent.operationId ?? "",
-        reused: true,
-      };
-    }
-
     const retrySeconds = Math.ceil(rateLimit.retryAfterMs / 1000);
     return {
       success: false,
