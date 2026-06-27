@@ -22,6 +22,15 @@ Before a server is saved, the host is validated:
 
 This prevents the application from being abused as a proxy to scan internal networks.
 
+## DNS resolution check
+
+Validation happens in two stages:
+
+1. **At save** — the hostname string is checked (private literals, metadata hosts, optional CIDR allowlist).
+2. **Before connect** — the hostname is resolved to an IP and the **resolved address** is checked with the same rules.
+
+This closes DNS rebinding gaps where a public hostname later resolves to a private or metadata IP.
+
 ## SSH test before save
 
 Creating or updating a server (host, port, or identity change) requires a successful **SSH connection test**. The UI blocks save until the test passes.

@@ -46,6 +46,10 @@ The app tries `docker …` first, then `sudo docker …` if permission is denied
 - Fixed 30s rate limits on refresh and control (not env-configurable)
 - Audit: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
 
+## Progress polling
+
+While inventory refresh runs, the UI polls a lightweight status endpoint. Poll interval backs off: **3s → 5s → 10s**. The operation banner shows step progress.
+
 ## Related docs
 
 - [Deployment overview](./overview.md)

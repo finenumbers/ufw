@@ -24,7 +24,7 @@ Nginx Proxy Manager is **always external** — not included in this repository.
 
 ## Recommended production path
 
-1. Pull image tag `v0.1.0` (or latest release) from GHCR
+1. Pull image tag **`latest`** (or pin e.g. `v0.6.1`) from GHCR
 2. Generate `.env` on server: `./scripts/generate-production-env.sh .env`
 3. Deploy with Compose + `docker-compose.prod.yml` + `docker-compose.ghcr.yml`
 4. Configure NPM Proxy Host → `ufw-app:8088`

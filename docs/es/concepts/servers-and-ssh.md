@@ -1,51 +1,60 @@
 # Servidores y SSH
 
-Un registro de **servidor** representa un host Linux que gestiona. La aplicación se conecta por SSH para ejecutar comandos UFW y leer el estado del firewall.
+Un registro de **servidor** representa un host Linux que gestiona. La aplicación se conecta por SSH para ejecutar comandos UFW y leer el estado del cortafuegos.
 
 ## Campos del servidor
 
 | Campo | Propósito |
-|-------|---------|
+|-------|-----------|
 | **Nombre** | Etiqueta visible en la barra lateral |
 | **Host** | Dirección IP o nombre DNS (validado antes de guardar) |
-| **Puerto** | Puerto SSH (predeterminado 22) |
+| **Puerto** | Puerto SSH (22 por defecto) |
 | **Identidad SSH** | Credenciales usadas para la conexión |
 
-## Validación de host (protección SSRF)
+## Validación del host (protección SSRF)
 
-Antes de guardar un servidor, se valida el host:
+Antes de guardar un servidor, el host se valida:
 
-- Los rangos de IP privada (10.x, 172.16–31, 192.168.x) están **bloqueados** por defecto
-- Se bloquean direcciones link-local y de metadatos en la nube
-- Se bloquean direcciones IPv6 mapeadas a IPv4 privadas
-- Lista de permitidos opcional: configure `SSH_ALLOWED_CIDRS` en `.env` (p. ej. `10.0.0.0/8`) para redes internas
+- Los rangos IP privados (10.x, 172.16–31, 192.168.x) están **bloqueados** por defecto
+- Las direcciones link-local y de metadatos en la nube están bloqueadas
+- Las direcciones IPv6 mapeadas a IPv4 privadas están bloqueadas
+- Lista blanca opcional: establezca `SSH_ALLOWED_CIDRS` en `.env` (p. ej. `10.0.0.0/8`) para redes internas
 
-Esto evita que la aplicación se use como proxy para escanear redes internas.
+Esto evita que la aplicación se abuse como proxy para escanear redes internas.
 
-## Prueba SSH antes de guardar
+## Comprobación de resolución DNS
 
-Crear o actualizar un servidor (cambio de host, puerto o identidad) requiere una **prueba de conexión SSH** exitosa. La interfaz bloquea el guardado hasta que la prueba pase.
+La validación ocurre en dos etapas:
 
-## Fijación de clave host SSH
+1. **Al guardar** — se comprueba la cadena del nombre de host (literales privados, hosts de metadatos, lista blanca CIDR opcional).
+2. **Antes de conectar** — el nombre de host se resuelve a IP y la **dirección resuelta** se comprueba con las mismas reglas.
 
-En la primera conexión exitosa, se almacena la huella de la clave host SSH del servidor.
+Esto cierra brechas de DNS rebinding donde un nombre de host público luego se resuelve a una IP privada o de metadatos.
+
+## Test SSH antes de guardar
+
+Crear o actualizar un servidor (host, puerto o cambio de identidad) requiere un **test de conexión SSH** exitoso. La UI bloquea el guardado hasta que el test pase.
+
+## Fijación de clave de host SSH
+
+En la primera conexión exitosa, se almacena la huella de la clave de host SSH del servidor.
 
 | Estado | Significado |
-|-------|---------|
-| **Verificada** | Clave registrada tras prueba SSH exitosa u operación normal |
-| **No verificada** | Clave importada desde archivo de configuración — ejecute prueba SSH para verificar |
+|--------|-------------|
+| **Verificado** | Clave registrada tras test SSH exitoso u operación normal |
+| **No verificado** | Clave importada desde archivo de configuración — ejecute el test SSH para verificar |
 
-Si la clave host remota cambia (reinstalación, MITM), la siguiente conexión fallará hasta que investigue.
+Si la clave de host remota cambia (reinstalación, MITM), la siguiente conexión falla hasta que investigue.
 
 ## Qué hace eliminar un servidor
 
-Eliminar un servidor quita **solo datos locales**:
+Eliminar un servidor quita **solo** datos locales:
 
-- Reglas borrador, snapshots, sesiones de aplicación e historial de operaciones de ese servidor
+- Reglas borrador, snapshots, sesiones de aplicación, historial de operaciones de ese servidor
 
-**No** modifica las reglas UFW en el host Linux remoto. El estado del firewall remoto permanece igual.
+**No** modifica las reglas UFW en el host Linux remoto. El estado del cortafuegos remoto permanece igual.
 
-## Ciclo de vida de UFW en un servidor
+## Ciclo de vida UFW en un servidor
 
 Desde el panel del servidor puede:
 
@@ -53,10 +62,10 @@ Desde el panel del servidor puede:
 2. **Instalar** UFW si falta
 3. **Activar** UFW y sincronizar reglas
 
-La edición de reglas está disponible solo cuando UFW está instalado **y** activo.
+La edición de reglas solo está disponible cuando UFW está instalado **y** activo.
 
 ## Documentación relacionada
 
 - [Identidades SSH](./ssh-identities.md)
-- [Administrar servidores](../user-guide/manage-servers.md)
+- [Gestionar servidores](../user-guide/manage-servers.md)
 - [Solución de problemas](../troubleshooting.md)

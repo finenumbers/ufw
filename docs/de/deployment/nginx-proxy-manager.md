@@ -5,14 +5,14 @@ Nginx Proxy Manager (NPM) muss auf Ihrem Docker-Host **bereits installiert** sei
 ## Datenfluss
 
 ```
-Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, Docker network)
+Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, Docker-Netzwerk)
 ```
 
-NPM terminiert HTTPS. Die App setzt HSTS in der Produktion, verlässt sich aber auf NPM für Zertifikate.
+NPM beendet HTTPS. Die App setzt HSTS in der Produktion, verlässt sich aber auf NPM für Zertifikate.
 
 ## Proxy-Host-Checkliste
 
-Einen **Proxy Host** in der NPM-Oberfläche anlegen oder aktualisieren:
+Erstellen oder aktualisieren Sie einen **Proxy Host** in der NPM-UI:
 
 | Feld | Wert |
 |------|------|
@@ -35,9 +35,9 @@ In `.env` setzen:
 NPM_NETWORK=nginxproxymanager_default
 ```
 
-(`docker-compose.prod.yml` hängt `ufw-app` an externes Netzwerk `npm_proxy` → `$NPM_NETWORK`.)
+(`docker-compose.prod.yml` verbindet `ufw-app` mit dem externen Netzwerk `npm_proxy` → `$NPM_NETWORK`.)
 
-Netzwerkname finden:
+Netzwerkname ermitteln:
 
 ```bash
 docker network ls | grep -i proxy
@@ -45,13 +45,34 @@ docker network ls | grep -i proxy
 
 ## APP_URL muss übereinstimmen
 
-`APP_URL` in `.env` muss exakt mit der öffentlichen URL übereinstimmen (Schema + Host):
+`APP_URL` in `.env` muss exakt der öffentlichen URL entsprechen (Schema + Host):
 
 ```bash
 APP_URL=https://ufw.example.com
 ```
 
-Abweichung verursacht Auth-Redirect-Schleifen oder defekte Cookies.
+Abweichungen verursachen Auth-Redirect-Schleifen oder defekte Cookies.
+
+## APP_URL vs. Proxy-Host-Schema
+
+| Schicht | Schema | Beispiel |
+|---------|--------|----------|
+| Browser / `APP_URL` | **HTTPS** | `https://ufw.example.com` |
+| NPM → Container | **HTTP** | `http://ufw-app:8088` |
+
+NPM beendet TLS. Der App-Container lauscht im Docker-Netzwerk auf unverschlüsseltem HTTP — das ist **Absicht**, keine Fehlkonfiguration.
+
+Setzen Sie `APP_URL` nur auf die öffentliche HTTPS-URL. Zeigen Sie `APP_URL` niemals auf `http://ufw-app:8088`.
+
+## TRUST_PROXY
+
+Bei Betrieb hinter NPM in `.env` oder Portainer-Stack-Umgebung setzen:
+
+```bash
+TRUST_PROXY=1
+```
+
+Damit verwenden Rate Limits auf `/setup` die echte Client-IP aus `X-Forwarded-For`. Siehe [Umgebungsvariablen](../administration/environment-variables.md).
 
 ## Lokaler Build (ohne GHCR)
 

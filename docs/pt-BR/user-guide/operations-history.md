@@ -1,16 +1,18 @@
 # Histórico de operações
 
-Tarefas de longa duração (aplicação, atualização de status, instalação do UFW, teste SSH) são rastreadas em **logs de operações** e exibidas na interface.
+Tarefas de longa duração (aplicar, atualizar, instalar UFW, teste SSH) são rastreadas em **logs de operação** e exibidas na interface.
 
 ## Banner de operação
 
-Enquanto uma operação está em execução, um banner aparece no topo da aplicação:
+Enquanto uma operação está em execução, um banner aparece no topo do app:
 
-- Tipo e status da operação (EM EXECUÇÃO, SUCESSO, FALHA)
+- Tipo de operação e status (RUNNING, SUCCESS, FAILED)
 - Lista de etapas expansível com status por etapa
-- Fechamento automático após sucesso, após um curto intervalo
+- Fechamento automático em sucesso após breve atraso
 
-O banner consulta atualizações enquanto o trabalho está em andamento.
+O banner faz polling de atualizações enquanto o trabalho está em andamento.
+
+Se um banner ficar preso em **RUNNING** ou **PENDING** após desconexão do navegador, atualize a página. Operações obsoletas são limpas automaticamente por uma varredura em segundo plano (tipicamente em 30–60 minutos).
 
 ## Página de operações
 
@@ -19,9 +21,9 @@ Barra lateral → **Histórico de operações** (`/operations`)
 Duas abas:
 
 | Aba | Conteúdo |
-|-----|---------|
-| **Logs de operações** | Log técnico de operações — apply, sync, teste SSH, etc. |
-| **Eventos de auditoria** | Eventos relevantes à segurança — login, logout, exportação de configuração |
+|-----|----------|
+| **Operações** | Log técnico de operações — aplicar, sync, teste SSH, etc. |
+| **Auditoria** | Eventos relevantes para segurança — login, logout, exportação de config |
 
 Ambas suportam rolagem infinita para entradas mais antigas.
 
@@ -31,14 +33,14 @@ Exemplos:
 
 - `apply_rules` — aplicação UFW
 - `ufw_refresh` — atualizar status e regras
-- `ufw_sync` — sincronizar rascunho com o servidor
-- `ufw_install` / `ufw_enable` — configuração do UFW
+- `ufw_sync` — sincronizar rascunho com servidor
+- `ufw_install` / `ufw_enable` — configuração UFW
 - `ssh_test` — verificação de conexão
 - `server_create` — novo servidor adicionado
 
 ## Limpar histórico
 
-Administradores podem limpar o histórico antigo de operações na interface (eventos de auditoria podem ser retidos conforme política de retenção). Limpar não afeta o estado do servidor ou as regras.
+Administradores podem limpar histórico antigo de operações na interface (eventos de auditoria podem ser retidos conforme política de retenção). Limpar não afeta estado do servidor ou regras.
 
 ## Documentação relacionada
 

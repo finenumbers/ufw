@@ -6,9 +6,9 @@
 
 | Переменная | Описание | Генерация |
 |------------|----------|-----------|
-| `APP_URL` | Публичный HTTPS URL админ-интерфейса | Ваш домен NPM, например `https://ufw.example.com` |
+| `APP_URL` | Публичный URL админ-интерфейса (HTTPS для реальных доменов) | Домен NPM, напр. `https://ufw.example.com` |
 | `POSTGRES_PASSWORD` | Пароль базы данных | `openssl rand -base64 24` |
-| `BETTER_AUTH_SECRET` | Секрет подписи сессий | `openssl rand -base64 32` |
+| `BETTER_AUTH_SECRET` | Секрет подписи сессий (**мин. 32 символа** в продакшене) | `openssl rand -base64 32` |
 | `APP_ENCRYPTION_KEY` | AES-ключ для SSH-учётных данных (32 декодированных байта) | `openssl rand -base64 32` |
 | `NPM_NETWORK` | Имя Docker-сети, общей с NPM | `docker network ls` |
 
@@ -28,6 +28,7 @@ Compose и Portainer stack по умолчанию используют `ghcr.io
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
 | `SSH_ALLOWED_CIDRS` | Разрешённые CIDR через запятую как SSH-цели | Пусто (частные IP блокируются) |
+| `TRUST_PROXY` | Задайте `1`, если приложение работает за Nginx Proxy Manager — rate limits `/setup` используют `X-Forwarded-For` | Не задано (forwarded headers игнорируются) |
 | `APP_BIND` | Адрес bind для локального compose | `127.0.0.1` |
 | `APP_PORT` | Порт хоста для локального compose | `8088` |
 | `POSTGRES_PORT` | Порт хоста для Postgres в dev | `5434` |
@@ -43,6 +44,28 @@ Compose и Portainer stack по умолчанию используют `ghcr.io
 - Start, stop, restart Docker-контейнеров
 
 С **v0.5.1** устаревшие переменные `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` и `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` **игнорируются**, если остались в `.env`.
+
+In-memory buckets rate limit очищаются при опустошении (только single-replica — см. [Архитектура](../architecture.md)).
+
+## APP_URL vs внутренний HTTP
+
+Два разных URL для разных ролей:
+
+| Настройка | Пример | Назначение |
+|-----------|--------|------------|
+| **`APP_URL`** | `https://ufw.example.com` | Публичный URL для Better Auth, cookies и редиректов браузера |
+| **NPM Proxy Host scheme** | `http` → `ufw-app:8088` | Внутренний Docker-трафик; TLS завершает NPM |
+
+**Не** указывайте `APP_URL` как внутренний URL контейнера. Better Auth требует публичный HTTPS-домен, который вводит пользователь.
+
+В продакшене `APP_URL` должен быть **HTTPS** для реальных имён хостов. Исключения: `http://localhost` и `http://127.0.0.1` (локальные smoke-тесты и CI).
+
+## Продакшен за NPM
+
+Когда `ufw-app` за Nginx Proxy Manager в общей Docker-сети:
+
+1. Задайте `TRUST_PROXY=1` в окружении приложения, чтобы rate limits `/setup` использовали IP клиента из `X-Forwarded-For` (NPM выставляет этот заголовок).
+2. Без `TRUST_PROXY` лимиты setup используют один общий bucket (`direct`) — допустимо для local dev, не идеально для продакшена.
 
 ## Как переменные попадают в контейнеры
 

@@ -24,7 +24,8 @@ SSH passwords and private keys are encrypted with **AES-256-GCM** before storage
 
 ## SSH security
 
-- Host validation blocks SSRF to private/metadata addresses
+- Host validation blocks SSRF to private/metadata addresses at save time
+- **DNS resolution check:** before each SSH connect and port scan, the resolved IP is validated again — blocks DNS rebinding to private/metadata addresses even when the hostname looked safe at save time
 - Optional `SSH_ALLOWED_CIDRS` for internal networks
 - Host key pinning on first successful connection
 - Imported keys marked unverified until SSH test succeeds

@@ -1,6 +1,6 @@
 # Workflow brouillon et application
 
-UFW Remote Manager ne pousse jamais de modifications de pare-feu silencieusement. Chaque mutation suit **édition → aperçu → confirmation → application**.
+UFW Remote Manager ne pousse jamais les modifications de pare-feu en silence. Chaque mutation suit **édition → aperçu → confirmation → application**.
 
 ![Workflow d'application](../../assets/ufw-apply-workflow.svg)
 
@@ -8,25 +8,25 @@ UFW Remote Manager ne pousse jamais de modifications de pare-feu silencieusement
 
 ### 1. Éditer le brouillon
 
-Modifiez les règles dans le tableau : ajouter, éditer, supprimer, réordonner, importer. Les modifications restent dans le **brouillon local** jusqu'à l'application.
+Modifiez les règles dans le tableau : ajouter, éditer, supprimer, réordonner, importer. Les changements restent dans le **brouillon local** jusqu'à application.
 
-### 2. Aperçu de l'application
+### 2. Aperçu d'application
 
-Cliquez sur **Enregistrer les règles**. L'application :
+Cliquez sur **Aperçu d'application**. L'application :
 
 1. Charge l'état UFW actuel depuis le serveur (snapshot SSH)
-2. Calcule un **plan** — les commandes qui aligneraient UFW sur votre brouillon
+2. Calcule un **plan** — commandes qui aligneraient UFW sur votre brouillon
 3. Affiche les règles ajoutées, supprimées et réordonnées
 
-Examinez l'aperçu attentivement. Portez attention aux règles pouvant vous verrouiller (ex. bloquer SSH).
+Examinez l'aperçu attentivement. Portez attention aux règles qui pourraient vous exclure (ex. bloquer SSH).
 
-### 3. Confirmation
+### 3. Confirmer
 
 Confirmez dans la boîte de dialogue. Ce n'est qu'alors que les commandes UFW sont exécutées via SSH.
 
 ### 4. Exécution de l'application
 
-Les commandes s'exécutent séquentiellement sur le serveur (file par serveur, concurrence 1). La progression apparaît dans la **bannière d'opération** avec le statut étape par étape.
+Les commandes s'exécutent séquentiellement sur le serveur (file par serveur, concurrence 1). La progression apparaît dans la **bannière d'opération** avec un statut étape par étape.
 
 ### 5. Synchronisation post-application
 
@@ -41,24 +41,35 @@ sequenceDiagram
   participant DB as Postgres
   participant Remote as Linux_UFW
 
-  User->>App: Edit draft rules
-  User->>App: Preview apply
-  App->>Remote: SSH read snapshot
-  App->>App: Build plan diff
-  User->>App: Confirm apply
-  App->>Remote: SSH ufw commands
-  App->>DB: Update snapshot and audit
+  User->>App: Éditer règles brouillon
+  User->>App: Aperçu application
+  App->>Remote: Lecture snapshot SSH
+  App->>App: Construire diff plan
+  User->>App: Confirmer application
+  App->>Remote: Lecture snapshot SSH
+  alt Distant modifié depuis aperçu
+    App-->>User: Rejet — nouvel aperçu requis
+  else Plan correspond
+    App->>Remote: Commandes ufw SSH
+    App->>DB: Mettre à jour snapshot et audit
+  end
 ```
 
 ## Application partielle et dérive
 
-Si l'application échoue en cours de route, UFW distant peut différer à la fois du brouillon et du snapshot. L'interface vous avertit et propose **Resynchronisation forcée depuis le serveur** pour réaligner l'état local sur les règles distantes réelles avant de rééditer.
+UFW distant peut changer entre aperçu et confirmation, ou l'application peut échouer en cours de route. L'application gère trois cas distincts :
 
-**N'ignorez jamais les avertissements d'application partielle** — continuer aveuglément peut provoquer des règles en double ou des erreurs d'ordre.
+| Scénario | Statut de session | Action |
+|----------|-------------------|--------|
+| UFW distant modifié **entre aperçu et confirmation** | Application rejetée (`needsRePreview`) | Relancer **Aperçu d'application** — ne pas forcer la resynchronisation |
+| Commandes UFW **interrompues** sur le serveur | `PARTIAL` (`needsResync`) | **Forcer resync depuis serveur**, puis examiner avant édition |
+| Commandes UFW réussies mais **sync post-application échouée** | `PARTIAL` (`needsResync`) | **Forcer resync depuis serveur** — UFW distant déjà modifié |
 
-## Protection d'accès SSH
+**N'ignorez jamais les avertissements d'application partielle** — continuer aveuglément peut provoquer des règles dupliquées ou des erreurs d'ordre.
 
-Le planificateur d'application inclut des protections autour des règles d'accès SSH lorsqu'elles sont configurées — voir les tests dans `src/lib/ufw/commands.allow-ssh.test.ts`. Vérifiez tout de même l'aperçu manuellement pour les serveurs de production.
+## Protection SSH autorisé
+
+Le planificateur d'application inclut des protections autour des règles d'accès SSH lorsque configuré — voir les tests dans `src/lib/ufw/commands.allow-ssh.test.ts`. Vérifiez quand même l'aperçu manuellement pour les serveurs de production.
 
 ## Documentation associée
 

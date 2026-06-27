@@ -1,52 +1,56 @@
-# Docker container monitoring
+# Docker-Container-Überwachung
 
-UFW Remote Manager can inventory and control **Docker containers** on each registered server over **SSH** (same transport as UFW operations).
+UFW Remote Manager kann **Docker-Container** auf jedem registrierten Server per **SSH** inventarisieren und steuern (gleicher Transport wie UFW-Operationen).
 
-Results appear in a table **below the port scan panel** on the server page.
+Ergebnisse erscheinen in einer Tabelle **unter dem Port-Scan-Panel** auf der Serverseite.
 
-## Enable
+## Aktivieren
 
-Set in the app environment (Compose / Portainer):
+In der App-Umgebung setzen (Compose / Portainer):
 
 ```env
 DOCKER_MONITOR_ENABLED=true
 ```
 
-Optional tuning:
+Optionale Feineinstellung:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Stored inventory snapshots per server |
-| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | SSH command timeout for Docker CLI |
+| Variable | Standard | Zweck |
+|----------|----------|-------|
+| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Gespeicherte Inventar-Snapshots pro Server |
+| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | SSH-Befehls-Timeout für Docker CLI |
 
-Inventory refresh and container control (start/stop/restart) share a **30 second** cooldown per server (fixed in app code since v0.5.1). Legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` and `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` in `.env` are **ignored**.
+Inventar-Aktualisierung und Container-Steuerung (start/stop/restart) teilen sich eine **30-Sekunden**-Abklingzeit pro Server (fest im App-Code seit v0.5.1). Legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` und `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` in `.env` werden **ignoriert**.
 
-## Requirements on managed servers
+## Anforderungen auf verwalteten Servern
 
-- **Docker CLI** installed (`docker` in PATH)
-- Docker daemon reachable for the SSH user
-- Either membership in the **`docker`** group or **passwordless sudo** for `docker`
+- **Docker CLI** installiert (`docker` in PATH)
+- Docker-Daemon für den SSH-Benutzer erreichbar
+- Entweder Mitgliedschaft in der Gruppe **`docker`** oder **passwortloses sudo** für `docker`
 
-The app tries `docker …` first, then `sudo docker …` if permission is denied.
+Die App versucht zuerst `docker …`, dann `sudo docker …` bei Berechtigungsverweigerung.
 
-## Features (MVP)
+## Funktionen (MVP)
 
-- Refresh inventory: `docker ps -a`, stats for running containers
-- Table: name, image, status, health, ports, CPU/memory, Compose labels
-- Grouping by Compose project
-- Container detail drawer (`docker inspect`, masked env vars)
-- Control: **start**, **stop**, **restart** (confirm for stop/restart)
-- Operation progress banner + audit events
+- Inventar aktualisieren: `docker ps -a`, Stats für laufende Container
+- Tabelle: Name, Image, Status, Health, Ports, CPU/Speicher, Compose-Labels
+- Gruppierung nach Compose-Projekt
+- Container-Detail-Drawer (`docker inspect`, maskierte Env-Vars)
+- Steuerung: **start**, **stop**, **restart** (Bestätigung für stop/restart)
+- Vorgangsfortschritts-Banner + Audit-Ereignisse
 
-## Security
+## Sicherheit
 
-- Feature flag (default off)
-- Container ID/name validation — no arbitrary shell from UI
-- Fixed control actions only
-- Fixed 30s rate limits on refresh and control (not env-configurable)
+- Feature-Flag (standardmäßig aus)
+- Container-ID/Name-Validierung — kein beliebiges Shell aus der UI
+- Nur feste Steuerungsaktionen
+- Feste 30s-Rate-Limits für Aktualisierung und Steuerung (nicht per Env konfigurierbar)
 - Audit: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
 
-## Related docs
+## Fortschritts-Polling
 
-- [Deployment overview](./overview.md)
-- [Security model](../administration/security-model.md)
+Während die Inventar-Aktualisierung läuft, pollt die UI einen leichtgewichtigen Status-Endpunkt. Polling-Intervall steigt: **3s → 5s → 10s**. Das Vorgangsbanner zeigt Schrittfortschritt.
+
+## Verwandte Dokumentation
+
+- [Bereitstellungsübersicht](./overview.md)
+- [Sicherheitsmodell](../administration/security-model.md)

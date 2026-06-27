@@ -1,16 +1,18 @@
 # Historial de operaciones
 
-Las tareas de larga duración (aplicación, actualización, instalación UFW, prueba SSH) se registran en **registros de operaciones** y se muestran en la interfaz.
+Las tareas de larga duración (aplicar, actualizar, instalar UFW, prueba SSH) se registran en **logs de operación** y se muestran en la interfaz.
 
-## Banner de operaciones
+## Banner de operación
 
-Mientras una operación está en curso, aparece un banner en la parte superior de la aplicación:
+Mientras una operación se ejecuta, aparece un banner en la parte superior de la app:
 
-- Tipo y estado de la operación (EN CURSO, ÉXITO, ERROR)
+- Tipo de operación y estado (RUNNING, SUCCESS, FAILED)
 - Lista de pasos expandible con estado por paso
-- Cierre automático tras éxito tras un breve retraso
+- Cierre automático en éxito tras un breve retraso
 
-El banner consulta actualizaciones mientras el trabajo está en progreso.
+El banner consulta actualizaciones mientras el trabajo está en curso.
+
+Si un banner queda atascado en **RUNNING** o **PENDING** tras desconectar el navegador, actualice la página. Las operaciones obsoletas se limpian automáticamente mediante un barrido en segundo plano (típicamente en 30–60 minutos).
 
 ## Página de operaciones
 
@@ -19,11 +21,11 @@ Barra lateral → **Historial de operaciones** (`/operations`)
 Dos pestañas:
 
 | Pestaña | Contenido |
-|-----|---------|
-| **Registros de operaciones** | Registro técnico de operaciones — aplicación, sincronización, prueba SSH, etc. |
-| **Eventos de auditoría** | Eventos relevantes para seguridad — inicio de sesión, cierre de sesión, exportación de configuración |
+|---------|-----------|
+| **Operaciones** | Log técnico de operaciones — aplicar, sync, prueba SSH, etc. |
+| **Auditoría** | Eventos relevantes para seguridad — login, logout, exportación de config |
 
-Ambas admiten desplazamiento infinito para entradas antiguas.
+Ambas admiten desplazamiento infinito para entradas más antiguas.
 
 ## Tipos de operación
 
@@ -38,9 +40,9 @@ Ejemplos:
 
 ## Borrar historial
 
-Los administradores pueden borrar el historial de operaciones antiguo desde la interfaz (los eventos de auditoría pueden conservarse según la política de retención). Borrar no afecta al estado del servidor ni a las reglas.
+Los administradores pueden borrar el historial antiguo de operaciones desde la interfaz (los eventos de auditoría pueden conservarse según la política de retención). Borrar no afecta al estado del servidor ni a las reglas.
 
 ## Documentación relacionada
 
-- [Registro de auditoría y exportación](../administration/audit-log-and-export.md)
+- [Log de auditoría y exportación](../administration/audit-log-and-export.md)
 - [Flujo de borrador y aplicación](../concepts/draft-apply-workflow.md)

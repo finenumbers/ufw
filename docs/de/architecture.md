@@ -29,43 +29,56 @@ flowchart LR
 
 1. Der Administrator öffnet `APP_URL` im Browser (HTTPS über NPM).
 2. Better Auth validiert das Session-Cookie.
-3. Server Actions und API-Routen orchestrieren SSH- und Datenbankarbeit.
-4. UFW-Befehle laufen auf Remote-Hosts erst nach expliziter Anwenden-Bestätigung.
+3. Server Actions und API-Routen orchestrieren SSH und Datenbankarbeit.
+4. UFW-Befehle auf Remote-Hosts laufen nur nach expliziter Apply-Bestätigung.
 
-## Laufzeitkonfiguration
+## Runtime-Konfiguration
 
-Die öffentliche URL wird zur **Laufzeit** gesetzt, nicht ins Docker-Image eingebacken:
+Die öffentliche URL wird zur **Laufzeit** gesetzt, nicht im Docker-Image:
 
 - `APP_URL` in `.env` → `BETTER_AUTH_URL` im Container
 - Ein GHCR-Image funktioniert für jede Domain — siehe [GHCR + Compose](./deployment/ghcr-compose.md)
 
 Implementierung: `getPublicAppUrl()` in `src/lib/app-url.ts`.
 
-## Nebenläufigkeitsmodell
+**Wichtig:** `APP_URL` ist die **öffentliche HTTPS-URL**, die der Browser nutzt (über NPM). NPM leitet auf `http://ufw-app:8088` im Docker-Netzwerk weiter — internes HTTP ist **beabsichtigt**. Siehe [Nginx Proxy Manager](./deployment/nginx-proxy-manager.md).
 
-- **SSH-Warteschlange pro Server** (`p-queue`, Nebenläufigkeit 1) — Vorgänge auf demselben Host werden serialisiert
-- **Eine App-Replik** in der Produktion — Rate-Limits sind im Speicher
-- Skalieren Sie nicht auf mehrere App-Replikas ohne gemeinsamen Rate-Limit-Speicher (z. B. Redis)
+## Server-Detail-Lademodell
+
+Das Öffnen eines Server-Dashboards ist **cache-first** — kein SSH beim ersten Seitenaufruf:
+
+1. **SSR** liest den neuesten UFW-**Snapshot** aus Postgres (`detectionFromSnapshot`) und rendert Status und Regeln aus der Datenbank.
+2. Regeln, Port-Scan-Ergebnisse und Docker-Inventar werden **parallel** aus Postgres geladen (`Promise.all`) — weiterhin kein SSH.
+3. **Refresh** (Dashboard oder Regeln-Toolbar) löst ein Live-SSH-Lesen aus und aktualisiert den Snapshot.
+4. **Initial Sync** läuft automatisch im Hintergrund, wenn UFW installiert und aktiv ist, aber **noch kein Snapshot existiert** (`needsSync`).
+
+Server-Seiten bleiben schnell; SSH-Arbeit erfolgt nur bei explizitem Refresh oder wenn noch kein Cache vorhanden ist.
+
+## Concurrency-Modell
+
+- **Pro-Server-SSH-Warteschlange** (`p-queue`, Concurrency 1) — Operationen auf demselben Host werden serialisiert
+- **Einzelne App-Replika** in Produktion — Rate Limits im Speicher
+- Nicht auf mehrere Replikas skalieren ohne gemeinsamen Rate-Limit-Speicher (z. B. Redis)
 
 ## Datenspeicherung
 
-| Daten | Speicherort | Verschlüsselt? |
-|-------|-------------|----------------|
-| SSH-Passwörter / private Schlüssel | Postgres (`identity`-Tabelle) | Ja — AES-256-GCM mit `APP_ENCRYPTION_KEY` |
+| Daten | Ort | Verschlüsselt? |
+|-------|-----|----------------|
+| SSH-Passwörter / private Keys | Postgres (`identity`-Tabelle) | Ja — AES-256-GCM mit `APP_ENCRYPTION_KEY` |
 | UFW-Regeln, Entwürfe, Snapshots | Postgres | Nur Metadaten; Regelinhalt ist nicht geheim |
-| Sitzungen | Postgres (Better Auth) | Session-Tokens; geschützt durch `BETTER_AUTH_SECRET` |
+| Sessions | Postgres (Better Auth) | Session-Tokens; geschützt durch `BETTER_AUTH_SECRET` |
 | Audit-Ereignisse | Postgres | Wer hat wann was getan |
-| `.env`-Geheimnisse | Nur Host-Dateisystem | Dürfen niemals in Git liegen |
+| `.env`-Geheimnisse | Nur Host-Dateisystem | Niemals in Git |
 
 ## Sicherheitsgrenzen
 
-- Postgres wird in der Produktion **nicht** auf den Host veröffentlicht (`docker-compose.prod.yml`)
-- App-Port ist im Docker-Netzwerk erreichbar (NPM + intern), in Prod nicht auf `0.0.0.0`
-- SSH-Zielvalidierung blockiert private/Metadaten-IPs standardmäßig; optional `SSH_ALLOWED_CIDRS`
+- Postgres wird in Produktion **nicht** auf den Host veröffentlicht (`docker-compose.prod.yml`)
+- App-Port ist im Docker-Netzwerk erreichbar (NPM + intern), nicht auf `0.0.0.0` in Prod
+- SSH-Zielvalidierung blockiert private/Metadata-IPs standardmäßig; optional `SSH_ALLOWED_CIDRS`
 - Produktionsantworten enthalten CSP, HSTS und Security-Header (`next.config.ts`)
 
 ## Verwandte Dokumentation
 
 - [Sicherheitsmodell](./administration/security-model.md)
-- [Entwurf-und-Anwenden-Workflow](./concepts/draft-apply-workflow.md)
+- [Entwurf-und-Apply-Workflow](./concepts/draft-apply-workflow.md)
 - [Umgebungsvariablen](./administration/environment-variables.md)

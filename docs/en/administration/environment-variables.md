@@ -6,9 +6,9 @@ Runtime configuration is supplied via `.env` (Compose) or Portainer environment 
 
 | Variable | Description | Generate |
 |----------|-------------|----------|
-| `APP_URL` | Public HTTPS URL of the admin UI | Your NPM domain, e.g. `https://ufw.example.com` |
+| `APP_URL` | Public URL of the admin UI (HTTPS for real domains) | Your NPM domain, e.g. `https://ufw.example.com` |
 | `POSTGRES_PASSWORD` | Database password | `openssl rand -base64 24` |
-| `BETTER_AUTH_SECRET` | Session signing secret | `openssl rand -base64 32` |
+| `BETTER_AUTH_SECRET` | Session signing secret (**min. 32 characters** in production) | `openssl rand -base64 32` |
 | `APP_ENCRYPTION_KEY` | AES key for SSH credentials (32 decoded bytes) | `openssl rand -base64 32` |
 | `NPM_NETWORK` | Docker network name shared with NPM | `docker network ls` |
 
@@ -19,7 +19,7 @@ Compose and Portainer stack default to `ghcr.io/finenumbers/ufw-remote-manager:l
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `GHCR_OWNER` | GitHub owner (lowercase) | `finenumbers` |
-| `GHCR_IMAGE_TAG` | Image tag (`latest` or pin e.g. `v0.2.1`) | `latest` |
+| `GHCR_IMAGE_TAG` | Image tag (`latest` or pin e.g. `v0.6.1`) | `latest` |
 
 Legacy `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` are no longer required — image URLs are built from owner + tag in compose files.
 
@@ -46,6 +46,19 @@ Repeat server actions use a **30 second** cooldown per server (not configurable 
 Since **v0.5.1**, legacy variables such as `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS`, and `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` are **ignored** if still present in `.env`.
 
 In-memory rate-limit buckets are evicted when empty (single-replica deployment only — see [Architecture](../architecture.md)).
+
+## APP_URL vs internal HTTP
+
+Two different URLs serve different roles:
+
+| Setting | Example | Purpose |
+|---------|---------|---------|
+| **`APP_URL`** | `https://ufw.example.com` | Public URL for Better Auth, cookies, and browser redirects |
+| **NPM Proxy Host scheme** | `http` → `ufw-app:8088` | Internal Docker traffic; NPM terminates TLS |
+
+Do **not** set `APP_URL` to the internal container URL. Better Auth requires the public HTTPS domain users type in the browser.
+
+In production, `APP_URL` must use **HTTPS** for real hostnames. The only exceptions are `http://localhost` and `http://127.0.0.1` (local smoke tests and CI).
 
 ## Production behind NPM
 

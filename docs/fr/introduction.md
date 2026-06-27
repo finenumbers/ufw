@@ -16,6 +16,7 @@ Dépôt : [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw)
 - Détecter, installer et activer UFW à distance
 - Charger les règles UFW en direct, les éditer dans un tableau (avec groupes, noms, recherche, réordonnancement)
 - Workflow **brouillon → aperçu → confirmation → application** avec visualisation des différences
+- Chargement rapide du tableau de bord serveur depuis les snapshots UFW en cache (SSH en direct uniquement à l'actualisation)
 - Importer des règles depuis CSV, XLSX ou JSON ; exporter/importer la configuration complète des serveurs
 - Chiffrer les identifiants SSH au repos ; épingler les clés hôte SSH ; auditer les actions sensibles
 - Interface multilingue (anglais, allemand, français, espagnol, italien, portugais, russe)

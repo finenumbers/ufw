@@ -8,24 +8,26 @@ Créez au moins une [identité SSH](../concepts/ssh-identities.md) avant d'ajout
 
 ## Ajouter un serveur
 
-1. Barre latérale → **Serveurs** ou cliquer sur **Ajouter un serveur**
-2. Remplir le nom, l'hôte, le port et sélectionner une identité
-3. Cliquer sur **Créer le serveur** — le test SSH s'exécute automatiquement
+1. Barre latérale → **Serveurs** ou cliquez sur **Ajouter un serveur**
+2. Renseignez le nom, l'hôte, le port et sélectionnez une identité
+3. Cliquez sur **Créer le serveur** — le test SSH s'exécute automatiquement
 4. En cas de succès, vous arrivez sur le tableau de bord du serveur
 
-Si le test SSH échoue, vérifiez l'accessibilité de l'hôte, les identifiants, le pare-feu autorisant SSH depuis l'hôte Docker et la [validation de l'hôte](../concepts/servers-and-ssh.md).
+Si le test SSH échoue, vérifiez l'accessibilité de l'hôte, les identifiants, le pare-feu autorisant SSH depuis l'hôte Docker et la [validation d'hôte](../concepts/servers-and-ssh.md).
 
 ## Tableau de bord du serveur
 
-Le tableau de bord affiche le statut UFW :
+Le tableau de bord charge l'**état UFW en cache** depuis le dernier snapshot Postgres — pas de SSH au premier affichage. La page reste ainsi rapide.
 
 | Statut | Actions disponibles |
 |--------|---------------------|
 | UFW non installé | **Installer UFW** |
 | Installé mais inactif | **Activer UFW** |
-| Installé et actif | **Règles**, actualisation, test SSH |
+| Installé et actif | **Règles**, actualiser, test SSH |
 
-Utilisez **Actualiser le statut** pour récupérer le dernier état UFW et synchroniser le tableau des règles.
+Utilisez **Actualiser** pour récupérer le dernier état UFW via SSH et synchroniser le tableau des règles.
+
+Si UFW est actif mais que l'application **n'a pas encore de snapshot** (première visite après activation), une synchronisation automatique en arrière-plan s'exécute une fois pour remplir le cache.
 
 ## Modifier un serveur
 
@@ -38,9 +40,9 @@ Utilisez **Actualiser le statut** pour récupérer le dernier état UFW et synch
 **Zone dangereuse** sur la page de modification ou les paramètres du serveur :
 
 - Supprime toutes les règles locales, brouillons et snapshots pour ce serveur
-- Ne **modifie pas** UFW distant
+- **Ne modifie pas** l'UFW distant
 
-Confirmez uniquement si vous souhaitez retirer les données de gestion, pas effacer les règles de pare-feu distantes.
+Confirmez uniquement si vous souhaitez supprimer les données de gestion, pas pour effacer les règles de pare-feu distantes.
 
 ## Outils de la liste des serveurs
 
@@ -51,4 +53,4 @@ Depuis la page principale des serveurs, vous pouvez :
 ## Documentation associée
 
 - [Serveurs et SSH](../concepts/servers-and-ssh.md)
-- [Éditer et appliquer les règles](./edit-and-apply-rules.md)
+- [Modifier et appliquer les règles](./edit-and-apply-rules.md)

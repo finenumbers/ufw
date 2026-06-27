@@ -1,6 +1,6 @@
 # Tests de fumée
 
-À exécuter après déploiement, mise à niveau ou reprise après sinistre.
+Exécuter après déploiement, mise à niveau ou reprise après sinistre.
 
 ## Script automatisé
 
@@ -18,10 +18,10 @@ Options :
 
 Le script vérifie :
 
-- Postgres sain
+- Postgres healthy
 - `ufw-migrate` exited 0
 - `ufw-app` healthy
-- `/api/health` interne retourne `{"status":"ok","db":"ok"}`
+- `/api/health` interne retourne `{"status":"ok","db":"ok","version":"…"}` (`revision` uniquement hors production)
 
 ## Vérification de santé manuelle
 
@@ -30,7 +30,7 @@ docker compose --env-file .env ps
 docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r.json()).then(console.log)"
 ```
 
-## Liste de contrôle navigateur
+## Checklist navigateur
 
 1. `APP_URL/login` — s'authentifier
 2. **Identités SSH** — identité existante ou en créer une

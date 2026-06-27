@@ -1,52 +1,56 @@
 # Мониторинг Docker-контейнеров
 
-UFW Remote Manager может получать inventory и управлять **Docker-контейнерами** на каждом зарегистрированном сервере через **SSH** (тот же transport, что и для UFW).
+UFW Remote Manager может инвентаризировать и управлять **Docker-контейнерами** на каждом зарегистрированном сервере по **SSH** (тот же транспорт, что и для операций UFW).
 
-Результаты отображаются в таблице **под блоком сканирования портов** на странице сервера.
+Результаты отображаются в таблице **под панелью сканирования портов** на странице сервера.
 
 ## Включение
 
-В окружении приложения (Compose / Portainer):
+Установить в окружении приложения (Compose / Portainer):
 
 ```env
 DOCKER_MONITOR_ENABLED=true
 ```
 
-Опциональные параметры:
+Дополнительная настройка:
 
 | Переменная | По умолчанию | Назначение |
 |------------|--------------|------------|
-| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | История snapshot inventory на сервер |
-| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | Таймаут SSH-команд Docker CLI |
+| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Сохранённых snapshot инвентаря на сервер |
+| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | Таймаут SSH-команд для Docker CLI |
 
-Refresh inventory и control (start/stop/restart) ограничены **раз в 30 секунд** на сервер (фиксировано в коде с v0.5.1). Устаревшие `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` и `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` в `.env` **игнорируются**.
+Обновление инвентаря и управление контейнерами (start/stop/restart) разделяют **30-секундный** cooldown на сервер (фиксировано в коде приложения с v0.5.1). Legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` и `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` в `.env` **игнорируются**.
 
-## Требования на managed-серверах
+## Требования на управляемых серверах
 
-- Установлен **Docker CLI** (`docker` в PATH)
-- Docker daemon доступен пользователю SSH
-- Пользователь в группе **`docker`** или **passwordless sudo** для `docker`
+- **Docker CLI** установлен (`docker` в PATH)
+- Docker daemon доступен для SSH-пользователя
+- Членство в группе **`docker`** или **passwordless sudo** для `docker`
 
-Приложение сначала выполняет `docker …`, при permission denied — `sudo docker …`.
+Приложение сначала пробует `docker …`, затем `sudo docker …` при отказе в доступе.
 
-## Возможности (MVP)
+## Функции (MVP)
 
-- Refresh inventory: `docker ps -a`, stats для running-контейнеров
-- Таблица: имя, образ, статус, health, порты, CPU/память, Compose labels
-- Группировка по Compose project
-- Drawer с деталями (`docker inspect`, маскирование секретов в env)
+- Обновить инвентарь: `docker ps -a`, статистика для запущенных контейнеров
+- Таблица: имя, образ, статус, health, порты, CPU/память, метки Compose
+- Группировка по проекту Compose
+- Drawer деталей контейнера (`docker inspect`, замаскированные env vars)
 - Управление: **start**, **stop**, **restart** (подтверждение для stop/restart)
-- Operation banner + audit events
+- Баннер прогресса операции + события аудита
 
 ## Безопасность
 
 - Feature flag (по умолчанию выключен)
-- Валидация container ID/name — без произвольных shell-команд
+- Валидация ID/имени контейнера — произвольная shell из UI невозможна
 - Только фиксированные control actions
-- Фиксированный rate limit **30 секунд** на refresh и control (не через env)
-- Audit: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
+- Фиксированные rate limits 30s на обновление и управление (не настраиваются через env)
+- Аудит: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
 
-## См. также
+## Polling прогресса
 
-- [Обзор деплоя](./overview.md)
+Пока обновление инвентаря выполняется, интерфейс опрашивает лёгкий status endpoint. Интервал polling увеличивается: **3s → 5s → 10s**. Баннер операции показывает прогресс по шагам.
+
+## Связанная документация
+
+- [Обзор развёртывания](./overview.md)
 - [Модель безопасности](../administration/security-model.md)

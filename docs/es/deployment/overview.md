@@ -6,43 +6,45 @@ Elija cómo ejecutar UFW Remote Manager en producción. Todas las rutas asumen *
 
 ## Comparación
 
-| Método | Mejor para | ¿Compilar imágenes? |
-|--------|----------|---------------|
-| [GHCR + Compose](./ghcr-compose.md) | La mayoría de usuarios autoalojados | No — descargar desde GitHub Packages |
-| [Portainer](./portainer.md) | Gestión de stack con interfaz gráfica | No — descargar imágenes GHCR |
-| Compose local con compilación | Desarrollo air-gapped o fork | Sí — `docker compose build` |
+| Método | Ideal para | ¿Construir imágenes? |
+|--------|------------|------------------------|
+| [GHCR + Compose](./ghcr-compose.md) | La mayoría de self-hosters | No — pull desde GitHub Packages |
+| [Portainer](./portainer.md) | Gestión de stack con GUI | No — pull de imágenes GHCR |
+| Build local Compose | Desarrollo air-gapped o fork | Sí — `docker compose build` |
 
-Nginx Proxy Manager es **siempre externo** — no está incluido en este repositorio.
+Nginx Proxy Manager es **siempre externo** — no incluido en este repositorio.
 
 ## Servicios del stack
 
 | Contenedor | Propósito |
-|-----------|---------|
+|------------|-----------|
 | `ufw-postgres` | Base de datos |
-| `ufw-migrate` | Ejecuta migraciones de BD una vez por despliegue |
-| `ufw-app` | Aplicación web |
+| `ufw-migrate` | Ejecuta migraciones BD una vez por despliegue |
+| `ufw-app` | Aplicación web (incluye Naabu/Nmap cuando el escaneo de puertos está activado) |
 
 ## Ruta de producción recomendada
 
-1. Descargue la etiqueta de imagen `v0.1.0` (o la última versión) desde GHCR
-2. Genere `.env` en el servidor: `./scripts/generate-production-env.sh .env`
-3. Despliegue con Compose + `docker-compose.prod.yml` + `docker-compose.ghcr.yml`
-4. Configure NPM Proxy Host → `ufw-app:8088`
-5. Abra `APP_URL/setup`, cree el administrador
-6. Ejecute `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
+1. Pull del tag de imagen **`latest`** (o fijar p. ej. `v0.6.1`) desde GHCR
+2. Generar `.env` en el servidor: `./scripts/generate-production-env.sh .env`
+3. Desplegar con Compose + `docker-compose.prod.yml` + `docker-compose.ghcr.yml`
+4. Configurar NPM Proxy Host → `ufw-app:8088`
+5. Abrir `APP_URL/setup`, crear admin
+6. Ejecutar `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
+7. Opcional: activar [escaneo de puertos externo](./port-scan.md) con `PORT_SCAN_ENABLED=true`
+8. Opcional: activar [monitorización de contenedores Docker](./docker-monitor.md) con `DOCKER_MONITOR_ENABLED=true`
 
 ## Imágenes universales
 
-Configure `APP_URL` en `.env` al desplegar. La misma imagen GHCR sirve para cualquier dominio — sin compilación de imagen por cliente.
+Defina `APP_URL` en `.env` al desplegar. La misma imagen GHCR funciona para cualquier dominio — sin build de imagen por cliente.
 
-## Disciplina con secretos
+## Disciplina de secretos
 
-- Genere secretos solo en el servidor
+- Generar secretos solo en el servidor
 - Modo de archivo `600` para `.env`
-- Nunca almacene secretos en el repositorio git del stack de Portainer ni en tickets públicos
+- Nunca almacenar secretos en el repo git del stack Portainer o tickets públicos
 
 ## Documentación relacionada
 
 - [Nginx Proxy Manager](./nginx-proxy-manager.md)
 - [Variables de entorno](../administration/environment-variables.md)
-- [Pruebas de humo](../operations/smoke-tests.md)
+- [Pruebas smoke](../operations/smoke-tests.md)

@@ -12,7 +12,7 @@ Altere regras na tabela: adicionar, editar, excluir, reordenar, importar. As alt
 
 ### 2. Visualizar aplicação
 
-Clique em **Salvar regras**. A aplicação:
+Clique em **Visualizar aplicação**. A aplicação:
 
 1. Carrega o estado UFW atual do servidor (snapshot SSH)
 2. Calcula um **plano** — comandos que alinhariam o UFW ao seu rascunho
@@ -41,18 +41,29 @@ sequenceDiagram
   participant DB as Postgres
   participant Remote as Linux_UFW
 
-  User->>App: Editar regras de rascunho
-  User->>App: Salvar regras
-  App->>Remote: Leitura snapshot SSH
-  App->>App: Montar diff do plano
-  User->>App: Confirmar aplicação
-  App->>Remote: Comandos ufw via SSH
-  App->>DB: Atualizar snapshot e auditoria
+  User->>App: Edit draft rules
+  User->>App: Preview apply
+  App->>Remote: SSH read snapshot
+  App->>App: Build plan diff
+  User->>App: Confirm apply
+  App->>Remote: SSH read snapshot
+  alt Remote changed since preview
+    App-->>User: Reject — re-preview required
+  else Plan matches
+    App->>Remote: SSH ufw commands
+    App->>DB: Update snapshot and audit
+  end
 ```
 
 ## Aplicação parcial e deriva
 
-Se a aplicação falhar no meio do caminho, o UFW remoto pode diferir tanto do rascunho quanto do snapshot. A interface avisa e oferece **Ressincronização forçada do servidor** para realinhar o estado local às regras remotas reais antes de editar novamente.
+O UFW remoto pode mudar entre visualização e confirmação, ou a aplicação pode falhar no meio do caminho. A aplicação trata três casos distintos:
+
+| Cenário | Status da sessão | O que fazer |
+|----------|----------------|------------|
+| UFW remoto mudou **entre visualização e confirmação** | Aplicação rejeitada (`needsRePreview`) | Execute **Visualizar aplicação** novamente — não force ressincronização |
+| Comandos UFW **interrompidos** no servidor | `PARTIAL` (`needsResync`) | **Ressincronização forçada do servidor**, depois revise antes de editar |
+| Comandos UFW bem-sucedidos, mas **sync pós-aplicação falhou** | `PARTIAL` (`needsResync`) | **Ressincronização forçada do servidor** — UFW remoto já alterado |
 
 **Nunca ignore avisos de aplicação parcial** — continuar às cegas pode causar regras duplicadas ou erros de ordem.
 

@@ -46,13 +46,24 @@ sequenceDiagram
   App->>Remote: SSH read snapshot
   App->>App: Build plan diff
   User->>App: Confirm apply
-  App->>Remote: SSH ufw commands
-  App->>DB: Update snapshot and audit
+  App->>Remote: SSH read snapshot
+  alt Remote changed since preview
+    App-->>User: Reject — re-preview required
+  else Plan matches
+    App->>Remote: SSH ufw commands
+    App->>DB: Update snapshot and audit
+  end
 ```
 
 ## Partial apply and drift
 
-If apply fails partway through, remote UFW may differ from both draft and snapshot. The UI warns you and offers **Force resync from server** to realign local state to actual remote rules before editing again.
+Remote UFW can change between preview and confirm, or apply can fail partway through. The app handles three distinct cases:
+
+| Scenario | Session status | What to do |
+|----------|----------------|------------|
+| Remote UFW changed **between preview and confirm** | Apply rejected (`needsRePreview`) | Run **Apply preview** again — do not force resync |
+| UFW commands **interrupted** on the server | `PARTIAL` (`needsResync`) | **Force resync from server**, then review before editing |
+| UFW commands succeeded but **post-apply sync failed** | `PARTIAL` (`needsResync`) | **Force resync from server** — remote UFW already changed |
 
 **Never ignore partial apply warnings** — continuing blindly can cause duplicate rules or ordering errors.
 

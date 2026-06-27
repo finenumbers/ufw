@@ -8,15 +8,15 @@ Funktionen:
 
 - Suche und Spaltenfilter
 - Gruppenabschnitte mit Ein-/Ausklappen
-- Drag-and-Drop-Neuordnung (Reihenfolge ist für UFW relevant)
-- Zeilenfarben nach [Sync-Zustand](../concepts/ufw-rules-and-states.md)
+- Drag-and-Drop-Neuordnung (Reihenfolge ist für UFW wichtig)
+- Zeilenfarben nach [Synchronisationsstatus](../concepts/ufw-rules-and-states.md)
 - Zeile hinzufügen, inline bearbeiten, Zeile löschen
 
 ## Vom Server aktualisieren
 
-**Status aktualisieren** klicken (oder Dashboard-Aktualisierung verwenden), um:
+Klicken Sie **Aktualisieren** (oder Dashboard-Aktualisierung), um:
 
-1. UFW-Zustand zu erkennen
+1. UFW-Status zu erkennen
 2. Snapshot vom Server zu laden
 3. Entwurfs-Ursprungszustände zu synchronisieren
 
@@ -24,7 +24,7 @@ Verwenden Sie dies nach manuellen Änderungen auf der Server-CLI oder nach teilw
 
 ## Erzwungene Synchronisation
 
-Warnt die Oberfläche vor Drift oder teilweisem Anwenden, verwenden Sie **Erzwungene Synchronisation vom Server**, um die lokale Entwurfsausrichtung durch den tatsächlichen Remote-Snapshot zu ersetzen, bevor Sie weiter bearbeiten.
+Warnt die UI vor Drift oder teilweisem Anwenden, nutzen Sie **Erzwungene Synchronisation vom Server**, um die lokale Entwurfsausrichtung durch den tatsächlichen Remote-Snapshot zu ersetzen, bevor Sie weiter bearbeiten.
 
 ## Regeln importieren
 
@@ -33,17 +33,17 @@ Symbolleiste → CSV, XLSX oder JSON importieren. Importierte Zeilen in der Tabe
 ## Anwenden-Workflow
 
 1. Entwurfsänderungen vornehmen
-2. **Regeln speichern** — geplanten Befehle und Diff-Zusammenfassung prüfen
-3. **Bestätigen** — Ausführung über SSH
-4. Vorgangsbanner auf Fortschritt beobachten
+2. **Anwenden-Vorschau** — geplante Befehle und Diff-Zusammenfassung prüfen
+3. **Bestätigen** — Ausführung per SSH (abgelehnt, wenn sich Remote-UFW seit der Vorschau geändert hat — Vorschau erneut ausführen)
+4. Fortschritt im Vorgangsbanner beobachten
 
-Details siehe [Entwurf-und-Anwenden-Workflow](../concepts/draft-apply-workflow.md).
+Details siehe [Entwurf- und Anwenden-Workflow](../concepts/draft-apply-workflow.md).
 
 ## Sicherheitstipps
 
 - Behalten Sie mindestens eine Regel, die SSH von Ihrem Admin-Netzwerk erlaubt, bevor Sie Deny-Regeln anwenden
-- Vorschau in der Produktion während eines Wartungsfensters ausführen
-- **Vorgangsverlauf** nach Anwenden auf SUCCESS- oder FAILED-Status prüfen
+- Führen Sie die Vorschau in der Produktion während eines Wartungsfensters aus
+- Prüfen Sie nach dem Anwenden den **Vorgangsverlauf** auf SUCCESS- oder FAILED-Status
 
 ## Verwandte Dokumentation
 

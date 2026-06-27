@@ -2,7 +2,7 @@
 
 Nginx Proxy Manager (NPM) doit **déjà être installé** sur votre hôte Docker. Ce projet ne déploie pas NPM.
 
-## Flux du trafic
+## Flux de trafic
 
 ```
 Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, réseau Docker)
@@ -10,7 +10,7 @@ Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, réseau Docker)
 
 NPM termine HTTPS. L'application définit HSTS en production mais s'appuie sur NPM pour les certificats.
 
-## Liste de contrôle Proxy Host
+## Checklist Proxy Host
 
 Créez ou mettez à jour un **Proxy Host** dans l'interface NPM :
 
@@ -51,7 +51,28 @@ docker network ls | grep -i proxy
 APP_URL=https://ufw.example.com
 ```
 
-Un écart provoque des boucles de redirection auth ou des cookies cassés.
+Un écart provoque des boucles de redirection d'authentification ou des cookies invalides.
+
+## APP_URL vs schéma Proxy Host
+
+| Couche | Schéma | Exemple |
+|--------|--------|---------|
+| Navigateur / `APP_URL` | **HTTPS** | `https://ufw.example.com` |
+| NPM → conteneur | **HTTP** | `http://ufw-app:8088` |
+
+NPM termine TLS. Le conteneur de l'application écoute en HTTP simple dans le réseau Docker — c'est **volontaire**, pas une mauvaise configuration.
+
+Définissez `APP_URL` uniquement sur l'URL HTTPS publique. Ne pointez jamais `APP_URL` vers `http://ufw-app:8088`.
+
+## TRUST_PROXY
+
+En exécution derrière NPM, définir dans `.env` ou l'environnement de la stack Portainer :
+
+```bash
+TRUST_PROXY=1
+```
+
+Cela fait utiliser à `/setup` les limites de débit avec la vraie IP client depuis `X-Forwarded-For`. Voir [Variables d'environnement](../administration/environment-variables.md).
 
 ## Build local (sans GHCR)
 

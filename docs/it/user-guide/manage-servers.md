@@ -4,49 +4,51 @@ Questa guida illustra il ciclo di vita del server: aggiunta, configurazione UFW,
 
 ## Prerequisiti
 
-Crea almeno un'[identità SSH](../concepts/ssh-identities.md) prima di aggiungere un server.
+Creare almeno un'[identità SSH](../concepts/ssh-identities.md) prima di aggiungere un server.
 
 ## Aggiungere un server
 
-1. Barra laterale → **Server** o clicca **Aggiungi server**
-2. Compila nome, host, porta e seleziona un'identità
-3. Clicca **Crea server** — il test SSH viene eseguito automaticamente
-4. In caso di successo, arrivi alla dashboard del server
+1. Barra laterale → **Server** o fare clic su **Aggiungi server**
+2. Compilare nome, host, porta e selezionare un'identità
+3. Fare clic su **Crea server** — il test SSH viene eseguito automaticamente
+4. In caso di successo, si arriva alla dashboard del server
 
-Se il test SSH fallisce, controlla raggiungibilità host, credenziali, firewall che consente SSH dall'host Docker e [validazione host](../concepts/servers-and-ssh.md).
+Se il test SSH fallisce, verificare raggiungibilità dell'host, credenziali, firewall che consenta SSH dall'host Docker e [validazione host](../concepts/servers-and-ssh.md).
 
 ## Dashboard del server
 
-La dashboard mostra lo stato UFW:
+La dashboard carica lo **stato UFW in cache** dall'ultimo snapshot Postgres — nessun SSH al primo rendering. La pagina resta veloce.
 
 | Stato | Azioni disponibili |
-|--------|-------------------|
+|-------|-------------------|
 | UFW non installato | **Installa UFW** |
-| Installato ma inattivo | Attivazione UFW |
-| Installato e attivo | **Regole**, aggiornamento stato, test SSH |
+| Installato ma inattivo | **Abilita UFW** |
+| Installato e attivo | **Regole**, aggiorna, test SSH |
 
-Usa **Aggiorna stato** per recuperare l'ultimo stato UFW e sincronizzare la tabella regole.
+Usare **Aggiorna** per recuperare l'ultimo stato UFW via SSH e sincronizzare la tabella delle regole.
+
+Se UFW è attivo ma l'app **non ha ancora uno snapshot** (prima visita dopo l'abilitazione), viene eseguita una sincronizzazione automatica in background una volta per popolare la cache.
 
 ## Modificare un server
 
-1. Apri server → **Modifica**
-2. Cambia nome, host, porta o identità
-3. Test SSH obbligatorio prima del salvataggio se i parametri di connessione sono cambiati
+1. Aprire il server → **Modifica**
+2. Cambiare nome, host, porta o identità
+3. Test SSH richiesto prima del salvataggio se i parametri di connessione sono cambiati
 
 ## Eliminare un server
 
-**Zona pericolosa** nella pagina modifica o impostazioni server:
+**Zona pericolosa** nella pagina di modifica o nelle impostazioni del server:
 
-- Elimina tutte le regole locali, bozze, snapshot per questo server
-- **Non** modifica UFW remoto
+- Elimina tutte le regole locali, bozze e snapshot per questo server
+- **Non modifica** l'UFW remoto
 
-Conferma solo se intendi rimuovere i dati di gestione, non per cancellare le regole firewall remote.
+Confermare solo se si intende rimuovere i dati di gestione, non per cancellare le regole firewall remote.
 
 ## Strumenti elenco server
 
-Dalla pagina principale server puoi:
+Dalla pagina principale dei server è possibile:
 
-- **Salva configurazione** / **Carica configurazione** — export/import JSON completo (vedi [Importazione ed esportazione configurazione](../concepts/import-export-config.md))
+- **Salva configurazione** / **Carica configurazione** — export/import JSON completo (vedere [Import ed export configurazione](../concepts/import-export-config.md))
 
 ## Documentazione correlata
 

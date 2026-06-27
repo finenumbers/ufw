@@ -20,16 +20,18 @@ Nginx Proxy Manager est **toujours externe** — non inclus dans ce dépôt.
 |-----------|------|
 | `ufw-postgres` | Base de données |
 | `ufw-migrate` | Exécute les migrations BD une fois par déploiement |
-| `ufw-app` | Application web |
+| `ufw-app` | Application web (inclut Naabu/Nmap lorsque le scan de ports est activé) |
 
 ## Parcours production recommandé
 
-1. Tirer le tag d'image `v0.1.0` (ou dernière release) depuis GHCR
+1. Tirer le tag d'image **`latest`** (ou épingler p.ex. `v0.6.1`) depuis GHCR
 2. Générer `.env` sur le serveur : `./scripts/generate-production-env.sh .env`
 3. Déployer avec Compose + `docker-compose.prod.yml` + `docker-compose.ghcr.yml`
 4. Configurer NPM Proxy Host → `ufw-app:8088`
 5. Ouvrir `APP_URL/setup`, créer l'admin
 6. Exécuter `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
+7. Optionnel : activer le [scan de ports externe](./port-scan.md) avec `PORT_SCAN_ENABLED=true`
+8. Optionnel : activer la [surveillance des conteneurs Docker](./docker-monitor.md) avec `DOCKER_MONITOR_ENABLED=true`
 
 ## Images universelles
 

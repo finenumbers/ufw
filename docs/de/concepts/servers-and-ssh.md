@@ -22,6 +22,15 @@ Bevor ein Server gespeichert wird, wird der Host validiert:
 
 Dies verhindert, dass die Anwendung als Proxy zum Scannen interner Netzwerke missbraucht wird.
 
+## DNS-Auflösungsprüfung
+
+Die Validierung erfolgt in zwei Stufen:
+
+1. **Beim Speichern** — der Hostname-String wird geprüft (private Literale, Metadaten-Hosts, optionale CIDR-Allowlist).
+2. **Vor der Verbindung** — der Hostname wird in eine IP aufgelöst, und die **aufgelöste Adresse** wird mit denselben Regeln geprüft.
+
+Dies schließt DNS-Rebinding-Lücken, bei denen ein öffentlicher Hostname später in eine private oder Metadaten-IP aufgelöst wird.
+
 ## SSH-Test vor dem Speichern
 
 Das Anlegen oder Aktualisieren eines Servers (Host-, Port- oder Identitätsänderung) erfordert einen erfolgreichen **SSH-Verbindungstest**. Die Oberfläche blockiert das Speichern, bis der Test bestanden ist.
@@ -32,8 +41,8 @@ Bei der ersten erfolgreichen Verbindung wird der SSH-Host-Key-Fingerabdruck des 
 
 | Zustand | Bedeutung |
 |---------|-----------|
-| **Verifiziert** | Key nach erfolgreichem SSH-Test oder normalem Betrieb gespeichert |
-| **Nicht verifiziert** | Key aus Konfigurationsdatei importiert — SSH-Test zur Verifizierung ausführen |
+| **Verified** | Key nach erfolgreichem SSH-Test oder normalem Betrieb gespeichert |
+| **Unverified** | Key aus Konfigurationsdatei importiert — SSH-Test zur Verifizierung ausführen |
 
 Ändert sich der Remote-Host-Key (Neuinstallation, MITM), schlägt die nächste Verbindung fehl, bis Sie die Ursache untersucht haben.
 

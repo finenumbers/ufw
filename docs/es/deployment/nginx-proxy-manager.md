@@ -8,9 +8,9 @@ Nginx Proxy Manager (NPM) debe estar **ya instalado** en su host Docker. Este pr
 Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, red Docker)
 ```
 
-NPM termina HTTPS. La aplicación establece HSTS en producción pero depende de NPM para los certificados.
+NPM termina HTTPS. La app establece HSTS en producción pero depende de NPM para los certificados.
 
-## Lista de comprobación de Proxy Host
+## Checklist Proxy Host
 
 Cree o actualice un **Proxy Host** en la interfaz de NPM:
 
@@ -27,17 +27,17 @@ Cree o actualice un **Proxy Host** en la interfaz de NPM:
 
 ## Red Docker
 
-El contenedor de la aplicación debe unirse a la **misma red Docker** que NPM.
+El contenedor de la app debe unirse a la **misma red Docker** que NPM.
 
-Configure en `.env`:
+Definir en `.env`:
 
 ```bash
 NPM_NETWORK=nginxproxymanager_default
 ```
 
-(`docker-compose.prod.yml` adjunta `ufw-app` a la red externa `npm_proxy` → `$NPM_NETWORK`.)
+(`docker-compose.prod.yml` conecta `ufw-app` a la red externa `npm_proxy` → `$NPM_NETWORK`.)
 
-Encuentre el nombre de su red:
+Encontrar el nombre de su red:
 
 ```bash
 docker network ls | grep -i proxy
@@ -51,9 +51,30 @@ docker network ls | grep -i proxy
 APP_URL=https://ufw.example.com
 ```
 
-La discrepancia provoca bucles de redirección de autenticación o cookies rotas.
+La discrepancia provoca bucles de redirección de auth o cookies rotas.
 
-## Compilación local (sin GHCR)
+## APP_URL vs esquema Proxy Host
+
+| Capa | Esquema | Ejemplo |
+|------|---------|---------|
+| Navegador / `APP_URL` | **HTTPS** | `https://ufw.example.com` |
+| NPM → contenedor | **HTTP** | `http://ufw-app:8088` |
+
+NPM termina TLS. El contenedor de la app escucha HTTP sin cifrar dentro de la red Docker — es **por diseño**, no una mala configuración.
+
+Defina `APP_URL` solo a la URL HTTPS pública. Nunca apunte `APP_URL` a `http://ufw-app:8088`.
+
+## TRUST_PROXY
+
+Al ejecutar detrás de NPM, definir en `.env` o entorno de stack Portainer:
+
+```bash
+TRUST_PROXY=1
+```
+
+Esto hace que los límites de tasa en `/setup` usen la IP real del cliente desde `X-Forwarded-For`. Véase [Variables de entorno](../administration/environment-variables.md).
+
+## Build local (sin GHCR)
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build

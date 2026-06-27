@@ -22,6 +22,15 @@ Antes de salvar um servidor, o host é validado:
 
 Isso impede que a aplicação seja usada como proxy para varrer redes internas.
 
+## Verificação de resolução DNS
+
+A validação ocorre em duas etapas:
+
+1. **Ao salvar** — a string do hostname é verificada (literais privados, hosts de metadados, lista de permissão CIDR opcional).
+2. **Antes de conectar** — o hostname é resolvido para um IP e o **endereço resolvido** é verificado com as mesmas regras.
+
+Isso fecha lacunas de DNS rebinding em que um hostname público passa a resolver para um IP privado ou de metadados.
+
 ## Teste SSH antes de salvar
 
 Criar ou atualizar um servidor (alteração de host, porta ou identidade) exige um **teste de conexão SSH** bem-sucedido. A interface bloqueia o salvamento até o teste passar.
@@ -32,7 +41,7 @@ Na primeira conexão bem-sucedida, a impressão digital da chave host SSH do ser
 
 | Estado | Significado |
 |-------|---------|
-| **Verificada** | Chave registrada após Testar SSH bem-sucedido ou operação normal |
+| **Verificada** | Chave registrada após teste SSH bem-sucedido ou operação normal |
 | **Não verificada** | Chave importada do arquivo de configuração — execute Testar SSH para verificar |
 
 Se a chave host remota mudar (reinstalação, MITM), a próxima conexão falha até você investigar.

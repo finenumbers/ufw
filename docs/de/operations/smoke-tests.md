@@ -21,7 +21,7 @@ Das Skript verifiziert:
 - Postgres healthy
 - `ufw-migrate` exited 0
 - `ufw-app` healthy
-- Internes `/api/health` liefert `{"status":"ok","db":"ok"}`
+- Internes `/api/health` liefert `{"status":"ok","db":"ok","version":"…"}` (`revision` nur außerhalb der Produktion)
 
 ## Manueller Health-Check
 

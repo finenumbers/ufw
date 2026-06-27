@@ -41,6 +41,19 @@ L'URL publique est définie à **l'exécution**, pas intégrée dans l'image Doc
 
 Implémentation : `getPublicAppUrl()` dans `src/lib/app-url.ts`.
 
+**Important :** `APP_URL` est l'**URL HTTPS publique** que le navigateur utilise (via NPM). NPM transmet vers `http://ufw-app:8088` sur le réseau Docker — le HTTP interne est intentionnel. Voir [Nginx Proxy Manager](./deployment/nginx-proxy-manager.md).
+
+## Modèle de chargement des détails serveur
+
+L'ouverture d'un tableau de bord serveur est **cache-first** — pas de SSH au chargement initial de la page :
+
+1. Le **SSR** lit le dernier **snapshot** UFW depuis Postgres (`detectionFromSnapshot`) et affiche le statut et les règles depuis la base de données.
+2. Les règles, les résultats de scan de ports et l'inventaire Docker se chargent **en parallèle** depuis Postgres (`Promise.all`) — toujours sans SSH.
+3. **Actualiser** (tableau de bord ou barre d'outils des règles) déclenche une lecture SSH en direct et met à jour le snapshot.
+4. La **synchronisation initiale** s'exécute automatiquement en arrière-plan lorsque UFW est installé et actif mais qu'**aucun snapshot n'existe encore** (`needsSync`).
+
+Cela garde les pages serveur rapides tandis que le travail SSH n'a lieu que lorsque vous actualisez explicitement ou lorsque l'application n'a pas encore d'état en cache.
+
 ## Modèle de concurrence
 
 - **File d'attente SSH par serveur** (`p-queue`, concurrence 1) — les opérations sur le même hôte sont sérialisées

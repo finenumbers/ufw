@@ -1,52 +1,56 @@
-# Docker container monitoring
+# Monitoraggio container Docker
 
-UFW Remote Manager can inventory and control **Docker containers** on each registered server over **SSH** (same transport as UFW operations).
+UFW Remote Manager può inventariare e controllare i **container Docker** su ogni server registrato via **SSH** (stesso trasporto delle operazioni UFW).
 
-Results appear in a table **below the port scan panel** on the server page.
+I risultati compaiono in una tabella **sotto il pannello scansione porte** nella pagina del server.
 
-## Enable
+## Abilitare
 
-Set in the app environment (Compose / Portainer):
+Impostare nell'ambiente dell'app (Compose / Portainer):
 
 ```env
 DOCKER_MONITOR_ENABLED=true
 ```
 
-Optional tuning:
+Regolazioni opzionali:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Stored inventory snapshots per server |
-| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | SSH command timeout for Docker CLI |
+| Variabile | Predefinito | Scopo |
+|-----------|-------------|-------|
+| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Snapshot inventario memorizzati per server |
+| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | Timeout comandi SSH per Docker CLI |
 
-Inventory refresh and container control (start/stop/restart) share a **30 second** cooldown per server (fixed in app code since v0.5.1). Legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` and `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` in `.env` are **ignored**.
+L'aggiornamento inventario e il controllo container (start/stop/restart) condividono un **cooldown di 30 secondi** per server (fisso nel codice da v0.5.1). I legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` e `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` in `.env` vengono **ignorati**.
 
-## Requirements on managed servers
+## Requisiti sui server gestiti
 
-- **Docker CLI** installed (`docker` in PATH)
-- Docker daemon reachable for the SSH user
-- Either membership in the **`docker`** group or **passwordless sudo** for `docker`
+- **Docker CLI** installato (`docker` in PATH)
+- Daemon Docker raggiungibile per l'utente SSH
+- Appartenenza al gruppo **`docker`** o **sudo senza password** per `docker`
 
-The app tries `docker …` first, then `sudo docker …` if permission is denied.
+L'app prova prima `docker …`, poi `sudo docker …` se il permesso viene negato.
 
-## Features (MVP)
+## Funzionalità (MVP)
 
-- Refresh inventory: `docker ps -a`, stats for running containers
-- Table: name, image, status, health, ports, CPU/memory, Compose labels
-- Grouping by Compose project
-- Container detail drawer (`docker inspect`, masked env vars)
-- Control: **start**, **stop**, **restart** (confirm for stop/restart)
-- Operation progress banner + audit events
+- Aggiorna inventario: `docker ps -a`, statistiche per container in esecuzione
+- Tabella: nome, immagine, stato, health, porte, CPU/memoria, label Compose
+- Raggruppamento per progetto Compose
+- Drawer dettaglio container (`docker inspect`, variabili env mascherate)
+- Controllo: **start**, **stop**, **restart** (conferma per stop/restart)
+- Banner progresso operazione + eventi audit
 
-## Security
+## Sicurezza
 
-- Feature flag (default off)
-- Container ID/name validation — no arbitrary shell from UI
-- Fixed control actions only
-- Fixed 30s rate limits on refresh and control (not env-configurable)
+- Feature flag (disabilitato per impostazione predefinita)
+- Validazione ID/nome container — nessuna shell arbitraria dall'interfaccia
+- Solo azioni di controllo fisse
+- Rate limit fissi di 30s su aggiornamento e controllo (non configurabili via env)
 - Audit: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
 
-## Related docs
+## Polling progresso
 
-- [Deployment overview](./overview.md)
-- [Security model](../administration/security-model.md)
+Durante l'aggiornamento inventario, l'interfaccia effettua polling su un endpoint di stato leggero. L'intervallo di polling aumenta: **3s → 5s → 10s**. Il banner operazione mostra il progresso per passo.
+
+## Documentazione correlata
+
+- [Panoramica distribuzione](./overview.md)
+- [Modello di sicurezza](../administration/security-model.md)

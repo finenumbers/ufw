@@ -1,36 +1,36 @@
 # GHCR + Docker Compose
 
-Production images are published to **GitHub Container Registry (GHCR)**:
+Les images de production sont publiées sur **GitHub Container Registry (GHCR)** :
 
-| Image | Purpose |
-|-------|---------|
-| `ghcr.io/finenumbers/ufw-remote-manager:TAG` | Next.js app |
-| `ghcr.io/finenumbers/ufw-remote-manager-migrate:TAG` | Prisma migrations (one-shot) |
+| Image | Rôle |
+|-------|------|
+| `ghcr.io/finenumbers/ufw-remote-manager:TAG` | Application Next.js |
+| `ghcr.io/finenumbers/ufw-remote-manager-migrate:TAG` | Migrations Prisma (exécution unique) |
 
-Each release publishes **`latest`** plus version tags (e.g. `v0.2.1`, `0.2.1`). Production deploys use **`latest`** by default — no version in `.env` required.
+Chaque release publie **`latest`** plus des tags de version (ex. `v0.6.1`, `0.6.1`). Les déploiements production utilisent **`latest`** par défaut — aucune version requise dans `.env`.
 
-Replace `finenumbers` with your fork owner if you use a fork (`GHCR_OWNER` in `.env`).
+Remplacez `finenumbers` par le propriétaire de votre fork si vous utilisez un fork (`GHCR_OWNER` dans `.env`).
 
-## Universal images — APP_URL at runtime
+## Images universelles — APP_URL à l'exécution
 
-Images are **domain-agnostic**. Set `APP_URL` in `.env` to your public HTTPS URL. No per-domain build required.
+Les images sont **agnostiques au domaine**. Définissez `APP_URL` dans `.env` sur votre URL HTTPS publique. Aucun build par domaine requis.
 
-## Get images
+## Obtenir les images
 
-### Option A — Git tag release (recommended)
+### Option A — Release par tag Git (recommandé)
 
 ```bash
-git tag v0.2.2
-git push origin v0.2.2
+git tag v0.6.2
+git push origin v0.6.2
 ```
 
-GitHub Actions publishes tagged images and updates `latest`. Packages must be **Public** on first use (GitHub → Packages → settings).
+GitHub Actions publie les images taguées et met à jour `latest`. Les packages doivent être **Public** à la première utilisation (GitHub → Packages → paramètres).
 
 ### Option B — Release (dispatch)
 
-Actions → **Release (dispatch)** → enter `image_tag` (custom tag; does not update `latest` unless you tag `latest` manually).
+Actions → **Release (dispatch)** → saisir `image_tag` (tag personnalisé ; ne met pas à jour `latest` sauf si vous taguez `latest` manuellement).
 
-## Prepare `.env` on the server
+## Préparer `.env` sur le serveur
 
 ```bash
 cp .env.production.example .env
@@ -38,7 +38,7 @@ cp .env.production.example .env
 ./scripts/generate-production-env.sh .env
 ```
 
-Example (secrets required; image vars optional):
+Exemple (secrets requis ; variables d'image optionnelles) :
 
 ```bash
 APP_URL=https://ufw.example.com
@@ -49,14 +49,14 @@ APP_ENCRYPTION_KEY=...
 # Optional: GHCR_OWNER=finenumbers  GHCR_IMAGE_TAG=latest
 ```
 
-Generate secrets:
+Générer les secrets :
 
 ```bash
 openssl rand -base64 32   # BETTER_AUTH_SECRET, APP_ENCRYPTION_KEY
 openssl rand -base64 24   # POSTGRES_PASSWORD
 ```
 
-## Deploy
+## Déployer
 
 ```bash
 docker compose \
@@ -74,30 +74,30 @@ docker compose \
   up -d
 ```
 
-Validate:
+Valider :
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env config
 ```
 
-Configure NPM — see [Nginx Proxy Manager](./nginx-proxy-manager.md).
+Configurer NPM — voir [Nginx Proxy Manager](./nginx-proxy-manager.md).
 
-## Upgrade
+## Mise à niveau
 
-Redeploy with `docker compose ... pull && up -d` — no `.env` changes when using `latest`.
+Redéployer avec `docker compose ... pull && up -d` — pas de modification `.env` avec `latest`.
 
-See [Upgrade and rollback](../operations/upgrade-rollback.md) to pin a version.
+Voir [Mise à niveau et rollback](../operations/upgrade-rollback.md) pour épingler une version.
 
-## Troubleshooting
+## Dépannage
 
-| Symptom | Check |
-|---------|-------|
-| Auth redirect loops | `APP_URL` exactly matches NPM public URL |
-| `pull access denied` | Package visibility Public, or `docker login ghcr.io` |
-| `APP_URL is required` | `.env` loaded with `--env-file .env` |
-| NPM 502 | App on `npm_proxy` network; container name `ufw-app` |
+| Symptôme | Vérifier |
+|----------|----------|
+| Boucles de redirection auth | `APP_URL` correspond exactement à l'URL publique NPM |
+| `pull access denied` | Visibilité du package Public, ou `docker login ghcr.io` |
+| `APP_URL is required` | `.env` chargé avec `--env-file .env` |
+| NPM 502 | App sur le réseau `npm_proxy` ; nom du conteneur `ufw-app` |
 
-## Related docs
+## Documentation associée
 
-- [Deployment overview](./overview.md)
-- [Smoke tests](../operations/smoke-tests.md)
+- [Vue d'ensemble du déploiement](./overview.md)
+- [Tests de fumée](../operations/smoke-tests.md)

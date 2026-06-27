@@ -1,58 +1,62 @@
-# External port scanning
+# Externer Port-Scan
 
-UFW Remote Manager can run an **external port scan** from the `ufw-app` container toward each registered server's `host` address. The pipeline uses:
+UFW Remote Manager kann einen **externen Port-Scan** vom `ufw-app`-Container zur `host`-Adresse jedes registrierten Servers ausführen. Die Pipeline nutzt:
 
-1. **Naabu** — TCP discovery on ports 1–65535 (`host/port/protocol/open`)
-2. **Nmap** — service detection only on discovered ports (`-sV`, XML output)
+1. **Naabu** — TCP-Erkennung auf Ports 1–65535 (`host/port/protocol/open`)
+2. **Nmap** — Service-Erkennung nur auf entdeckten Ports (`-sV`, XML-Ausgabe)
 
-Results appear in a table **below the UFW rules** on the server page.
+Ergebnisse erscheinen in einer Tabelle **unter den UFW-Regeln** auf der Serverseite.
 
-## Enable
+## Aktivieren
 
-Set in the app environment (Compose / Portainer):
+In der App-Umgebung setzen (Compose / Portainer):
 
 ```env
 PORT_SCAN_ENABLED=true
 ```
 
-Optional tuning:
+Optionale Feineinstellung:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Max ports sent to Nmap enrichment |
-| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Full-port discovery timeout (30 min) |
-| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Enrichment timeout |
-| `PORT_SCAN_HISTORY_LIMIT` | `10` | Stored scan runs per server |
+| Variable | Standard | Zweck |
+|----------|----------|-------|
+| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Max. Ports für Nmap-Anreicherung |
+| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Timeout für Vollport-Erkennung (30 Min.) |
+| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Timeout für Anreicherung |
+| `PORT_SCAN_HISTORY_LIMIT` | `10` | Gespeicherte Scan-Läufe pro Server |
 
-Repeat scans on the same server are rate-limited to **once every 30 seconds** (fixed in app code since v0.5.1). Legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` in `.env` is **ignored**.
+Wiederholte Scans desselben Servers sind auf **einmal alle 30 Sekunden** begrenzt (fest im App-Code seit v0.5.1). Legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` in `.env` wird **ignoriert**.
 
-## Network requirements
+## Netzwerkanforderungen
 
-The app container must reach **managed server hosts on scanned TCP ports**, not only SSH `:22`. Ensure routing/firewall rules allow egress from the Docker host (or `ufw-app` network) to target servers.
+Der App-Container muss **verwaltete Server-Hosts auf gescannten TCP-Ports** erreichen, nicht nur SSH `:22`. Stellen Sie sicher, dass Routing-/Firewall-Regeln Egress vom Docker-Host (oder `ufw-app`-Netzwerk) zu Zielservern erlauben.
 
-This feature scans **only hosts already registered in UFW Remote Manager** — arbitrary targets are rejected.
+Diese Funktion scannt **nur bereits in UFW Remote Manager registrierte Hosts** — beliebige Ziele werden abgelehnt.
 
-## UFW coverage column
+## UFW-Abdeckungsspalte
 
-Each open port is compared with the latest UFW snapshot using **external-scan semantics**:
+Jeder offene Port wird mit dem neuesten UFW-Snapshot unter **External-Scan-Semantik** verglichen:
 
-| Value | Meaning |
-|-------|---------|
-| **Allowed** | Inbound ALLOW/LIMIT from **any** source (`From = any`) covers this port |
-| **Not in UFW** | Port is open externally but not covered by a public inbound ALLOW — review |
-| **Denied** | Inbound DENY/REJECT from **any** source targets this port |
-| **Unknown** | UFW inactive or no snapshot |
+| Wert | Bedeutung |
+|------|-----------|
+| **Allowed** | Eingehendes ALLOW/LIMIT von **beliebiger** Quelle (`From = any`) deckt diesen Port ab |
+| **Not in UFW** | Port ist extern offen, aber nicht durch öffentliches eingehendes ALLOW abgedeckt — prüfen |
+| **Denied** | Eingehendes DENY/REJECT von **beliebiger** Quelle betrifft diesen Port |
+| **Unknown** | UFW inaktiv oder kein Snapshot |
 
-Whitelist-only rules (`From = specific IP/CIDR`, `To Port = any`) do **not** count as allowed for external scan. Only rules that explicitly allow traffic from anywhere are treated as public exposure.
+Whitelist-Regeln (`From = specific IP/CIDR`, `To Port = any`) gelten **nicht** als erlaubt für External Scan. Nur Regeln, die explizit Traffic von überall erlauben, gelten als öffentliche Exposition.
 
-## Security notes
+## Sicherheitshinweise
 
-- Rate-limited (30 seconds between repeat scans per server; not env-configurable)
-- Audit events: `PORT_SCAN_STARTED`, `PORT_SCAN_COMPLETED`
-- Scans run in the per-server queue alongside SSH operations (serialized)
-- Uses connect scans (`naabu -scan-type c`, `nmap -sT`) — no raw socket capabilities required
+- Rate-Limited (30 Sekunden zwischen Wiederholungsscans pro Server; nicht per Env konfigurierbar)
+- Audit-Ereignisse: `PORT_SCAN_STARTED`, `PORT_SCAN_COMPLETED`
+- Scans laufen in der pro-Server-Warteschlange neben SSH-Operationen (serialisiert)
+- Nutzt Connect-Scans (`naabu -scan-type c`, `nmap -sT`) — keine Raw-Socket-Capabilities erforderlich
 
-## Related docs
+## Fortschritts-Polling
 
-- [Deployment overview](./overview.md)
-- [Security model](../administration/security-model.md)
+Während ein Scan läuft, pollt die UI einen leichtgewichtigen Status-Endpunkt (keine vollständigen SSH-Neulesungen). Polling-Intervall steigt: **3s → 5s → 10s** im Verlauf. Das Vorgangsbanner zeigt Schrittfortschritt.
+
+## Verwandte Dokumentation
+
+- [Bereitstellungsübersicht](./overview.md)
+- [Sicherheitsmodell](../administration/security-model.md)

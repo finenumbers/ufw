@@ -1,52 +1,56 @@
-# Docker container monitoring
+# Monitoramento de containers Docker
 
-UFW Remote Manager can inventory and control **Docker containers** on each registered server over **SSH** (same transport as UFW operations).
+O UFW Remote Manager pode inventariar e controlar **containers Docker** em cada servidor registrado via **SSH** (mesmo transporte das operações UFW).
 
-Results appear in a table **below the port scan panel** on the server page.
+Os resultados aparecem em uma tabela **abaixo do painel de varredura de portas** na página do servidor.
 
-## Enable
+## Ativar
 
-Set in the app environment (Compose / Portainer):
+Definir no ambiente do app (Compose / Portainer):
 
 ```env
 DOCKER_MONITOR_ENABLED=true
 ```
 
-Optional tuning:
+Ajustes opcionais:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Stored inventory snapshots per server |
-| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | SSH command timeout for Docker CLI |
+| Variável | Padrão | Propósito |
+|----------|--------|-----------|
+| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Snapshots de inventário armazenados por servidor |
+| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | Timeout de comandos SSH para Docker CLI |
 
-Inventory refresh and container control (start/stop/restart) share a **30 second** cooldown per server (fixed in app code since v0.5.1). Legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` and `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` in `.env` are **ignored**.
+Atualização de inventário e controle de containers (start/stop/restart) compartilham um **cooldown de 30 segundos** por servidor (fixo no código do app desde v0.5.1). Os legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` e `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` em `.env` são **ignorados**.
 
-## Requirements on managed servers
+## Requisitos nos servidores gerenciados
 
-- **Docker CLI** installed (`docker` in PATH)
-- Docker daemon reachable for the SSH user
-- Either membership in the **`docker`** group or **passwordless sudo** for `docker`
+- **Docker CLI** instalado (`docker` no PATH)
+- Daemon Docker acessível para o usuário SSH
+- Membresia no grupo **`docker`** ou **sudo sem senha** para `docker`
 
-The app tries `docker …` first, then `sudo docker …` if permission is denied.
+O app tenta primeiro `docker …`, depois `sudo docker …` se a permissão for negada.
 
-## Features (MVP)
+## Recursos (MVP)
 
-- Refresh inventory: `docker ps -a`, stats for running containers
-- Table: name, image, status, health, ports, CPU/memory, Compose labels
-- Grouping by Compose project
-- Container detail drawer (`docker inspect`, masked env vars)
-- Control: **start**, **stop**, **restart** (confirm for stop/restart)
-- Operation progress banner + audit events
+- Atualizar inventário: `docker ps -a`, estatísticas para containers em execução
+- Tabela: nome, imagem, status, health, portas, CPU/memória, labels Compose
+- Agrupamento por projeto Compose
+- Gaveta de detalhes do container (`docker inspect`, variáveis env mascaradas)
+- Controle: **start**, **stop**, **restart** (confirmação para stop/restart)
+- Banner de progresso de operação + eventos de auditoria
 
-## Security
+## Segurança
 
-- Feature flag (default off)
-- Container ID/name validation — no arbitrary shell from UI
-- Fixed control actions only
-- Fixed 30s rate limits on refresh and control (not env-configurable)
-- Audit: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
+- Feature flag (desativado por padrão)
+- Validação de ID/nome de container — sem shell arbitrário da interface
+- Apenas ações de controle fixas
+- Limites de taxa fixos de 30s em atualização e controle (não configuráveis por env)
+- Auditoria: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
 
-## Related docs
+## Polling de progresso
 
-- [Deployment overview](./overview.md)
-- [Security model](../administration/security-model.md)
+Enquanto a atualização de inventário está em execução, a interface faz polling de um endpoint de status leve. O intervalo de polling aumenta: **3s → 5s → 10s**. O banner de operação mostra progresso por etapa.
+
+## Documentação relacionada
+
+- [Visão geral de implantação](./overview.md)
+- [Modelo de segurança](../administration/security-model.md)

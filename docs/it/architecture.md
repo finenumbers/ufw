@@ -41,6 +41,19 @@ L'URL pubblico è impostato a **runtime**, non incorporato nell'immagine Docker:
 
 Implementazione: `getPublicAppUrl()` in `src/lib/app-url.ts`.
 
+**Importante:** `APP_URL` è l'**URL HTTPS pubblico** usato dal browser (via NPM). NPM inoltra a `http://ufw-app:8088` sulla rete Docker — l'HTTP interno è intenzionale. Vedi [Nginx Proxy Manager](./deployment/nginx-proxy-manager.md).
+
+## Modello di caricamento dettaglio server
+
+L'apertura della dashboard di un server è **cache-first** — nessuna connessione SSH al caricamento iniziale della pagina:
+
+1. **SSR** legge l'ultimo **snapshot** UFW da Postgres (`detectionFromSnapshot`) e renderizza stato e regole dal database.
+2. Regole, risultati della scansione porte e inventario Docker vengono caricati **in parallelo** da Postgres (`Promise.all`) — ancora senza SSH.
+3. **Aggiorna** (dashboard o barra strumenti regole) avvia una lettura SSH live e aggiorna lo snapshot.
+4. **Sincronizzazione iniziale** parte automaticamente in background quando UFW è installato e attivo ma **non esiste ancora uno snapshot** (`needsSync`).
+
+Questo mantiene le pagine server veloci mentre il lavoro SSH avviene solo quando aggiorni esplicitamente o quando l'app non ha ancora stato in cache.
+
 ## Modello di concorrenza
 
 - **Coda SSH per server** (`p-queue`, concorrenza 1) — le operazioni sullo stesso host sono serializzate

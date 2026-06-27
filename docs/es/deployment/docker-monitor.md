@@ -1,52 +1,56 @@
-# Docker container monitoring
+# Monitorización de contenedores Docker
 
-UFW Remote Manager can inventory and control **Docker containers** on each registered server over **SSH** (same transport as UFW operations).
+UFW Remote Manager puede inventariar y controlar **contenedores Docker** en cada servidor registrado por **SSH** (mismo transporte que las operaciones UFW).
 
-Results appear in a table **below the port scan panel** on the server page.
+Los resultados aparecen en una tabla **debajo del panel de escaneo de puertos** en la página del servidor.
 
-## Enable
+## Activar
 
-Set in the app environment (Compose / Portainer):
+Definir en el entorno de la app (Compose / Portainer):
 
 ```env
 DOCKER_MONITOR_ENABLED=true
 ```
 
-Optional tuning:
+Ajustes opcionales:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Stored inventory snapshots per server |
-| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | SSH command timeout for Docker CLI |
+| Variable | Predeterminado | Propósito |
+|----------|----------------|-----------|
+| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Snapshots de inventario almacenados por servidor |
+| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | Tiempo de espera de comandos SSH para Docker CLI |
 
-Inventory refresh and container control (start/stop/restart) share a **30 second** cooldown per server (fixed in app code since v0.5.1). Legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` and `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` in `.env` are **ignored**.
+La actualización de inventario y el control de contenedores (start/stop/restart) comparten un **cooldown de 30 segundos** por servidor (fijo en el código desde v0.5.1). Los legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` y `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` en `.env` se **ignoran**.
 
-## Requirements on managed servers
+## Requisitos en servidores gestionados
 
-- **Docker CLI** installed (`docker` in PATH)
-- Docker daemon reachable for the SSH user
-- Either membership in the **`docker`** group or **passwordless sudo** for `docker`
+- **Docker CLI** instalado (`docker` en PATH)
+- Daemon Docker accesible para el usuario SSH
+- Membresía en el grupo **`docker`** o **sudo sin contraseña** para `docker`
 
-The app tries `docker …` first, then `sudo docker …` if permission is denied.
+La app intenta primero `docker …`, luego `sudo docker …` si se deniega permiso.
 
-## Features (MVP)
+## Funciones (MVP)
 
-- Refresh inventory: `docker ps -a`, stats for running containers
-- Table: name, image, status, health, ports, CPU/memory, Compose labels
-- Grouping by Compose project
-- Container detail drawer (`docker inspect`, masked env vars)
-- Control: **start**, **stop**, **restart** (confirm for stop/restart)
-- Operation progress banner + audit events
+- Actualizar inventario: `docker ps -a`, estadísticas para contenedores en ejecución
+- Tabla: nombre, imagen, estado, health, puertos, CPU/memoria, etiquetas Compose
+- Agrupación por proyecto Compose
+- Panel de detalle del contenedor (`docker inspect`, variables env enmascaradas)
+- Control: **start**, **stop**, **restart** (confirmación para stop/restart)
+- Banner de progreso de operación + eventos de auditoría
 
-## Security
+## Seguridad
 
-- Feature flag (default off)
-- Container ID/name validation — no arbitrary shell from UI
-- Fixed control actions only
-- Fixed 30s rate limits on refresh and control (not env-configurable)
-- Audit: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
+- Feature flag (desactivado por defecto)
+- Validación de ID/nombre de contenedor — sin shell arbitrario desde la interfaz
+- Solo acciones de control fijas
+- Límites de tasa fijos de 30s en actualización y control (no configurables por env)
+- Auditoría: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
 
-## Related docs
+## Polling de progreso
 
-- [Deployment overview](./overview.md)
-- [Security model](../administration/security-model.md)
+Mientras la actualización de inventario se ejecuta, la interfaz consulta un endpoint de estado ligero. El intervalo de polling aumenta: **3s → 5s → 10s**. El banner de operación muestra el progreso por pasos.
+
+## Documentación relacionada
+
+- [Resumen de despliegue](./overview.md)
+- [Modelo de seguridad](../administration/security-model.md)

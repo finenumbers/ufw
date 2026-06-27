@@ -6,44 +6,44 @@ Quando o UFW está **instalado e ativo** em um servidor, abra a aba **Regras** p
 
 Recursos:
 
-- Busca e filtros de coluna
-- Seções de grupo com expandir/recolher
+- Busca e filtros por coluna
+- Seções de grupos com expandir/recolher
 - Reordenação por arrastar e soltar (a ordem importa para o UFW)
-- Cores das linhas por [estado de sincronização](../concepts/ufw-rules-and-states.md)
+- Cores de linha por [estado de sincronização](../concepts/ufw-rules-and-states.md)
 - Adicionar linha, editar inline, excluir linha
 
-## Atualizar status a partir do servidor
+## Atualizar do servidor
 
-Clique em **Atualizar status** (ou use a atualização no painel) para:
+Clique em **Atualizar** (ou use a atualização do painel) para:
 
-1. Detectar o estado do UFW
+1. Detectar o estado UFW
 2. Carregar snapshot do servidor
 3. Sincronizar estados de origem do rascunho
 
-Use isso após alterações manuais na CLI do servidor ou após uma aplicação parcial.
+Use após alterações manuais na CLI do servidor ou após aplicação parcial.
 
 ## Ressincronização forçada
 
-Se a interface avisar sobre deriva ou aplicação parcial, use **Ressincronização forçada do servidor** para substituir o alinhamento do rascunho local pelo snapshot remoto real antes de continuar editando.
+Se a interface alertar sobre drift ou aplicação parcial, use **Ressincronização forçada do servidor** para substituir o alinhamento local do rascunho pelo snapshot remoto real antes de continuar editando.
 
 ## Importar regras
 
-Barra de ferramentas → importar CSV, XLSX ou JSON. Valide as linhas importadas na tabela antes de Salvar regras.
+Barra de ferramentas → importar CSV, XLSX ou JSON. Valide as linhas importadas na tabela antes da pré-visualização de aplicação.
 
 ## Fluxo de aplicação
 
-1. Faça edições no rascunho
-2. **Salvar regras** — revise os comandos planejados e o resumo de diferenças
-3. **Confirmar** — executa via SSH
-4. Acompanhe o banner de operação para ver o progresso
+1. Fazer edições no rascunho
+2. **Pré-visualização de aplicação** — revisar comandos planejados e resumo de diff
+3. **Confirmar** — executa via SSH (rejeitado se o UFW remoto mudou desde a pré-visualização — execute a pré-visualização novamente)
+4. Acompanhe o banner de operação para o progresso
 
 Veja [Fluxo de rascunho e aplicação](../concepts/draft-apply-workflow.md) para detalhes.
 
 ## Dicas de segurança
 
-- Mantenha sempre pelo menos uma regra permitindo SSH da sua rede de administração antes de aplicar regras deny
-- Execute a visualização em produção durante uma janela de manutenção
-- Verifique o **Histórico de operações** após aplicar para status SUCESSO ou FALHA
+- Mantenha pelo menos uma regra permitindo SSH da sua rede de administração antes de aplicar regras deny
+- Execute a pré-visualização em produção durante uma janela de manutenção
+- Verifique o **Histórico de operações** após aplicar o status SUCCESS ou FAILED
 
 ## Documentação relacionada
 

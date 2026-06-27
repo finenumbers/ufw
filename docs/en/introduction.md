@@ -16,6 +16,7 @@ Repository: [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw)
 - Detect, install, and enable UFW remotely
 - Load live UFW rules, edit them in a table (with groups, names, search, reorder)
 - **Draft → preview → confirm → apply** workflow with diff visualization
+- Fast server dashboard load from cached UFW snapshots (live SSH only on refresh)
 - Import rules from CSV, XLSX, or JSON; export/import full server configuration
 - Encrypt SSH credentials at rest; pin SSH host keys; audit sensitive actions
 - Multi-language UI (English, German, French, Spanish, Italian, Portuguese, Russian)

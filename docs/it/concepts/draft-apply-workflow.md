@@ -12,7 +12,7 @@ Modifica le regole nella tabella: aggiungi, modifica, elimina, riordina, importa
 
 ### 2. Anteprima applicazione
 
-Clicca **Salva regole**. L'app:
+Clicca **Anteprima applicazione**. L'app:
 
 1. Carica lo stato UFW corrente dal server (snapshot SSH)
 2. Calcola un **piano** — comandi che allineerebbero UFW alla tua bozza
@@ -46,13 +46,24 @@ sequenceDiagram
   App->>Remote: SSH read snapshot
   App->>App: Build plan diff
   User->>App: Confirm apply
-  App->>Remote: SSH ufw commands
-  App->>DB: Update snapshot and audit
+  App->>Remote: SSH read snapshot
+  alt Remote changed since preview
+    App-->>User: Reject — re-preview required
+  else Plan matches
+    App->>Remote: SSH ufw commands
+    App->>DB: Update snapshot and audit
+  end
 ```
 
 ## Applicazione parziale e deriva
 
-Se l'applicazione fallisce a metà, UFW remoto può differire sia dalla bozza che dallo snapshot. L'interfaccia avvisa e offre **Risincronizzazione forzata dal server** per riallineare lo stato locale alle regole remote effettive prima di modificare di nuovo.
+UFW remoto può cambiare tra anteprima e conferma, oppure l'applicazione può fallire a metà. L'app gestisce tre casi distinti:
+
+| Scenario | Stato sessione | Cosa fare |
+|----------|----------------|------------|
+| UFW remoto cambiato **tra anteprima e conferma** | Apply rifiutato (`needsRePreview`) | Esegui di nuovo **Anteprima applicazione** — non forzare resync |
+| Comandi UFW **interrotti** sul server | `PARTIAL` (`needsResync`) | **Risincronizzazione forzata dal server**, poi rivedi prima di modificare |
+| Comandi UFW riusciti ma **sync post-applicazione fallita** | `PARTIAL` (`needsResync`) | **Risincronizzazione forzata dal server** — UFW remoto già modificato |
 
 **Non ignorare mai gli avvisi di applicazione parziale** — continuare alla cieca può causare regole duplicate o errori di ordine.
 

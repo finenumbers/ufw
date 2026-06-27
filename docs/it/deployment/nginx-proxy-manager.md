@@ -1,6 +1,6 @@
 # Nginx Proxy Manager
 
-Nginx Proxy Manager (NPM) deve essere **già installato** sul tuo host Docker. Questo progetto non deploya NPM.
+Nginx Proxy Manager (NPM) deve essere **già installato** sull'host Docker. Questo progetto non distribuisce NPM.
 
 ## Flusso del traffico
 
@@ -12,10 +12,10 @@ NPM termina HTTPS. L'app imposta HSTS in produzione ma si affida a NPM per i cer
 
 ## Checklist Proxy Host
 
-Crea o aggiorna un **Proxy Host** nell'interfaccia NPM:
+Creare o aggiornare un **Proxy Host** nell'interfaccia NPM:
 
 | Campo | Valore |
-|-------|-------|
+|-------|--------|
 | Domain Names | Host da `APP_URL` (es. `ufw.example.com`) |
 | Scheme | `http` |
 | Forward Hostname / IP | `ufw-app` |
@@ -29,7 +29,7 @@ Crea o aggiorna un **Proxy Host** nell'interfaccia NPM:
 
 Il container dell'app deve unirsi alla **stessa rete Docker** di NPM.
 
-Imposta in `.env`:
+Impostare in `.env`:
 
 ```bash
 NPM_NETWORK=nginxproxymanager_default
@@ -37,7 +37,7 @@ NPM_NETWORK=nginxproxymanager_default
 
 (`docker-compose.prod.yml` collega `ufw-app` alla rete esterna `npm_proxy` → `$NPM_NETWORK`.)
 
-Trova il nome della tua rete:
+Trovare il nome della rete:
 
 ```bash
 docker network ls | grep -i proxy
@@ -51,7 +51,28 @@ docker network ls | grep -i proxy
 APP_URL=https://ufw.example.com
 ```
 
-La mancata corrispondenza causa loop di redirect auth o cookie non funzionanti.
+Una discrepanza causa loop di redirect auth o cookie non validi.
+
+## APP_URL vs schema Proxy Host
+
+| Livello | Schema | Esempio |
+|---------|--------|---------|
+| Browser / `APP_URL` | **HTTPS** | `https://ufw.example.com` |
+| NPM → container | **HTTP** | `http://ufw-app:8088` |
+
+NPM termina TLS. Il container dell'app ascolta HTTP in chiaro nella rete Docker — è **intenzionale**, non una misconfigurazione.
+
+Impostare `APP_URL` solo sull'URL HTTPS pubblico. Non puntare mai `APP_URL` a `http://ufw-app:8088`.
+
+## TRUST_PROXY
+
+In esecuzione dietro NPM, impostare in `.env` o ambiente stack Portainer:
+
+```bash
+TRUST_PROXY=1
+```
+
+Questo fa usare a `/setup` i rate limit con l'IP client reale da `X-Forwarded-For`. Vedere [Variabili d'ambiente](../administration/environment-variables.md).
 
 ## Build locale (senza GHCR)
 
@@ -63,6 +84,6 @@ Si applicano le stesse impostazioni NPM Proxy Host.
 
 ## Documentazione correlata
 
-- [Panoramica deployment](./overview.md)
+- [Panoramica distribuzione](./overview.md)
 - [GHCR + Compose](./ghcr-compose.md)
 - [Risoluzione problemi](../troubleshooting.md)

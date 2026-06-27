@@ -1,58 +1,62 @@
-# External port scanning
+# Varredura de portas externa
 
-UFW Remote Manager can run an **external port scan** from the `ufw-app` container toward each registered server's `host` address. The pipeline uses:
+O UFW Remote Manager pode executar uma **varredura de portas externa** do container `ufw-app` em direção ao endereço `host` de cada servidor registrado. O pipeline usa:
 
-1. **Naabu** — TCP discovery on ports 1–65535 (`host/port/protocol/open`)
-2. **Nmap** — service detection only on discovered ports (`-sV`, XML output)
+1. **Naabu** — descoberta TCP nas portas 1–65535 (`host/port/protocol/open`)
+2. **Nmap** — detecção de serviços apenas nas portas descobertas (`-sV`, saída XML)
 
-Results appear in a table **below the UFW rules** on the server page.
+Os resultados aparecem em uma tabela **abaixo das regras UFW** na página do servidor.
 
-## Enable
+## Ativar
 
-Set in the app environment (Compose / Portainer):
+Definir no ambiente do app (Compose / Portainer):
 
 ```env
 PORT_SCAN_ENABLED=true
 ```
 
-Optional tuning:
+Ajustes opcionais:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Max ports sent to Nmap enrichment |
-| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Full-port discovery timeout (30 min) |
-| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Enrichment timeout |
-| `PORT_SCAN_HISTORY_LIMIT` | `10` | Stored scan runs per server |
+| Variável | Padrão | Propósito |
+|----------|--------|-----------|
+| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Máx. portas enviadas ao enriquecimento Nmap |
+| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Timeout de descoberta de portas completas (30 min) |
+| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Timeout de enriquecimento |
+| `PORT_SCAN_HISTORY_LIMIT` | `10` | Execuções de varredura armazenadas por servidor |
 
-Repeat scans on the same server are rate-limited to **once every 30 seconds** (fixed in app code since v0.5.1). Legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` in `.env` is **ignored**.
+Varreduras repetidas no mesmo servidor são limitadas a **uma a cada 30 segundos** (fixo no código do app desde v0.5.1). O legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` em `.env` é **ignorado**.
 
-## Network requirements
+## Requisitos de rede
 
-The app container must reach **managed server hosts on scanned TCP ports**, not only SSH `:22`. Ensure routing/firewall rules allow egress from the Docker host (or `ufw-app` network) to target servers.
+O container do app deve alcançar **hosts de servidores gerenciados nas portas TCP varridas**, não apenas SSH `:22`. Garanta que regras de roteamento/firewall permitam saída do host Docker (ou rede `ufw-app`) para servidores de destino.
 
-This feature scans **only hosts already registered in UFW Remote Manager** — arbitrary targets are rejected.
+Este recurso varre **apenas hosts já registrados no UFW Remote Manager** — alvos arbitrários são rejeitados.
 
-## UFW coverage column
+## Coluna de cobertura UFW
 
-Each open port is compared with the latest UFW snapshot using **external-scan semantics**:
+Cada porta aberta é comparada com o último snapshot UFW usando **semântica de varredura externa**:
 
-| Value | Meaning |
-|-------|---------|
-| **Allowed** | Inbound ALLOW/LIMIT from **any** source (`From = any`) covers this port |
-| **Not in UFW** | Port is open externally but not covered by a public inbound ALLOW — review |
-| **Denied** | Inbound DENY/REJECT from **any** source targets this port |
-| **Unknown** | UFW inactive or no snapshot |
+| Valor | Significado |
+|-------|-------------|
+| **Allowed** | ALLOW/LIMIT de entrada de **qualquer** origem (`From = any`) cobre esta porta |
+| **Not in UFW** | Porta aberta externamente mas não coberta por ALLOW de entrada público — revisar |
+| **Denied** | DENY/REJECT de entrada de **qualquer** origem direciona esta porta |
+| **Unknown** | UFW inativo ou sem snapshot |
 
-Whitelist-only rules (`From = specific IP/CIDR`, `To Port = any`) do **not** count as allowed for external scan. Only rules that explicitly allow traffic from anywhere are treated as public exposure.
+Regras de whitelist (`From = specific IP/CIDR`, `To Port = any`) **não** contam como permitidas para varredura externa. Apenas regras que permitem explicitamente tráfego de qualquer lugar são tratadas como exposição pública.
 
-## Security notes
+## Notas de segurança
 
-- Rate-limited (30 seconds between repeat scans per server; not env-configurable)
-- Audit events: `PORT_SCAN_STARTED`, `PORT_SCAN_COMPLETED`
-- Scans run in the per-server queue alongside SSH operations (serialized)
-- Uses connect scans (`naabu -scan-type c`, `nmap -sT`) — no raw socket capabilities required
+- Limitado por taxa (30 segundos entre varreduras repetidas por servidor; não configurável por env)
+- Eventos de auditoria: `PORT_SCAN_STARTED`, `PORT_SCAN_COMPLETED`
+- Varreduras executam na fila por servidor junto com operações SSH (serializadas)
+- Usa varreduras connect (`naabu -scan-type c`, `nmap -sT`) — não requer capacidades raw socket
 
-## Related docs
+## Polling de progresso
 
-- [Deployment overview](./overview.md)
-- [Security model](../administration/security-model.md)
+Enquanto uma varredura está em execução, a interface faz polling de um endpoint de status leve (não releituras SSH completas). O intervalo de polling aumenta: **3s → 5s → 10s** conforme a execução progride. O banner de operação mostra progresso por etapa.
+
+## Documentação relacionada
+
+- [Visão geral de implantação](./overview.md)
+- [Modelo de segurança](../administration/security-model.md)

@@ -34,7 +34,7 @@ Toolbar → import CSV, XLSX, or JSON. Validate imported rows in the table befor
 
 1. Make draft edits
 2. **Apply preview** — review planned commands and diff summary
-3. **Confirm** — executes over SSH
+3. **Confirm** — executes over SSH (rejected if remote UFW changed since preview — run preview again)
 4. Watch the operation banner for progress
 
 See [Draft and apply workflow](../concepts/draft-apply-workflow.md) for details.

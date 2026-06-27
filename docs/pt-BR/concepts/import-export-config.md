@@ -29,6 +29,11 @@ Servidores **ausentes** do arquivo de importação podem ser **excluídos** junt
 
 Chaves host SSH importadas podem ser marcadas como **não verificadas** até você executar Testar SSH em cada servidor.
 
+### Limites de importação
+
+- Importações de regras (CSV, XLSX, JSON) são limitadas a **10 000 linhas** por arquivo.
+- A **visualização** da importação de configuração é limitada a **10 tentativas por minuto** por usuário — aguarde e tente novamente se atingir o limite.
+
 ## Exportação vs backup do Postgres
 
 | Método | Contém | Melhor para |

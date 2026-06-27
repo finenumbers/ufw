@@ -52,6 +52,10 @@ Whitelist-only rules (`From = specific IP/CIDR`, `To Port = any`) do **not** cou
 - Scans run in the per-server queue alongside SSH operations (serialized)
 - Uses connect scans (`naabu -scan-type c`, `nmap -sT`) — no raw socket capabilities required
 
+## Progress polling
+
+While a scan runs, the UI polls a lightweight status endpoint (not full SSH re-reads). Poll interval backs off: **3s → 5s → 10s** as the run progresses. The operation banner shows step progress.
+
 ## Related docs
 
 - [Deployment overview](./overview.md)

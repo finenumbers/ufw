@@ -29,6 +29,11 @@ Servers **missing** from the import file can be **deleted** along with all their
 
 Imported SSH host keys may be marked **unverified** until you run SSH test on each server.
 
+### Import limits
+
+- Rule imports (CSV, XLSX, JSON) are capped at **10 000 rows** per file.
+- Config import **preview** is rate-limited to **10 attempts per minute** per user — wait and retry if you hit the limit.
+
 ## Export vs Postgres backup
 
 | Method | Contains | Best for |

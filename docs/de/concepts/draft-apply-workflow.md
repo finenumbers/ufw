@@ -12,7 +12,7 @@ Regeln in der Tabelle ändern: hinzufügen, bearbeiten, löschen, neu ordnen, im
 
 ### 2. Anwenden-Vorschau
 
-**Regeln speichern** klicken (öffnet die Anwenden-Vorschau). Die App:
+**Apply preview** klicken. Die App:
 
 1. Lädt den aktuellen UFW-Zustand vom Server (SSH-Snapshot)
 2. Berechnet einen **Plan** — Befehle, die UFW an Ihren Entwurf anpassen würden
@@ -46,13 +46,24 @@ sequenceDiagram
   App->>Remote: SSH read snapshot
   App->>App: Build plan diff
   User->>App: Confirm apply
-  App->>Remote: SSH ufw commands
-  App->>DB: Update snapshot and audit
+  App->>Remote: SSH read snapshot
+  alt Remote changed since preview
+    App-->>User: Reject — re-preview required
+  else Plan matches
+    App->>Remote: SSH ufw commands
+    App->>DB: Update snapshot and audit
+  end
 ```
 
 ## Teilweises Anwenden und Drift
 
-Schlägt Anwenden unterwegs fehl, kann Remote-UFW sowohl vom Entwurf als auch vom Snapshot abweichen. Die Oberfläche warnt Sie und bietet **Erzwungene Synchronisation vom Server**, um den lokalen Zustand an die tatsächlichen Remote-Regeln anzugleichen, bevor Sie weiter bearbeiten.
+Remote-UFW kann sich zwischen Vorschau und Bestätigung ändern, oder Anwenden kann unterwegs fehlschlagen. Die App behandelt drei verschiedene Fälle:
+
+| Szenario | Sitzungsstatus | Vorgehen |
+|----------|----------------|----------|
+| Remote-UFW **zwischen Vorschau und Bestätigung geändert** | Anwenden abgelehnt (`needsRePreview`) | Erneut **Apply preview** ausführen — kein Force Resync |
+| UFW-Befehle auf dem Server **unterbrochen** | `PARTIAL` (`needsResync`) | **Force resync from server**, dann prüfen vor weiterer Bearbeitung |
+| UFW-Befehle erfolgreich, aber **Post-Apply-Sync fehlgeschlagen** | `PARTIAL` (`needsResync`) | **Force resync from server** — Remote-UFW wurde bereits geändert |
 
 **Ignorieren Sie Teilweise-Anwenden-Warnungen niemals** — blindes Fortfahren kann doppelte Regeln oder Reihenfolgefehler verursachen.
 

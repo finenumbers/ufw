@@ -22,6 +22,15 @@ Prima che un server venga salvato, l'host viene validato:
 
 Questo impedisce che l'applicazione venga abusata come proxy per scansionare reti interne.
 
+## Controllo risoluzione DNS
+
+La validazione avviene in due fasi:
+
+1. **Al salvataggio** — la stringa hostname viene controllata (letterali privati, host metadati, allowlist CIDR opzionale).
+2. **Prima della connessione** — l'hostname viene risolto in un IP e l'**indirizzo risolto** viene controllato con le stesse regole.
+
+Questo chiude le lacune di DNS rebinding dove un hostname pubblico in seguito risolve a un IP privato o di metadati.
+
 ## Test SSH prima del salvataggio
 
 La creazione o l'aggiornamento di un server (host, porta o cambio identità) richiede un **test di connessione SSH** riuscito. L'interfaccia blocca il salvataggio finché il test non passa.

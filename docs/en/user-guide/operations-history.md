@@ -12,6 +12,8 @@ While an operation runs, a banner appears at the top of the app:
 
 The banner polls for updates while work is in progress.
 
+If a banner appears stuck on **RUNNING** or **PENDING** after a browser disconnect, refresh the page. Stale operations are cleared automatically by a background sweep (typically within 30–60 minutes).
+
 ## Operations page
 
 Sidebar → **Operations history** (`/operations`)

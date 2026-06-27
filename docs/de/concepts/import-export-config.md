@@ -4,7 +4,7 @@ Sie können eine **vollständige Serverkonfiguration** (alle Server, Identitäte
 
 ## Export
 
-1. Von der **Server**-Seite **Konfiguration speichern** verwenden
+1. Von der **Server**-Seite **Save configuration** verwenden
 2. Ihr **Kontopasswort** erneut eingeben (Step-up-Authentifizierung)
 3. JSON-Datei herunterladen
 
@@ -18,7 +18,7 @@ Die Exportdatei enthält **SSH-Passwörter und private Schlüssel im Klartext**.
 
 ## Import
 
-1. **Konfiguration laden** auf der Server-Seite verwenden
+1. **Load configuration** auf der Server-Seite verwenden
 2. JSON-v2-Datei auswählen
 3. Zusammenfassung prüfen: zu erstellende, aktualisierende, löschende Server
 4. Bestätigen — Import läuft in einer Transaktion (Upsert zuerst, Löschen zuletzt)
@@ -27,7 +27,12 @@ Die Exportdatei enthält **SSH-Passwörter und private Schlüssel im Klartext**.
 
 Server, die in der Importdatei **fehlen**, können **gelöscht** werden, zusammen mit allen Regeln und Snapshots. Lesen Sie den Bestätigungsdialog sorgfältig.
 
-Importierte SSH-Host-Keys können als **nicht verifiziert** markiert sein, bis Sie auf jedem Server einen SSH-Test ausführen.
+Importierte SSH-Host-Keys können als **unverified** markiert sein, bis Sie auf jedem Server einen SSH test ausführen.
+
+### Import-Limits
+
+- Regel-Imports (CSV, XLSX, JSON) sind auf **10 000 Zeilen** pro Datei begrenzt.
+- Konfigurationsimport-**Vorschau** ist auf **10 Versuche pro Minute** pro Benutzer begrenzt — warten Sie und versuchen Sie es erneut, wenn Sie das Limit erreichen.
 
 ## Export vs. Postgres-Backup
 

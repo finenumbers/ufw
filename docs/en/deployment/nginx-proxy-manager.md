@@ -53,6 +53,27 @@ APP_URL=https://ufw.example.com
 
 Mismatch causes auth redirect loops or broken cookies.
 
+## APP_URL vs Proxy Host scheme
+
+| Layer | Scheme | Example |
+|-------|--------|---------|
+| Browser / `APP_URL` | **HTTPS** | `https://ufw.example.com` |
+| NPM → container | **HTTP** | `http://ufw-app:8088` |
+
+NPM terminates TLS. The app container listens on plain HTTP inside the Docker network — this is **by design**, not a misconfiguration.
+
+Set `APP_URL` to the public HTTPS URL only. Never point `APP_URL` at `http://ufw-app:8088`.
+
+## TRUST_PROXY
+
+When running behind NPM, set in `.env` or Portainer stack environment:
+
+```bash
+TRUST_PROXY=1
+```
+
+This makes `/setup` rate limits use the real client IP from `X-Forwarded-For`. See [Environment variables](../administration/environment-variables.md).
+
 ## Local build (without GHCR)
 
 ```bash

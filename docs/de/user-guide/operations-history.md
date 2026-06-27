@@ -1,16 +1,18 @@
 # Vorgangsverlauf
 
-Lang laufende Aufgaben (Anwenden, Aktualisieren, UFW installieren, SSH-Test) werden in **Vorgangsprotokollen** erfasst und in der Oberfläche angezeigt.
+Langlaufende Aufgaben (Anwenden, Aktualisieren, UFW installieren, SSH-Test) werden in **Vorgangsprotokollen** erfasst und in der UI angezeigt.
 
 ## Vorgangsbanner
 
 Während ein Vorgang läuft, erscheint oben in der App ein Banner:
 
 - Vorgangstyp und Status (RUNNING, SUCCESS, FAILED)
-- Aufklappbare Schrittliste mit Status pro Schritt
-- Automatisches Schließen bei Erfolg nach kurzer Verzögerung
+- Ausklappbare Schrittliste mit Status pro Schritt
+- Automatisches Ausblenden bei Erfolg nach kurzer Verzögerung
 
-Das Banner pollt während der Arbeit auf Updates.
+Das Banner pollt während der Ausführung auf Updates.
+
+Bleibt ein Banner nach einer Browser-Trennung auf **RUNNING** oder **PENDING** hängen, laden Sie die Seite neu. Veraltete Vorgänge werden automatisch durch einen Hintergrund-Sweep bereinigt (typischerweise innerhalb von 30–60 Minuten).
 
 ## Vorgangsseite
 
@@ -33,14 +35,14 @@ Beispiele:
 - `ufw_refresh` — Status und Regeln aktualisieren
 - `ufw_sync` — Entwurf mit Server synchronisieren
 - `ufw_install` / `ufw_enable` — UFW-Einrichtung
-- `ssh_test` — Verbindungsverifizierung
+- `ssh_test` — Verbindungsprüfung
 - `server_create` — neuer Server hinzugefügt
 
 ## Verlauf löschen
 
-Administratoren können alten Vorgangsverlauf in der Oberfläche löschen (Audit-Ereignisse können je nach Aufbewahrungsrichtlinie erhalten bleiben). Löschen beeinflusst weder Serverzustand noch Regeln.
+Administratoren können alten Vorgangsverlauf in der UI löschen (Audit-Ereignisse können gemäß Aufbewahrungsrichtlinie erhalten bleiben). Das Löschen beeinflusst weder Serverstatus noch Regeln.
 
 ## Verwandte Dokumentation
 
 - [Audit-Protokoll und Export](../administration/audit-log-and-export.md)
-- [Entwurf-und-Anwenden-Workflow](../concepts/draft-apply-workflow.md)
+- [Entwurf- und Anwenden-Workflow](../concepts/draft-apply-workflow.md)

@@ -17,7 +17,7 @@ If SSH test fails, check host reachability, credentials, firewall allowing SSH f
 
 ## Server dashboard
 
-The dashboard shows UFW status:
+The dashboard loads **cached UFW state** from the latest Postgres snapshot — no SSH on first paint. This keeps the page fast.
 
 | Status | Actions available |
 |--------|-------------------|
@@ -25,7 +25,9 @@ The dashboard shows UFW status:
 | Installed but inactive | **Enable UFW** |
 | Installed and active | **Rules**, refresh, SSH test |
 
-Use **Refresh** to pull latest UFW state and sync the rules table.
+Use **Refresh** to pull the latest UFW state over SSH and sync the rules table.
+
+If UFW is active but the app has **no snapshot yet** (first visit after enable), an automatic background sync runs once to populate the cache.
 
 ## Edit a server
 

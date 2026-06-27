@@ -1,52 +1,56 @@
-# Docker container monitoring
+# Surveillance des conteneurs Docker
 
-UFW Remote Manager can inventory and control **Docker containers** on each registered server over **SSH** (same transport as UFW operations).
+UFW Remote Manager peut inventorier et contrôler les **conteneurs Docker** sur chaque serveur enregistré via **SSH** (même transport que les opérations UFW).
 
-Results appear in a table **below the port scan panel** on the server page.
+Les résultats apparaissent dans un tableau **sous le panneau de scan de ports** sur la page du serveur.
 
-## Enable
+## Activer
 
-Set in the app environment (Compose / Portainer):
+Définir dans l'environnement de l'application (Compose / Portainer) :
 
 ```env
 DOCKER_MONITOR_ENABLED=true
 ```
 
-Optional tuning:
+Réglages optionnels :
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Stored inventory snapshots per server |
-| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | SSH command timeout for Docker CLI |
+| Variable | Défaut | Rôle |
+|----------|--------|------|
+| `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Snapshots d'inventaire stockés par serveur |
+| `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | Délai d'expiration des commandes SSH pour Docker CLI |
 
-Inventory refresh and container control (start/stop/restart) share a **30 second** cooldown per server (fixed in app code since v0.5.1). Legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` and `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` in `.env` are **ignored**.
+L'actualisation de l'inventaire et le contrôle des conteneurs (start/stop/restart) partagent un délai de **30 secondes** par serveur (fixé dans le code depuis v0.5.1). Les anciens `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` et `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` dans `.env` sont **ignorés**.
 
-## Requirements on managed servers
+## Exigences sur les serveurs gérés
 
-- **Docker CLI** installed (`docker` in PATH)
-- Docker daemon reachable for the SSH user
-- Either membership in the **`docker`** group or **passwordless sudo** for `docker`
+- **Docker CLI** installé (`docker` dans PATH)
+- Démon Docker accessible pour l'utilisateur SSH
+- Soit appartenance au groupe **`docker`**, soit **sudo sans mot de passe** pour `docker`
 
-The app tries `docker …` first, then `sudo docker …` if permission is denied.
+L'application essaie d'abord `docker …`, puis `sudo docker …` en cas de refus de permission.
 
-## Features (MVP)
+## Fonctionnalités (MVP)
 
-- Refresh inventory: `docker ps -a`, stats for running containers
-- Table: name, image, status, health, ports, CPU/memory, Compose labels
-- Grouping by Compose project
-- Container detail drawer (`docker inspect`, masked env vars)
-- Control: **start**, **stop**, **restart** (confirm for stop/restart)
-- Operation progress banner + audit events
+- Actualiser l'inventaire : `docker ps -a`, statistiques pour les conteneurs en cours d'exécution
+- Tableau : nom, image, statut, santé, ports, CPU/mémoire, labels Compose
+- Regroupement par projet Compose
+- Tiroir de détail du conteneur (`docker inspect`, variables d'env masquées)
+- Contrôle : **start**, **stop**, **restart** (confirmation pour stop/restart)
+- Bannière de progression d'opération + événements d'audit
 
-## Security
+## Sécurité
 
-- Feature flag (default off)
-- Container ID/name validation — no arbitrary shell from UI
-- Fixed control actions only
-- Fixed 30s rate limits on refresh and control (not env-configurable)
-- Audit: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
+- Feature flag (désactivé par défaut)
+- Validation ID/nom de conteneur — pas de shell arbitraire depuis l'interface
+- Actions de contrôle fixes uniquement
+- Limites de débit fixes de 30s sur actualisation et contrôle (non configurables par env)
+- Audit : `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
 
-## Related docs
+## Interrogation de progression
 
-- [Deployment overview](./overview.md)
-- [Security model](../administration/security-model.md)
+Pendant l'actualisation de l'inventaire, l'interface interroge un point de terminaison de statut léger. L'intervalle d'interrogation augmente : **3s → 5s → 10s**. La bannière d'opération affiche la progression des étapes.
+
+## Documentation associée
+
+- [Vue d'ensemble du déploiement](./overview.md)
+- [Modèle de sécurité](../administration/security-model.md)

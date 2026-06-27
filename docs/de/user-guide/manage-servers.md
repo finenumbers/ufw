@@ -17,15 +17,17 @@ Schlägt der SSH-Test fehl, prüfen Sie Host-Erreichbarkeit, Zugangsdaten, Firew
 
 ## Server-Dashboard
 
-Das Dashboard zeigt den UFW-Status:
+Das Dashboard lädt den **gecachten UFW-Status** aus dem neuesten Postgres-Snapshot — kein SSH beim ersten Rendern. So bleibt die Seite schnell.
 
 | Status | Verfügbare Aktionen |
 |--------|---------------------|
 | UFW nicht installiert | **UFW installieren** |
 | Installiert, aber inaktiv | **UFW aktivieren** |
-| Installiert und aktiv | **Regeln**, Status aktualisieren, SSH testen |
+| Installiert und aktiv | **Regeln**, aktualisieren, SSH testen |
 
-**Status aktualisieren** verwenden, um den neuesten UFW-Zustand abzurufen und die Regeltabelle zu synchronisieren.
+**Aktualisieren** verwenden, um den neuesten UFW-Zustand per SSH abzurufen und die Regeltabelle zu synchronisieren.
+
+Ist UFW aktiv, die App aber **noch ohne Snapshot** (erster Besuch nach der Aktivierung), läuft einmalig automatisch eine Hintergrund-Synchronisation, um den Cache zu füllen.
 
 ## Server bearbeiten
 

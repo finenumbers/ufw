@@ -1,6 +1,6 @@
-# Testes de fumaça
+# Testes smoke
 
-Execute após implantação, atualização ou recuperação de desastre.
+Executar após deploy, atualização ou disaster recovery.
 
 ## Script automatizado
 
@@ -10,37 +10,37 @@ Execute após implantação, atualização ou recuperação de desastre.
 
 Flags:
 
-| Flag | Finalidade |
-|------|---------|
-| `--env-file .env` | Carrega variáveis de produção (exige `NPM_NETWORK` para compose prod) |
-| `--ghcr` | Inclui overlay `docker-compose.ghcr.yml` |
-| `--app-url URL` | Também verifica `/api/health` HTTPS público via curl |
+| Flag | Propósito |
+|------|-----------|
+| `--env-file .env` | Carregar variáveis de produção (requer `NPM_NETWORK` para compose prod) |
+| `--ghcr` | Incluir overlay `docker-compose.ghcr.yml` |
+| `--app-url URL` | Verificar também `/api/health` HTTPS público via curl |
 
 O script verifica:
 
-- Postgres saudável
+- Postgres healthy
 - `ufw-migrate` exited 0
 - `ufw-app` healthy
-- `/api/health` interno retorna `{"status":"ok","db":"ok"}`
+- `/api/health` interno retorna `{"status":"ok","db":"ok","version":"…"}` (`revision` apenas fora de produção)
 
-## Verificação manual de saúde
+## Verificação de saúde manual
 
 ```bash
 docker compose --env-file .env ps
 docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r.json()).then(console.log)"
 ```
 
-## Checklist no navegador
+## Checklist do navegador
 
-1. `APP_URL/login` — autentique-se
-2. **Identidades SSH** — identidade existe ou crie uma
-3. **Servidores** — Testar SSH tem sucesso
-4. **Regras** — Salvar regras roda (confirmação opcional)
+1. `APP_URL/login` — autenticar
+2. **Identidades SSH** — identidade existente ou criar uma
+3. **Servidores** — teste SSH bem-sucedido
+4. **Regras** — pré-visualização de aplicação executada (confirmação opcional)
 5. **Histórico de operações** — entradas recentes visíveis
 
 ## Primeira instalação
 
-Use `APP_URL/setup` em vez de `/login` para criar a conta de administrador uma vez.
+Use `APP_URL/setup` em vez de `/login` para criar a conta admin uma vez.
 
 ## Documentação relacionada
 

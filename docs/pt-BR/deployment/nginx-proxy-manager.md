@@ -8,9 +8,9 @@ O Nginx Proxy Manager (NPM) deve **já estar instalado** no seu host Docker. Est
 Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, rede Docker)
 ```
 
-O NPM termina HTTPS. A aplicação define HSTS em produção, mas depende do NPM para certificados.
+O NPM termina HTTPS. O app define HSTS em produção, mas depende do NPM para certificados.
 
-## Checklist de Proxy Host
+## Checklist Proxy Host
 
 Crie ou atualize um **Proxy Host** na interface do NPM:
 
@@ -27,17 +27,17 @@ Crie ou atualize um **Proxy Host** na interface do NPM:
 
 ## Rede Docker
 
-O container da aplicação deve entrar na **mesma rede Docker** que o NPM.
+O container do app deve entrar na **mesma rede Docker** que o NPM.
 
-Defina no `.env`:
+Definir em `.env`:
 
 ```bash
 NPM_NETWORK=nginxproxymanager_default
 ```
 
-(`docker-compose.prod.yml` anexa `ufw-app` à rede externa `npm_proxy` → `$NPM_NETWORK`.)
+(`docker-compose.prod.yml` conecta `ufw-app` à rede externa `npm_proxy` → `$NPM_NETWORK`.)
 
-Encontre o nome da sua rede:
+Encontrar o nome da sua rede:
 
 ```bash
 docker network ls | grep -i proxy
@@ -45,13 +45,34 @@ docker network ls | grep -i proxy
 
 ## APP_URL deve corresponder
 
-`APP_URL` no `.env` deve corresponder exatamente à URL pública (esquema + host):
+`APP_URL` em `.env` deve corresponder exatamente à URL pública (esquema + host):
 
 ```bash
 APP_URL=https://ufw.example.com
 ```
 
-Incompatibilidade causa loops de redirecionamento de autenticação ou cookies quebrados.
+Discrepância causa loops de redirecionamento de auth ou cookies inválidos.
+
+## APP_URL vs esquema Proxy Host
+
+| Camada | Esquema | Exemplo |
+|--------|---------|---------|
+| Navegador / `APP_URL` | **HTTPS** | `https://ufw.example.com` |
+| NPM → container | **HTTP** | `http://ufw-app:8088` |
+
+O NPM termina TLS. O container do app escuta HTTP sem criptografia na rede Docker — isso é **intencional**, não uma má configuração.
+
+Defina `APP_URL` apenas para a URL HTTPS pública. Nunca aponte `APP_URL` para `http://ufw-app:8088`.
+
+## TRUST_PROXY
+
+Ao executar atrás do NPM, definir em `.env` ou ambiente da stack Portainer:
+
+```bash
+TRUST_PROXY=1
+```
+
+Isso faz com que os limites de taxa em `/setup` usem o IP real do cliente de `X-Forwarded-For`. Veja [Variáveis de ambiente](../administration/environment-variables.md).
 
 ## Build local (sem GHCR)
 
@@ -59,10 +80,10 @@ Incompatibilidade causa loops de redirecionamento de autenticação ou cookies q
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-As mesmas configurações de Proxy Host do NPM se aplicam.
+As mesmas configurações de NPM Proxy Host se aplicam.
 
 ## Documentação relacionada
 
-- [Visão geral da implantação](./overview.md)
+- [Visão geral de implantação](./overview.md)
 - [GHCR + Compose](./ghcr-compose.md)
 - [Solução de problemas](../troubleshooting.md)
