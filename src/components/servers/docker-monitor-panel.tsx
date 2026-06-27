@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { DockerContainerDrawer } from "@/components/servers/docker-container-drawer";
@@ -17,6 +17,7 @@ import {
   controlDockerContainerAction,
   getDockerContainerInspectAction,
   getDockerInventoryByIdAction,
+  getDockerInventoryStatusByIdAction,
   refreshDockerInventoryAction,
 } from "@/server/actions/docker-monitor";
 
@@ -26,6 +27,16 @@ type DockerMonitorPanelProps = {
   startToken?: number;
   onInventoryUpdated?: (inventory: DockerInventoryView) => void;
 };
+
+function pollDelayMs(attempt: number): number {
+  if (attempt < 5) {
+    return 3000;
+  }
+  if (attempt < 15) {
+    return 5000;
+  }
+  return 10000;
+}
 
 export function DockerMonitorPanel({
   serverId,
@@ -46,11 +57,19 @@ export function DockerMonitorPanel({
   const [pendingAction, setPendingAction] = useState<DockerContainerAction | null>(null);
   const [confirmAction, setConfirmAction] = useState<DockerContainerAction | null>(null);
   const [confirmContainer, setConfirmContainer] = useState<DockerContainerView | null>(null);
+  const pollAttemptRef = useRef(0);
 
   useEffect(() => {
+    if (
+      refreshing ||
+      inventory?.status === "RUNNING" ||
+      inventory?.status === "PENDING"
+    ) {
+      return;
+    }
     setInventory(initialInventory);
     setSnapshotId(initialInventory?.id ?? null);
-  }, [initialInventory]);
+  }, [initialInventory, refreshing, inventory?.status]);
 
   const notifyInventoryUpdate = useCallback(
     (next: DockerInventoryView) => {
@@ -62,13 +81,33 @@ export function DockerMonitorPanel({
     [onInventoryUpdated],
   );
 
-  const refreshById = useCallback(
+  const pollInventory = useCallback(
     async (id: string) => {
-      const latest = await getDockerInventoryByIdAction(id);
-      if (latest) {
-        notifyInventoryUpdate(latest);
+      const status = await getDockerInventoryStatusByIdAction(id);
+      if (!status) {
+        return null;
       }
-      return latest;
+
+      if (status.status === "SUCCESS" || status.status === "FAILED") {
+        pollAttemptRef.current = 0;
+        const full = await getDockerInventoryByIdAction(id);
+        if (full) {
+          notifyInventoryUpdate(full);
+        }
+        return full;
+      }
+
+      setInventory((previous) =>
+        previous?.id === id
+          ? {
+              ...previous,
+              status: status.status,
+              errorMessage: status.errorMessage,
+              summary: status.summary,
+            }
+          : status,
+      );
+      return status;
     },
     [notifyInventoryUpdate],
   );
@@ -76,6 +115,7 @@ export function DockerMonitorPanel({
   const startRefresh = useCallback(async () => {
     setRefreshing(true);
     clearMessage();
+    pollAttemptRef.current = 0;
 
     const result = await refreshDockerInventoryAction(serverId);
     if (!result.success) {
@@ -87,9 +127,9 @@ export function DockerMonitorPanel({
     setInventory(null);
     setSnapshotId(result.snapshotId);
     notifyOperationStarted(serverId);
-    await refreshById(result.snapshotId);
+    await pollInventory(result.snapshotId);
     setRefreshing(false);
-  }, [clearMessage, refreshById, serverId, showFailure, tCommon]);
+  }, [clearMessage, pollInventory, serverId, showFailure, tCommon]);
 
   useEffect(() => {
     if (startToken <= 0) {
@@ -112,12 +152,29 @@ export function DockerMonitorPanel({
       return;
     }
 
-    const timer = window.setInterval(() => {
-      void refreshById(snapshotId);
-    }, 3000);
+    let cancelled = false;
+    let timer: number | undefined;
 
-    return () => window.clearInterval(timer);
-  }, [inventory, refreshById, snapshotId]);
+    const schedulePoll = () => {
+      timer = window.setTimeout(() => {
+        void pollInventory(snapshotId).finally(() => {
+          if (!cancelled) {
+            pollAttemptRef.current += 1;
+            schedulePoll();
+          }
+        });
+      }, pollDelayMs(pollAttemptRef.current));
+    };
+
+    schedulePoll();
+
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
+    };
+  }, [inventory, pollInventory, snapshotId]);
 
   async function handleDetails(container: DockerContainerView) {
     setDrawerOpen(true);
@@ -153,7 +210,7 @@ export function DockerMonitorPanel({
 
     notifyOperationStarted(serverId);
     setSnapshotId(result.followUpSnapshotId);
-    await refreshById(result.followUpSnapshotId);
+    await pollInventory(result.followUpSnapshotId);
   }
 
   function requestConfirm(container: DockerContainerView, action: DockerContainerAction) {

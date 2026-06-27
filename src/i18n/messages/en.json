@@ -200,7 +200,8 @@
       "partialResync": "Some rules were applied before the error. Use Force resync to align local state with UFW.",
       "forceResync": "Force resync from server",
       "forceResyncing": "Resyncing...",
-      "forceResyncFailed": "Resync failed"
+      "forceResyncFailed": "Resync failed",
+      "remoteChanged": "Remote UFW state changed since preview. Please preview again before applying."
     },
     "table": {
       "searchPlaceholder": "Search rules...",
@@ -313,7 +314,8 @@
       "docker_control_complete": "Done: {action} completed for {name}",
       "docker_control_failed": "Docker control failed: {error}",
       "operation_failed": "Operation failed: {error}",
-      "operation_cancelled": "Operation cancelled"
+      "operation_cancelled": "Operation cancelled",
+      "operation_timed_out": "Operation timed out"
     },
     "phases": {
       "ufw_commands": "Applying UFW commands",

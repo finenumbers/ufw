@@ -29,12 +29,15 @@ import {
 import {
   buildPostApplyRuleRecords,
   resolveApplyClaimError,
+  storedSummaryMatchesPlan,
 } from "@/server/services/apply-sync";
 import type { UnifiedRuleRow } from "@/types/rule";
 import { buildTableRowsFromSources, getLiveRemoteParsedRules } from "@/server/services/rules-view.service";
 import { runSshForServer } from "@/server/services/ssh.service";
 import { syncDraftOriginStates, updateDraftRules } from "@/server/services/draft.service";
 import type { ApplyPlan } from "@/types/apply";
+
+export const APPLY_REMOTE_CHANGED = "APPLY_REMOTE_CHANGED";
 
 function validatePlanCommands(plan: ApplyPlan): void {
   for (const item of plan.items) {
@@ -269,7 +272,13 @@ async function runPostApplySync(
 export async function confirmApply(
   sessionId: string,
   userId: string,
-): Promise<{ success: boolean; error?: string; partial?: boolean; needsResync?: boolean }> {
+): Promise<{
+  success: boolean;
+  error?: string;
+  partial?: boolean;
+  needsResync?: boolean;
+  needsRePreview?: boolean;
+}> {
   const session = await db.applySession.findUnique({
     where: { id: sessionId },
     include: { items: { orderBy: { sortOrder: "asc" } } },
@@ -375,6 +384,11 @@ export async function confirmApply(
       async (client, config) => {
         const initialDetection = await buildDetectionFromClient(client, config.password);
         const plan = rebuildApplyPlanAtConfirm(desiredRows, initialDetection.rules);
+
+        if (!storedSummaryMatchesPlan(summary, plan)) {
+          throw new Error(APPLY_REMOTE_CHANGED);
+        }
+
         const ufwChanges = hasApplyChanges(plan);
 
         if (!ufwChanges) {
@@ -537,7 +551,45 @@ export async function confirmApply(
       await updateDraftRules(session.serverId, userId, desiredRows);
     }
 
-    await runPostApplySync(session, tracker, { detection: sshResult.detection });
+    try {
+      await runPostApplySync(session, tracker, { detection: sshResult.detection });
+    } catch (syncError) {
+      const message =
+        syncError instanceof Error ? syncError.message : "Post-apply sync failed";
+
+      if (sshResult.detection) {
+        await persistPartialApplyMetadata(session.serverId, userId, sshResult.detection);
+      }
+
+      await db.applySession.update({
+        where: { id: sessionId },
+        data: {
+          status: "PARTIAL",
+          errorMessage: message,
+          completedAt: new Date(),
+        },
+      });
+
+      await createAuditEvent({
+        userId,
+        action: "APPLY_FAILED",
+        entityType: "apply_session",
+        entityId: sessionId,
+        metadata: { errors: [message], partial: true, syncFailed: true },
+      });
+
+      await tracker.fail(
+        { key: "messages.apply_failed", params: { error: message } },
+        [message],
+      );
+
+      return {
+        success: false,
+        error: message,
+        partial: true,
+        needsResync: true,
+      };
+    }
 
     await db.applySession.update({
       where: { id: sessionId },
@@ -556,6 +608,23 @@ export async function confirmApply(
     return { success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Apply failed";
+
+    if (message === APPLY_REMOTE_CHANGED) {
+      await db.applySession.update({
+        where: { id: sessionId },
+        data: {
+          status: "PENDING",
+          confirmedAt: null,
+          errorMessage: "Remote UFW state changed since preview",
+        },
+      });
+      await tracker.fail(
+        { key: "messages.apply_failed", params: { error: message } },
+        [message],
+      );
+      return { success: false, error: APPLY_REMOTE_CHANGED, needsRePreview: true };
+    }
+
     await db.applySession.update({
       where: { id: sessionId },
       data: { status: "FAILED", errorMessage: message, completedAt: new Date() },

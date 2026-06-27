@@ -200,7 +200,8 @@
       "partialResync": "Certaines règles ont été appliquées avant l'erreur. Utilisez « Resynchronisation forcée » pour aligner l'état local avec UFW.",
       "forceResync": "Resynchronisation forcée depuis le serveur",
       "forceResyncing": "Resynchronisation...",
-      "forceResyncFailed": "Échec de la resynchronisation"
+      "forceResyncFailed": "Échec de la resynchronisation",
+      "remoteChanged": "L'état UFW distant a changé depuis l'aperçu. Veuillez relancer l'aperçu avant d'appliquer."
     },
     "table": {
       "searchPlaceholder": "Rechercher des règles...",
@@ -298,6 +299,7 @@
       "server_create_complete": "Serveur {name} créé",
       "operation_failed": "Opération échouée : {error}",
       "operation_cancelled": "Opération annulée",
+      "operation_timed_out": "Délai d'opération dépassé",
       "port_scan_start": "Starting external port scan",
       "port_scan_discovery": "Discovering open ports",
       "port_scan_enrichment": "Identifying services with Nmap",

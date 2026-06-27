@@ -72,8 +72,8 @@ test("unifiedRowsToImportRows skips deleted rows and preserves order", () => {
   assert.equal(exported[1]?.name, "Second");
 });
 
-test("exportRulesToXlsxBuffer uses table column order", () => {
-  const buffer = exportRulesToXlsxBuffer([sampleRow()]);
+test("exportRulesToXlsxBuffer uses table column order", async () => {
+  const buffer = await exportRulesToXlsxBuffer([sampleRow()]);
   const workbook = XLSX.read(buffer, { type: "array" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]!]!;
   const headerRow = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 })[0];
@@ -81,8 +81,8 @@ test("exportRulesToXlsxBuffer uses table column order", () => {
   assert.deepEqual(headerRow, [...RULES_FILE_COLUMNS]);
 });
 
-test("exportRulesToXlsxBuffer produces import-compatible workbook", () => {
-  const buffer = exportRulesToXlsxBuffer([
+test("exportRulesToXlsxBuffer produces import-compatible workbook", async () => {
+  const buffer = await exportRulesToXlsxBuffer([
     sampleRow({
       core: {
         action: "ALLOW",
@@ -105,7 +105,7 @@ test("exportRulesToXlsxBuffer produces import-compatible workbook", () => {
       },
     }),
   ]);
-  const imported = parseXlsxRules(buffer);
+  const imported = await parseXlsxRules(buffer);
 
   assert.equal(imported.length, 1);
   assert.equal(imported[0]?.action, "ALLOW");

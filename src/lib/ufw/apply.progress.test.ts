@@ -129,3 +129,71 @@ test("executeApplyPlan reports failed step progress", async () => {
   assert.equal(events.at(-1)?.status, "FAILED");
   assert.match(events.at(-1)?.error ?? "", /permission denied/);
 });
+
+test("executeApplyPlan fails when post-apply status read fails", async () => {
+  const result = await executeApplyPlan(
+    client,
+    {
+      items: [
+        {
+          action: "ADD",
+          fingerprint: "fp1",
+          remoteCommand: "ufw allow 22/tcp",
+          sortOrder: 0,
+        },
+      ],
+      summary: { addCount: 1, removeCount: 0, updateCount: 0 },
+    },
+    undefined,
+    {
+      exec: async (_client, command) => {
+        if (command === UFW_COMMANDS.statusNumbered) {
+          return { code: 1, stdout: "", stderr: "status read failed" };
+        }
+        return { code: 0, stdout: "ok", stderr: "" };
+      },
+    },
+  );
+
+  assert.equal(result.success, false);
+  assert.equal(result.partial, true);
+  assert.match(result.errors[0] ?? "", /status read failed/);
+});
+
+test("executeApplyPlan marks partial when status read fails after partial execution", async () => {
+  const result = await executeApplyPlan(
+    client,
+    {
+      items: [
+        {
+          action: "ADD",
+          fingerprint: "fp1",
+          remoteCommand: "ufw allow 22/tcp",
+          sortOrder: 0,
+        },
+        {
+          action: "ADD",
+          fingerprint: "fp2",
+          remoteCommand: "ufw allow 443/tcp",
+          sortOrder: 1,
+        },
+      ],
+      summary: { addCount: 2, removeCount: 0, updateCount: 0 },
+    },
+    undefined,
+    {
+      exec: async (_client, command) => {
+        if (command === "ufw allow 443/tcp") {
+          return { code: 1, stdout: "", stderr: "denied" };
+        }
+        if (command === UFW_COMMANDS.statusNumbered) {
+          return { code: 0, stdout: "Status: active", stderr: "" };
+        }
+        return { code: 0, stdout: "ok", stderr: "" };
+      },
+    },
+  );
+
+  assert.equal(result.success, false);
+  assert.equal(result.partial, true);
+});

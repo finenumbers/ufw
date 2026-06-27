@@ -200,7 +200,8 @@
       "partialResync": "Einige Regeln wurden vor dem Fehler angewendet. Verwenden Sie «Erzwungene Synchronisation», um den lokalen Zustand mit UFW abzugleichen.",
       "forceResync": "Erzwungene Synchronisation vom Server",
       "forceResyncing": "Synchronisiere...",
-      "forceResyncFailed": "Synchronisation fehlgeschlagen"
+      "forceResyncFailed": "Synchronisation fehlgeschlagen",
+      "remoteChanged": "Der UFW-Status auf dem Server hat sich seit der Vorschau geändert. Bitte Vorschau erneut ausführen."
     },
     "table": {
       "searchPlaceholder": "Regeln suchen...",
@@ -298,6 +299,7 @@
       "server_create_complete": "Server {name} erstellt",
       "operation_failed": "Vorgang fehlgeschlagen: {error}",
       "operation_cancelled": "Vorgang abgebrochen",
+      "operation_timed_out": "Zeitüberschreitung der Operation",
       "port_scan_start": "Starting external port scan",
       "port_scan_discovery": "Discovering open ports",
       "port_scan_enrichment": "Identifying services with Nmap",

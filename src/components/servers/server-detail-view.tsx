@@ -1,24 +1,45 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Settings } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { OperationBanner } from "@/components/layout/operation-banner";
-import { RulesGroupSection } from "@/components/rules/rules-group-section";
 import { RulesImportExport } from "@/components/rules/rules-import-export";
 import { RulesToolbar } from "@/components/rules/rules-toolbar";
 import { ServerInitialSync } from "@/components/servers/server-initial-sync";
 import { UfwDashboard } from "@/components/servers/ufw-dashboard";
-import { PortScanPanel } from "@/components/servers/port-scan-panel";
-import { DockerMonitorPanel } from "@/components/servers/docker-monitor-panel";
 import { Button } from "@/components/ui/button";
+import { OPERATION_STARTED_EVENT } from "@/lib/operations/events";
 import type { DockerInventoryView } from "@/types/docker-monitor";
 import type { PortScanView } from "@/types/port-scan";
 import type { UnifiedRuleRow } from "@/types/rule";
 import type { UfwDetectionResult } from "@/types/ufw";
 import { getRulesViewPageAction } from "@/server/actions/rules";
+
+const RulesGroupSection = dynamic(
+  () =>
+    import("@/components/rules/rules-group-section").then((module) => ({
+      default: module.RulesGroupSection,
+    })),
+  { ssr: false },
+);
+
+const PortScanPanel = dynamic(
+  () =>
+    import("@/components/servers/port-scan-panel").then((module) => ({
+      default: module.PortScanPanel,
+    })),
+);
+
+const DockerMonitorPanel = dynamic(
+  () =>
+    import("@/components/servers/docker-monitor-panel").then((module) => ({
+      default: module.DockerMonitorPanel,
+    })),
+);
 
 type ServerDetailViewProps = {
   server: {
@@ -85,22 +106,45 @@ export function ServerDetailView({
 
   const loadingMoreRef = useRef(false);
   const rowsRef = useRef(rows);
+  const rowsDirtyRef = useRef(false);
+  const operationActiveRef = useRef(false);
   rowsRef.current = rows;
 
   useEffect(() => {
+    function handleOperationStarted() {
+      operationActiveRef.current = true;
+    }
+
+    window.addEventListener(OPERATION_STARTED_EVENT, handleOperationStarted);
+    return () => window.removeEventListener(OPERATION_STARTED_EVENT, handleOperationStarted);
+  }, []);
+
+  useEffect(() => {
+    if (operationActiveRef.current) {
+      return;
+    }
     setPortFindingCount(initialPortFindingCount);
     setContainerCount(initialContainerCount);
   }, [initialPortFindingCount, initialContainerCount]);
 
   useEffect(() => {
+    if (rowsDirtyRef.current || operationActiveRef.current || loadingMoreRef.current) {
+      return;
+    }
     setRows(sortRows(initialRows));
     setTotal(initialTotal);
     setHasMore(initialHasMore);
     setNextOffset(initialNextOffset);
   }, [initialRows, initialTotal, initialHasMore, initialNextOffset]);
 
+  const handleRowsChange = useCallback((next: UnifiedRuleRow[]) => {
+    rowsDirtyRef.current = true;
+    setRows(next);
+  }, []);
+
   const refreshRules = useCallback(async () => {
     const page = await getRulesViewPageAction(server.id, 0);
+    rowsDirtyRef.current = false;
     setRows(sortRows(page.rows));
     setTotal(page.total);
     setHasMore(page.hasMore);
@@ -198,7 +242,7 @@ export function ServerDetailView({
         portFindingCount={portFindingCount}
         containerCount={containerCount}
         rows={rows}
-        onRowsChange={setRows}
+        onRowsChange={handleRowsChange}
         resolveAllRows={resolveAllRows}
         onRulesRefresh={refreshRules}
         portScanEnabled={portScanEnabled}
@@ -213,7 +257,7 @@ export function ServerDetailView({
           <RulesGroupSection
             serverId={server.id}
             rows={rows}
-            onChange={setRows}
+            onChange={handleRowsChange}
             optionsRefreshKey={optionsRefreshKey}
             total={total}
             hasMore={hasMore}

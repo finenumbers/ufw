@@ -107,6 +107,39 @@ export async function getLatestSnapshot(serverId: string) {
   });
 }
 
+export function detectionFromSnapshot(
+  snapshot: NonNullable<Awaited<ReturnType<typeof getLatestSnapshot>>>,
+): UfwDetectionResult {
+  return {
+    installed: snapshot.ufwInstalled,
+    active: snapshot.ufwActive,
+    status: {
+      installed: snapshot.ufwInstalled,
+      active: snapshot.ufwActive,
+      rawStatus: snapshot.rawStatus ?? "",
+    },
+    rules: snapshot.rules.map((rule) => ({
+      fingerprint: rule.fingerprint,
+      rawLine: rule.rawLine ?? "",
+      core: {
+        action: rule.action,
+        direction: rule.direction,
+        interface: rule.interface,
+        protocol: rule.protocol,
+        fromAddress: rule.fromAddress,
+        fromPort: rule.fromPort,
+        toAddress: rule.toAddress,
+        toPort: rule.toPort,
+        appName: rule.appName,
+        logMode: rule.logMode,
+        ruleComment: rule.ruleComment,
+        ipv6: rule.ipv6,
+      },
+    })),
+    interfaces: snapshot.interfaceOptions,
+  };
+}
+
 export async function getSnapshotInterfaceOptions(serverId: string): Promise<string[]> {
   const snapshot = await getLatestSnapshot(serverId);
   return snapshot?.interfaceOptions ?? [];
@@ -115,12 +148,13 @@ export async function getSnapshotInterfaceOptions(serverId: string): Promise<str
 export async function persistSnapshotInterfaceOptions(
   serverId: string,
   interfaceOptions: string[],
+  snapshot?: Awaited<ReturnType<typeof getLatestSnapshot>>,
 ): Promise<void> {
-  const snapshot = await getLatestSnapshot(serverId);
-  if (!snapshot) return;
+  const target = snapshot ?? (await getLatestSnapshot(serverId));
+  if (!target) return;
 
   await db.serverSnapshot.update({
-    where: { id: snapshot.id },
+    where: { id: target.id },
     data: { interfaceOptions },
   });
 }

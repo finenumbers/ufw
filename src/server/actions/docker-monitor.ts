@@ -18,6 +18,7 @@ import {
   controlDockerContainer,
   getDockerContainerInspect,
   getDockerInventoryById,
+  getDockerInventoryStatusById,
   startDockerInventoryRefresh,
 } from "@/server/services/docker-monitor.service";
 import { getServerById } from "@/server/services/server.service";
@@ -65,6 +66,11 @@ export async function refreshDockerInventoryAction(
 export async function getDockerInventoryByIdAction(snapshotId: string) {
   await requireUserId();
   return getDockerInventoryById(snapshotId);
+}
+
+export async function getDockerInventoryStatusByIdAction(snapshotId: string) {
+  await requireUserId();
+  return getDockerInventoryStatusById(snapshotId);
 }
 
 export async function getDockerContainerInspectAction(serverId: string, containerRef: string) {

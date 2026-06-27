@@ -1,6 +1,6 @@
 {
   "name": "ufw-remote-manager",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 8088",
@@ -16,6 +16,7 @@
     "i18n:check": "npx tsx scripts/i18n-check.ts",
     "docs:check": "npx tsx scripts/docs-check.ts",
     "deadcode:check": "knip --include files,dependencies,exports,types",
+    "analyze": "ANALYZE=true npm run build",
     "test": "npx tsx --test src/lib/**/*.test.ts src/lib/*.test.ts src/server/**/*.test.ts"
   },
   "dependencies": {
@@ -50,6 +51,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@next/bundle-analyzer": "^15.3.3",
     "@tailwindcss/postcss": "^4.1.8",
     "@types/node": "^22.15.29",
     "@types/papaparse": "^5.3.16",

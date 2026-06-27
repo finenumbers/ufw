@@ -1,5 +1,7 @@
 import type { RuleAction, RuleDirection, RuleProtocol, LogMode } from "@prisma/client";
 
+import { hasApplyChanges } from "@/lib/ufw/plan";
+import type { ApplyPlan, ApplyPreviewResult } from "@/types/apply";
 import type { UnifiedRuleRow } from "@/types/rule";
 
 type SnapshotRuleRecord = {
@@ -58,6 +60,26 @@ export function buildPostApplyRuleRecords(
       },
     };
   });
+}
+
+export function storedSummaryMatchesPlan(
+  stored: ApplyPreviewResult["plan"]["summary"],
+  plan: ApplyPlan,
+): boolean {
+  const previewHadUfw =
+    stored.addCount + stored.removeCount + stored.updateCount > 0 || Boolean(stored.orderResync);
+  const currentHasUfw = hasApplyChanges(plan);
+
+  if (previewHadUfw !== currentHasUfw) {
+    return false;
+  }
+
+  return (
+    stored.addCount === plan.summary.addCount &&
+    stored.removeCount === plan.summary.removeCount &&
+    stored.updateCount === plan.summary.updateCount &&
+    Boolean(stored.orderResync) === Boolean(plan.summary.orderResync)
+  );
 }
 
 export function resolveApplyClaimError(updateCount: number): string | null {

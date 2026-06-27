@@ -21,7 +21,7 @@ export async function parseImportFile(
     case "json":
       return finalizeImportRows(parseJsonRules(content as string));
     case "xlsx":
-      return finalizeImportRows(parseXlsxRules(content as ArrayBuffer));
+      return finalizeImportRows(await parseXlsxRules(content as ArrayBuffer));
     default:
       throw new Error(`Unsupported import format: ${format}`);
   }

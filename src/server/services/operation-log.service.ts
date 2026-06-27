@@ -68,7 +68,7 @@ export async function getActiveOperationLog(serverId: string, userId?: string) {
   return db.operationLog.findFirst({
     where: {
       serverId,
-      status: "RUNNING",
+      status: { in: ["RUNNING", "PENDING"] },
       ...(userId ? { userId } : {}),
     },
     orderBy: { createdAt: "desc" },

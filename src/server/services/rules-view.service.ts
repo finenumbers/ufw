@@ -206,25 +206,6 @@ async function syncDraftFromRemoteSnapshot(
   return { skipped: false };
 }
 
-export function remoteSnapshotOutOfSync(
-  snapshot: { rules: Array<{ fingerprint: string }> } | null,
-  remoteRules: Array<{ fingerprint: string }>,
-): boolean {
-  if (!snapshot) {
-    return remoteRules.length > 0;
-  }
-
-  const snapshotFingerprints = [...new Set(snapshot.rules.map((rule) => rule.fingerprint))].sort();
-  const remoteFingerprints = [...new Set(remoteRules.map((rule) => rule.fingerprint))].sort();
-
-  if (snapshotFingerprints.length !== remoteFingerprints.length) {
-    return true;
-  }
-
-  return snapshotFingerprints.some(
-    (fingerprint, index) => fingerprint !== remoteFingerprints[index],
-  );
-}
 
 export async function refreshRemoteRules(
   serverId: string,

@@ -408,6 +408,7 @@ model OperationLog {
 
   @@index([status])
   @@index([serverId, createdAt(sort: Desc)])
+  @@index([serverId, status, createdAt(sort: Desc)])
   @@map("operation_log")
 }
 
@@ -444,6 +445,7 @@ model PortScan {
   findings PortScanFinding[]
 
   @@index([serverId, startedAt(sort: Desc)])
+  @@index([serverId, status, startedAt(sort: Desc)])
   @@map("port_scan")
 }
 
@@ -488,6 +490,7 @@ model DockerInventorySnapshot {
   containers DockerContainerRecord[]
 
   @@index([serverId, capturedAt(sort: Desc)])
+  @@index([serverId, status, capturedAt(sort: Desc)])
   @@map("docker_inventory_snapshot")
 }
 

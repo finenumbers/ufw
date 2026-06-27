@@ -1,10 +1,9 @@
-import * as XLSX from "xlsx";
-
 import { assertImportRowCount, MAX_IMPORT_ROWS } from "@/lib/imports/import-limits";
 import { normalizeImportRow } from "@/lib/imports/normalize-row";
 import type { ImportRuleRow } from "@/lib/validations/import";
 
-export function parseXlsxRules(content: ArrayBuffer): ImportRuleRow[] {
+export async function parseXlsxRules(content: ArrayBuffer): Promise<ImportRuleRow[]> {
+  const XLSX = await import("xlsx");
   const workbook = XLSX.read(content, { type: "array" });
   const sheetName = workbook.SheetNames[0];
   if (!sheetName) {

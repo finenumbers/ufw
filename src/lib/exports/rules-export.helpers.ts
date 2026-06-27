@@ -1,5 +1,3 @@
-import * as XLSX from "xlsx";
-
 import type { ImportRuleRow } from "@/lib/validations/import";
 import { RULES_FILE_COLUMNS, type RulesFileColumn } from "@/lib/rules/file-columns";
 import type { UnifiedRuleRow } from "@/types/rule";
@@ -54,7 +52,8 @@ function importRowToSheetRow(row: ImportRuleRow): Record<RulesFileColumn, string
   };
 }
 
-export function exportRulesToXlsxBuffer(rows: UnifiedRuleRow[]): ArrayBuffer {
+export async function exportRulesToXlsxBuffer(rows: UnifiedRuleRow[]): Promise<ArrayBuffer> {
+  const XLSX = await import("xlsx");
   const sheetRows = unifiedRowsToImportRows(rows).map(importRowToSheetRow);
   const worksheet = XLSX.utils.json_to_sheet(sheetRows, { header: [...RULES_FILE_COLUMNS] });
   const workbook = XLSX.utils.book_new();

@@ -17,6 +17,8 @@ function resolveDraftOriginState(
 
 export async function getOrCreateDraftSession(serverId: string, userId: string) {
   return db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`${serverId}:${userId}`}))`;
+
     const existing = await tx.draftSession.findFirst({
       where: { serverId, userId, isActive: true },
       include: { rules: { orderBy: { sortOrder: "asc" } } },

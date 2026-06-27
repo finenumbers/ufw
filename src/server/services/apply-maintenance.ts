@@ -50,10 +50,27 @@ export async function sweepStalePendingOperationLogs(maxAgeMinutes = 60): Promis
   return result.count;
 }
 
+export async function sweepStaleRunningOperationLogs(maxAgeMinutes = 30): Promise<number> {
+  const staleBefore = new Date(Date.now() - maxAgeMinutes * 60_000);
+  const result = await db.operationLog.updateMany({
+    where: {
+      status: "RUNNING",
+      createdAt: { lt: staleBefore },
+    },
+    data: {
+      status: "FAILED",
+      message: "messages.operation_timed_out",
+    },
+  });
+
+  return result.count;
+}
+
 export async function prepareServersForMaintenanceOperation(): Promise<void> {
   await Promise.all([
     sweepStaleApplySessions(),
     sweepStalePendingApplySessions(),
     sweepStalePendingOperationLogs(),
+    sweepStaleRunningOperationLogs(),
   ]);
 }

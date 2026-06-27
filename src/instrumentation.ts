@@ -11,14 +11,15 @@ export async function register() {
 
   validateProductionEnv();
 
-  const { sweepStaleApplySessions, sweepStalePendingApplySessions, sweepStalePendingOperationLogs } =
+  const { sweepStaleApplySessions, sweepStalePendingApplySessions, sweepStalePendingOperationLogs, sweepStaleRunningOperationLogs } =
     await import("@/server/services/apply-maintenance");
-  const [runningSwept, pendingApplySwept, pendingLogSwept] = await Promise.all([
+  const [runningSwept, pendingApplySwept, pendingLogSwept, runningLogSwept] = await Promise.all([
     sweepStaleApplySessions(),
     sweepStalePendingApplySessions(),
     sweepStalePendingOperationLogs(),
+    sweepStaleRunningOperationLogs(),
   ]);
-  const swept = runningSwept + pendingApplySwept + pendingLogSwept;
+  const swept = runningSwept + pendingApplySwept + pendingLogSwept + runningLogSwept;
   if (swept > 0) {
     const { createChildLogger } = await import("@/lib/logger");
     createChildLogger("startup").warn({ swept }, "Marked stale apply sessions as failed");

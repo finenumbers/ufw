@@ -19,14 +19,23 @@ function pruneBucket(bucket: Bucket, windowMs: number, now: number): void {
   bucket.timestamps = bucket.timestamps.filter((timestamp) => now - timestamp < windowMs);
 }
 
+function syncBucket(key: string, bucket: Bucket): void {
+  if (bucket.timestamps.length === 0) {
+    buckets.delete(key);
+    return;
+  }
+
+  buckets.set(key, bucket);
+}
+
 export function assertRateLimit(key: string, options: RateLimitOptions): RateLimitResult {
   const now = Date.now();
   const bucket = buckets.get(key) ?? { timestamps: [] };
   pruneBucket(bucket, options.windowMs, now);
 
   if (bucket.timestamps.length >= options.limit) {
+    syncBucket(key, bucket);
     const oldest = bucket.timestamps[0] ?? now;
-    buckets.set(key, bucket);
     return {
       allowed: false,
       remaining: 0,
@@ -35,7 +44,7 @@ export function assertRateLimit(key: string, options: RateLimitOptions): RateLim
   }
 
   bucket.timestamps.push(now);
-  buckets.set(key, bucket);
+  syncBucket(key, bucket);
 
   return {
     allowed: true,

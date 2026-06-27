@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { notifyOperationStarted } from "@/lib/operations/events";
@@ -14,6 +14,7 @@ type ServerInitialSyncProps = {
 export function ServerInitialSync({ serverId, needsSync }: ServerInitialSyncProps) {
   const router = useRouter();
   const startedRef = useRef(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!needsSync || startedRef.current) return;
@@ -21,10 +22,18 @@ export function ServerInitialSync({ serverId, needsSync }: ServerInitialSyncProp
 
     notifyOperationStarted(serverId);
 
-    void syncRemoteRulesAction(serverId).then(() => {
+    void syncRemoteRulesAction(serverId).then((result) => {
+      if (!result.success) {
+        setSyncError("error" in result ? result.error : "Sync failed");
+        return;
+      }
       router.refresh();
     });
   }, [needsSync, serverId, router]);
 
-  return null;
+  if (!syncError) {
+    return null;
+  }
+
+  return <p className="text-sm text-destructive">{syncError}</p>;
 }

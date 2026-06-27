@@ -91,6 +91,21 @@ export async function executeApplyPlan(
     sudoPassword,
   );
 
+  if (statusResult.code !== 0) {
+    const error =
+      statusResult.stderr ||
+      statusResult.stdout ||
+      "Failed to read UFW status after apply";
+    errors.push(error);
+    return {
+      success: false,
+      partial: successCount > 0,
+      executedCommands,
+      errors,
+      refreshedStatus: statusResult.stdout,
+    };
+  }
+
   return {
     success: errors.length === 0,
     partial: false,

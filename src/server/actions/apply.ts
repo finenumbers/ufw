@@ -48,6 +48,7 @@ export async function confirmApplyAction(
   error?: string;
   partial?: boolean;
   needsResync?: boolean;
+  needsRePreview?: boolean;
 }> {
   const userId = await requireUserId();
   const rateLimit = assertRateLimit(`apply:${userId}`, { limit: 5, windowMs: 60_000 });
@@ -68,7 +69,7 @@ export async function confirmApplyAction(
     revalidatePath("/operations");
   }
 
-  if (!result.success && result.error) {
+  if (!result.success && result.error && !result.needsRePreview) {
     return {
       ...result,
       error: sanitizeApplyClientError([result.error]),

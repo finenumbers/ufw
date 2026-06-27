@@ -152,6 +152,44 @@ export async function getPortScanById(scanId: string): Promise<PortScanView | nu
   return scan ? toPortScanView(scan) : null;
 }
 
+export async function getPortScanStatusById(scanId: string): Promise<PortScanView | null> {
+  const scan = await db.portScan.findUnique({
+    where: { id: scanId },
+    select: {
+      id: true,
+      serverId: true,
+      status: true,
+      perspective: true,
+      targetHost: true,
+      targetIp: true,
+      profile: true,
+      summaryJson: true,
+      errorMessage: true,
+      startedAt: true,
+      completedAt: true,
+    },
+  });
+
+  if (!scan) {
+    return null;
+  }
+
+  return {
+    id: scan.id,
+    serverId: scan.serverId,
+    status: scan.status,
+    perspective: scan.perspective,
+    targetHost: scan.targetHost,
+    targetIp: scan.targetIp,
+    profile: scan.profile,
+    summary: (scan.summaryJson as PortScanSummary | null) ?? null,
+    errorMessage: scan.errorMessage,
+    startedAt: scan.startedAt.toISOString(),
+    completedAt: scan.completedAt?.toISOString() ?? null,
+    findings: [],
+  };
+}
+
 async function createPortScanJob(params: {
   serverId: string;
   userId: string;
@@ -332,7 +370,13 @@ export async function startPortScan(params: {
     metadata: { scanId, profile: "FULL", targetHost: server.host },
   });
 
-  void runPortScanPipeline(scanId, tracker).catch(() => {});
+  void runPortScanPipeline(scanId, tracker).catch(async (error) => {
+    const message = error instanceof Error ? error.message : "Port scan failed";
+    await tracker.fail(
+      { key: "messages.port_scan_failed", params: { error: message } },
+      [message],
+    );
+  });
 
   return { scanId, operationId: tracker.operationId };
 }

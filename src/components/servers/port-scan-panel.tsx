@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { PortScanTable } from "@/components/servers/port-scan-table";
@@ -9,6 +9,7 @@ import { notifyOperationStarted } from "@/lib/operations/events";
 import type { PortScanView } from "@/types/port-scan";
 import {
   getPortScanByIdAction,
+  getPortScanStatusByIdAction,
   startPortScanAction,
 } from "@/server/actions/port-scan";
 
@@ -18,6 +19,16 @@ type PortScanPanelProps = {
   startToken?: number;
   onScanUpdated?: (scan: PortScanView) => void;
 };
+
+function pollDelayMs(attempt: number): number {
+  if (attempt < 5) {
+    return 3000;
+  }
+  if (attempt < 15) {
+    return 5000;
+  }
+  return 10000;
+}
 
 export function PortScanPanel({
   serverId,
@@ -30,10 +41,14 @@ export function PortScanPanel({
   const [scan, setScan] = useState<PortScanView | null>(initialScan);
   const [loading, setLoading] = useState(false);
   const { message: error, showFailure, clearMessage } = useActionFailureState();
+  const pollAttemptRef = useRef(0);
 
   useEffect(() => {
+    if (loading || scan?.status === "RUNNING" || scan?.status === "PENDING") {
+      return;
+    }
     setScan(initialScan);
-  }, [initialScan]);
+  }, [initialScan, loading, scan?.status]);
 
   const notifyScanUpdate = useCallback(
     (next: PortScanView) => {
@@ -45,13 +60,28 @@ export function PortScanPanel({
     [onScanUpdated],
   );
 
-  const refreshById = useCallback(
+  const pollScan = useCallback(
     async (scanId: string) => {
-      const latest = await getPortScanByIdAction(scanId);
-      if (latest) {
-        notifyScanUpdate(latest);
+      const status = await getPortScanStatusByIdAction(scanId);
+      if (!status) {
+        return null;
       }
-      return latest;
+
+      if (status.status === "SUCCESS" || status.status === "FAILED") {
+        pollAttemptRef.current = 0;
+        const full = await getPortScanByIdAction(scanId);
+        if (full) {
+          notifyScanUpdate(full);
+        }
+        return full;
+      }
+
+      setScan((previous) =>
+        previous?.id === scanId
+          ? { ...previous, status: status.status, errorMessage: status.errorMessage }
+          : status,
+      );
+      return status;
     },
     [notifyScanUpdate],
   );
@@ -59,6 +89,7 @@ export function PortScanPanel({
   const startScan = useCallback(async () => {
     setLoading(true);
     clearMessage();
+    pollAttemptRef.current = 0;
 
     const result = await startPortScanAction(serverId);
     if (!result.success) {
@@ -69,9 +100,9 @@ export function PortScanPanel({
 
     setScan(null);
     notifyOperationStarted(serverId);
-    await refreshById(result.scanId);
+    await pollScan(result.scanId);
     setLoading(false);
-  }, [clearMessage, refreshById, serverId, showFailure, tCommon]);
+  }, [clearMessage, pollScan, serverId, showFailure, tCommon]);
 
   useEffect(() => {
     if (startToken <= 0) {
@@ -82,19 +113,37 @@ export function PortScanPanel({
   }, [startToken, startScan]);
 
   useEffect(() => {
-    if (!scan?.id || (scan.status !== "RUNNING" && scan.status !== "PENDING")) {
+    const scanId = scan?.id;
+    if (!scanId || (scan.status !== "RUNNING" && scan.status !== "PENDING")) {
       if (scan && scan.status !== "RUNNING" && scan.status !== "PENDING") {
         setLoading(false);
       }
       return;
     }
 
-    const timer = window.setInterval(() => {
-      void refreshById(scan.id);
-    }, 3000);
+    let cancelled = false;
+    let timer: number | undefined;
 
-    return () => window.clearInterval(timer);
-  }, [refreshById, scan]);
+    const schedulePoll = () => {
+      timer = window.setTimeout(() => {
+        void pollScan(scanId).finally(() => {
+          if (!cancelled) {
+            pollAttemptRef.current += 1;
+            schedulePoll();
+          }
+        });
+      }, pollDelayMs(pollAttemptRef.current));
+    };
+
+    schedulePoll();
+
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
+    };
+  }, [pollScan, scan]);
 
   return (
     <div className="space-y-4">

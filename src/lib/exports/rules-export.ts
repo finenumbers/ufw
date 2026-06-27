@@ -5,8 +5,8 @@ import {
   exportRulesToXlsxBuffer,
 } from "@/lib/exports/rules-export.helpers";
 
-export function downloadRulesExport(rows: UnifiedRuleRow[], filename?: string): void {
-  const content = exportRulesToXlsxBuffer(rows);
+export async function downloadRulesExport(rows: UnifiedRuleRow[], filename?: string): Promise<void> {
+  const content = await exportRulesToXlsxBuffer(rows);
   const blob = new Blob([content], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });

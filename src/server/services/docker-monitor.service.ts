@@ -161,6 +161,33 @@ export async function getDockerInventoryById(
   return snapshot ? toInventoryView(snapshot) : null;
 }
 
+export async function getDockerInventoryStatusById(
+  snapshotId: string,
+): Promise<DockerInventoryView | null> {
+  const snapshot = await db.dockerInventorySnapshot.findUnique({
+    where: { id: snapshotId },
+    select: {
+      id: true,
+      serverId: true,
+      status: true,
+      dockerInstalled: true,
+      dockerReachable: true,
+      dockerVersion: true,
+      composeVersion: true,
+      containerCount: true,
+      runningCount: true,
+      errorMessage: true,
+      capturedAt: true,
+    },
+  });
+
+  if (!snapshot) {
+    return null;
+  }
+
+  return toInventoryView({ ...snapshot, containers: [] });
+}
+
 async function runDockerInventoryRefresh(
   snapshotId: string,
   tracker: OperationTracker,
@@ -313,7 +340,13 @@ export async function startDockerInventoryRefresh(params: {
     },
   });
 
-  void runDockerInventoryRefresh(snapshot.id, tracker).catch(() => {});
+  void runDockerInventoryRefresh(snapshot.id, tracker).catch(async (error) => {
+    const message = error instanceof Error ? error.message : "Docker inventory refresh failed";
+    await tracker.fail(
+      { key: "messages.docker_inventory_failed", params: { error: message } },
+      [message],
+    );
+  });
 
   return { snapshotId: snapshot.id, operationId: tracker.operationId };
 }

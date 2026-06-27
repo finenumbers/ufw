@@ -6,12 +6,6 @@ export type ServerInventoryStats = {
   containerCount: number;
 };
 
-const emptyStats: ServerInventoryStats = {
-  ufwRuleCount: 0,
-  portFindingCount: 0,
-  containerCount: 0,
-};
-
 async function loadPortFindingCounts(serverIds: string[]): Promise<Map<string, number>> {
   if (serverIds.length === 0) {
     return new Map();
@@ -23,11 +17,16 @@ async function loadPortFindingCounts(serverIds: string[]): Promise<Map<string, n
     distinct: ["serverId"],
     select: {
       serverId: true,
-      _count: { select: { findings: true } },
+      summaryJson: true,
     },
   });
 
-  return new Map(scans.map((scan) => [scan.serverId, scan._count.findings]));
+  return new Map(
+    scans.map((scan) => {
+      const summary = scan.summaryJson as { openCount?: number } | null;
+      return [scan.serverId, summary?.openCount ?? 0];
+    }),
+  );
 }
 
 async function loadContainerCounts(serverIds: string[]): Promise<Map<string, number>> {
@@ -90,9 +89,4 @@ export async function getServerInventoryStatsMap(
       mergeServerInventoryStats(serverId, ufwCounts, portCounts, containerCounts),
     ]),
   );
-}
-
-export async function getServerInventoryStats(serverId: string): Promise<ServerInventoryStats> {
-  const stats = await getServerInventoryStatsMap([serverId]);
-  return stats.get(serverId) ?? emptyStats;
 }

@@ -55,7 +55,7 @@ export function RulesImportExport({
   async function handleExport() {
     onStatusChange?.({ error: null, notice: null });
     const exportRows = resolveAllRows ? await resolveAllRows() : rows;
-    downloadRulesExport(exportRows);
+    void downloadRulesExport(exportRows);
   }
 
   return (

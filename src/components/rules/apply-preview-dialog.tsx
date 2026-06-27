@@ -55,7 +55,11 @@ export function ApplyPreviewDialog({
     setLoading(false);
 
     if (!result.success) {
-      setError(result.error ?? t("failed"));
+      if (result.needsRePreview) {
+        setError(t("remoteChanged"));
+      } else {
+        setError(result.error ?? t("failed"));
+      }
       setNeedsResync(Boolean(result.needsResync));
       onOpenChange(true);
       return;

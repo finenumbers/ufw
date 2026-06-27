@@ -10,6 +10,7 @@ import { getServerPath } from "@/lib/server-path";
 import type { ActionFailureResult } from "@/types/action-result";
 import {
   getPortScanById,
+  getPortScanStatusById,
   startPortScan,
 } from "@/server/services/port-scan.service";
 import { getServerById } from "@/server/services/server.service";
@@ -55,4 +56,9 @@ export async function startPortScanAction(
 export async function getPortScanByIdAction(scanId: string) {
   await requireUserId();
   return getPortScanById(scanId);
+}
+
+export async function getPortScanStatusByIdAction(scanId: string) {
+  await requireUserId();
+  return getPortScanStatusById(scanId);
 }

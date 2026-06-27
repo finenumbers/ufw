@@ -9,10 +9,11 @@ import { getServerByAddressAction } from "@/server/actions/servers";
 import { getRulesViewPageAction } from "@/server/actions/rules";
 import { getLatestDockerInventory } from "@/server/services/docker-monitor.service";
 import { getLatestSuccessfulPortScan } from "@/server/services/port-scan.service";
-import { getServerInventoryStats } from "@/server/services/server-stats.service";
-import { detectUfwState } from "@/server/services/ssh.service";
-import { getLatestSnapshot, persistSnapshotInterfaceOptions } from "@/server/services/snapshot.service";
-import { remoteSnapshotOutOfSync } from "@/server/services/rules-view.service";
+import {
+  detectionFromSnapshot,
+  getLatestSnapshot,
+  persistSnapshotInterfaceOptions,
+} from "@/server/services/snapshot.service";
 import type { UfwDetectionResult } from "@/types/ufw";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
@@ -41,21 +42,10 @@ export default async function ServerDetailPage({ params }: PageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
 
-  let ufwState = emptyUfwState;
-  try {
-    ufwState = await detectUfwState(server.id);
-  } catch {
-    ufwState = emptyUfwState;
-  }
+  const latestSnapshot = await getLatestSnapshot(server.id);
+  const ufwState = latestSnapshot ? detectionFromSnapshot(latestSnapshot) : emptyUfwState;
 
-  const latestSnapshot =
-    ufwState.installed && ufwState.active ? await getLatestSnapshot(server.id) : null;
-
-  const needsSync =
-    Boolean(userId) &&
-    ufwState.installed &&
-    ufwState.active &&
-    remoteSnapshotOutOfSync(latestSnapshot, ufwState.rules);
+  const needsSync = Boolean(userId) && ufwState.installed && ufwState.active && !latestSnapshot;
 
   if (
     ufwState.installed &&
@@ -64,20 +54,26 @@ export default async function ServerDetailPage({ params }: PageProps) {
     ufwState.interfaces.length > 0 &&
     !needsSync
   ) {
-    await persistSnapshotInterfaceOptions(server.id, ufwState.interfaces);
+    await persistSnapshotInterfaceOptions(server.id, ufwState.interfaces, latestSnapshot);
   }
 
-  const rulesPage = userId
-    ? await getRulesViewPageAction(server.id, 0)
-    : { rows: [], total: 0, hasMore: false, nextOffset: 0 };
-  const inventoryStats = await getServerInventoryStats(server.id);
-  const rulesAvailable = ufwState.installed && ufwState.active;
   const portScanEnabled = isPortScanEnabled();
   const dockerMonitorEnabled = isDockerMonitorEnabled();
-  const initialPortScan = portScanEnabled ? await getLatestSuccessfulPortScan(server.id) : null;
-  const initialDockerInventory = dockerMonitorEnabled
-    ? await getLatestDockerInventory(server.id)
-    : null;
+
+  const [rulesPage, initialPortScan, initialDockerInventory] = await Promise.all([
+    userId
+      ? getRulesViewPageAction(server.id, 0)
+      : Promise.resolve({ rows: [], total: 0, hasMore: false, nextOffset: 0 }),
+    portScanEnabled ? getLatestSuccessfulPortScan(server.id) : Promise.resolve(null),
+    dockerMonitorEnabled ? getLatestDockerInventory(server.id) : Promise.resolve(null),
+  ]);
+
+  const rulesAvailable = ufwState.installed && ufwState.active;
+  const dbRulesCount = rulesPage.total;
+  const portFindingCount =
+    initialPortScan?.summary?.openCount ?? initialPortScan?.findings.length ?? 0;
+  const containerCount =
+    initialDockerInventory?.summary?.containerCount ?? 0;
 
   return (
     <ServerDetailView
@@ -91,9 +87,9 @@ export default async function ServerDetailPage({ params }: PageProps) {
       editHref={getServerPath(server.host, "/edit")}
       ufwState={ufwState}
       needsSync={needsSync}
-      dbRulesCount={inventoryStats.ufwRuleCount}
-      portFindingCount={inventoryStats.portFindingCount}
-      containerCount={inventoryStats.containerCount}
+      dbRulesCount={dbRulesCount}
+      portFindingCount={portFindingCount}
+      containerCount={containerCount}
       initialPortScan={initialPortScan}
       initialDockerInventory={initialDockerInventory}
       initialRows={rulesPage.rows}
