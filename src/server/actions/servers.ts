@@ -15,7 +15,6 @@ import { assertImportFileSize } from "@/lib/imports/import-limits";
 import {
   checkOperationRateLimit,
   createRateLimitedFailure,
-  throwIfOperationRateLimited,
 } from "@/lib/operation-rate-limit";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { decodeServerAddress, getServerPath } from "@/lib/server-path";
@@ -218,10 +217,18 @@ async function runRemoteRulesSync(
   }
 }
 
-export async function loadUfwStateAction(serverId: string) {
+export async function loadUfwStateAction(
+  serverId: string,
+): Promise<
+  | { success: true; state: Awaited<ReturnType<typeof detectUfwState>> }
+  | ActionFailureResult
+> {
   const userId = await requireUserId();
 
-  throwIfOperationRateLimited(`ufw-refresh:${serverId}`);
+  const rateLimit = checkOperationRateLimit(`ufw-refresh:${serverId}`);
+  if (!rateLimit.allowed) {
+    return createRateLimitedFailure(rateLimit.retryAfterMs);
+  }
 
   const tracker = await startOperation({
     serverId,
@@ -248,11 +255,11 @@ export async function loadUfwStateAction(serverId: string) {
 
     await revalidateServerPaths(serverId);
     await tracker.complete({ key: "messages.refresh_complete" });
-    return state;
+    return { success: true, state };
   } catch (error) {
     const message = sanitizeGenericClientError(error, "Refresh failed");
     await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
-    throw new Error(message);
+    return { success: false, error: message };
   }
 }
 

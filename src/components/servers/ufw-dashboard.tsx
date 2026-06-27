@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { notifyOperationStarted } from "@/lib/operations/events";
-import { RateLimitError } from "@/lib/operation-rate-limit";
+import { resolveActionFailureMessage } from "@/lib/i18n/action-errors";
 import { appendEmptyRule } from "@/lib/rules/add-rule";
 import { cn } from "@/lib/utils";
 import type { UnifiedRuleRow } from "@/types/rule";
@@ -91,18 +91,17 @@ export function UfwDashboard({
     setLoading(true);
     setOperationError(null);
     notifyOperationStarted(serverId);
-    try {
-      const next = await loadUfwStateAction(serverId);
-      setState(next);
-      await onRulesRefresh();
-      router.refresh();
-    } catch (error) {
-      if (error instanceof RateLimitError) {
-        setOperationError(tc("rateLimitRetry", { seconds: error.retryAfterSeconds }));
-      } else {
-        setOperationError(error instanceof Error ? error.message : "Unknown error");
-      }
+
+    const result = await loadUfwStateAction(serverId);
+    if (!result.success) {
+      setOperationError(resolveActionFailureMessage(result, tc));
+      setLoading(false);
+      return;
     }
+
+    setState(result.state);
+    await onRulesRefresh();
+    router.refresh();
     setLoading(false);
   }
 
@@ -148,10 +147,14 @@ export function UfwDashboard({
     notifyOperationStarted(serverId);
     const result = await installUfwAction(serverId);
     if (result.success) {
-      const next = await loadUfwStateAction(serverId);
-      setState(next);
-      await onRulesRefresh();
-      router.refresh();
+      const refreshResult = await loadUfwStateAction(serverId);
+      if (!refreshResult.success) {
+        setOperationError(resolveActionFailureMessage(refreshResult, tc));
+      } else {
+        setState(refreshResult.state);
+        await onRulesRefresh();
+        router.refresh();
+      }
     } else {
       setOperationError(result.message);
     }
