@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { DockerContainerDrawer } from "@/components/servers/docker-container-drawer";
+import { InventoryPanelStatus } from "@/components/servers/inventory-panel-status";
 import { DockerContainersTable } from "@/components/servers/docker-containers-table";
 import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { notifyOperationStarted } from "@/lib/operations/events";
@@ -214,14 +215,11 @@ export function DockerMonitorPanel({
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold">{t("title")}</h3>
-        <p className="text-sm text-muted-foreground">{t("description")}</p>
-        {inventory?.dockerVersion ? (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t("meta", {
-              version: inventory.dockerVersion,
-              compose: inventory.composeVersion ?? "—",
-            })}
-          </p>
+        {inventory?.status === "SUCCESS" && inventory.capturedAt ? (
+          <InventoryPanelStatus
+            date={new Date(inventory.capturedAt).toLocaleString()}
+            itemsLabel={t("containerCount", { count: inventory.containers.length })}
+          />
         ) : null}
       </div>
 

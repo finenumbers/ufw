@@ -20,8 +20,8 @@ Las imágenes son **agnósticas al dominio**. Defina `APP_URL` en `.env` a su UR
 ### Opción A — Release por tag Git (recomendado)
 
 ```bash
-git tag v0.7.3
-git push origin v0.7.3
+git tag v0.7.4
+git push origin v0.7.4
 ```
 
 GitHub Actions publica imágenes etiquetadas y actualiza `latest`. Los paquetes deben ser **Public** en el primer uso (GitHub → Packages → ajustes).

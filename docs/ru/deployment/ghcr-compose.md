@@ -20,8 +20,8 @@ Production-образы публикуются в **GitHub Container Registry (G
 ### Вариант A — Release по Git tag (рекомендуется)
 
 ```bash
-git tag v0.7.3
-git push origin v0.7.3
+git tag v0.7.4
+git push origin v0.7.4
 ```
 
 GitHub Actions публикует tagged images и обновляет `latest`. Пакеты должны быть **Public** при первом использовании (GitHub → Packages → settings).

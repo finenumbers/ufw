@@ -30,7 +30,6 @@ import {
   getServerById,
   listServersWithInventoryStats,
   SERVER_DUPLICATE_ERROR,
-  testServerConnection,
   updateServer,
 } from "@/server/services/server.service";
 import {
@@ -160,23 +159,6 @@ export async function deleteServerAction(
   revalidatePath("/operations");
 
   return { success: true };
-}
-
-export async function testServerConnectionAction(serverId: string) {
-  const auth = await requireUserIdForAction();
-  if (!auth.ok) {
-    return { success: false, message: auth.failure.error };
-  }
-
-  const rateLimit = assertRateLimit(`ssh-test:${auth.userId}`, { limit: 10, windowMs: 60_000 });
-  if (!rateLimit.allowed) {
-    return {
-      success: false,
-      message: "Too many connection tests. Please try again later.",
-    };
-  }
-
-  return testServerConnection(serverId, auth.userId);
 }
 
 export async function syncRemoteRulesAction(

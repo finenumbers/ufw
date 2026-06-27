@@ -21,11 +21,13 @@ The dashboard loads **cached UFW state** from the latest Postgres snapshot — n
 
 | Status | Actions available |
 |--------|-------------------|
-| UFW not installed | **Install UFW** |
+| UFW not installed | **Refresh Status**, then **Install UFW** (if needed) |
 | Installed but inactive | **Enable UFW** |
-| Installed and active | **Rules**, refresh, SSH test |
+| Installed and active | **Rules**, **Refresh Status** |
 
-Use **Refresh** to pull the latest UFW state over SSH and sync the rules table.
+Click **Refresh Status** first to verify SSH and detect whether UFW is installed. **Install UFW** stays disabled until a successful refresh shows UFW is missing.
+
+Use **Refresh Status** to pull the latest UFW state over SSH and sync the rules table.
 
 If UFW is active but the app has **no snapshot yet** (first visit after enable), an automatic background sync runs once to populate the cache.
 

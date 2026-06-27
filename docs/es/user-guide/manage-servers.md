@@ -21,11 +21,13 @@ El panel carga el **estado UFW en caché** del último snapshot de Postgres — 
 
 | Estado | Acciones disponibles |
 |--------|----------------------|
-| UFW no instalado | **Instalar UFW** |
+| UFW no instalado | **Actualizar estado**, luego **Instalar UFW** (si hace falta) |
 | Instalado pero inactivo | **Activar UFW** |
-| Instalado y activo | **Reglas**, actualizar, prueba SSH |
+| Instalado y activo | **Reglas**, **Actualizar estado** |
 
-Use **Actualizar** para obtener el último estado UFW por SSH y sincronizar la tabla de reglas.
+Haga clic primero en **Actualizar estado** para verificar SSH y detectar si UFW está instalado. **Instalar UFW** permanece deshabilitado hasta que una actualización exitosa indique que falta UFW.
+
+Use **Actualizar estado** para obtener el último estado UFW por SSH y sincronizar la tabla de reglas.
 
 Si UFW está activo pero la app **aún no tiene snapshot** (primera visita tras activar), se ejecuta una sincronización automática en segundo plano una vez para rellenar la caché.
 

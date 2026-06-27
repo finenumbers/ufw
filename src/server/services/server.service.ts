@@ -10,7 +10,6 @@ import { getServerInventoryStatsMap } from "@/server/services/server-stats.servi
 import { resolveIdentitySecrets } from "@/server/services/identity.service";
 import { createOperationLog } from "@/server/services/operation-log.service";
 import { verifySshConnection } from "@/lib/ssh/verify";
-import { testSshConnection } from "@/server/services/ssh.service";
 
 export const SERVER_DUPLICATE_ERROR = "SERVER_DUPLICATE";
 
@@ -366,60 +365,6 @@ export async function getServerSshConfig(serverId: string) {
     passphrase: identity.passphrase,
     expectedHostKeyFingerprint: server.sshHostKeyFingerprint,
   };
-}
-
-export async function testServerConnection(
-  serverId: string,
-  userId: string,
-): Promise<{ success: boolean; message: string; hostname?: string }> {
-  const { semanticStep, startOperation } = await import("@/server/services/operation-progress.service");
-  const tracker = await startOperation({
-    serverId,
-    userId,
-    type: "ssh.test",
-    messageI18n: { key: "messages.ssh_start" },
-    steps: [semanticStep("ssh", "steps.ssh")],
-  });
-
-  try {
-    const result = await testSshConnection(serverId, {
-      onStart: async () => {
-        await tracker.markRunning();
-        await tracker.startStep("ssh", semanticStep("ssh", "steps.ssh"));
-      },
-    });
-
-    await createAuditEvent({
-      userId,
-      action: "SSH_TEST",
-      entityType: "server",
-      entityId: serverId,
-      metadata: { success: result.success },
-    });
-
-    if (!result.success) {
-      await tracker.failStep("ssh", result.message);
-      await tracker.fail(
-        { key: "messages.operation_failed", params: { error: result.message } },
-        [result.message],
-      );
-      return result;
-    }
-
-    const { db } = await import("@/lib/db");
-    await db.server.update({
-      where: { id: serverId },
-      data: { sshHostKeyVerified: true },
-    });
-
-    await tracker.completeStep("ssh");
-    await tracker.complete({ key: "messages.ssh_complete" });
-    return result;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "SSH test failed";
-    await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
-    throw error;
-  }
 }
 
 async function verifyServerSsh(config: {

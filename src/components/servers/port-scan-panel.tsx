@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { InventoryPanelStatus } from "@/components/servers/inventory-panel-status";
 import { PortScanTable } from "@/components/servers/port-scan-table";
 import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { notifyOperationStarted } from "@/lib/operations/events";
@@ -141,25 +142,22 @@ export function PortScanPanel({
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold">{t("title")}</h3>
+        {scan?.status === "SUCCESS" && scan.completedAt ? (
+          <InventoryPanelStatus
+            date={new Date(scan.completedAt).toLocaleString()}
+            itemsLabel={t("portCount", { count: scan.findings.length })}
+          />
+        ) : null}
       </div>
 
       {loading ? <p className="text-sm text-muted-foreground">{t("scanning")}</p> : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      {scan?.completedAt ? (
-        <p className="text-xs text-muted-foreground">
-          {t("lastScanAt", {
-            date: new Date(scan.completedAt).toLocaleString(),
-            target: scan.targetHost,
-          })}
-        </p>
-      ) : null}
-
       {scan?.errorMessage && scan.status === "FAILED" ? (
         <p className="text-sm text-destructive">{scan.errorMessage}</p>
       ) : null}
 
-      <PortScanTable findings={scan?.findings ?? []} summary={scan?.summary ?? null} />
+      <PortScanTable findings={scan?.findings ?? []} />
     </div>
   );
 }

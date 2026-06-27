@@ -24,11 +24,7 @@ import { cn } from "@/lib/utils";
 import type { UnifiedRuleRow } from "@/types/rule";
 import type { UfwDetectionResult } from "@/types/ufw";
 import { previewApplyAction } from "@/server/actions/apply";
-import {
-  installUfwAction,
-  loadUfwStateAction,
-  testServerConnectionAction,
-} from "@/server/actions/servers";
+import { installUfwAction, loadUfwStateAction } from "@/server/actions/servers";
 
 const dashboardActionButtonClass = "w-[160px] shrink-0";
 
@@ -74,6 +70,8 @@ export function UfwDashboard({
   const [portFindingCount, setPortFindingCount] = useState(initialPortFindingCount);
   const [containerCount, setContainerCount] = useState(initialContainerCount);
   const [loading, setLoading] = useState(false);
+  const [statusChecked, setStatusChecked] = useState(false);
+  const [sshReachable, setSshReachable] = useState<boolean | null>(null);
   const {
     message: operationError,
     showFailure: showOperationFailure,
@@ -103,22 +101,19 @@ export function UfwDashboard({
     notifyOperationStarted(serverId);
 
     const result = await loadUfwStateAction(serverId);
+    setStatusChecked(true);
+
     if (!result.success) {
+      setSshReachable(false);
       showOperationFailure(result, tc);
       setLoading(false);
       return;
     }
 
+    setSshReachable(true);
     setState(result.state);
     await onRulesRefresh();
     router.refresh();
-    setLoading(false);
-  }
-
-  async function handleTestSsh() {
-    setLoading(true);
-    notifyOperationStarted(serverId);
-    await testServerConnectionAction(serverId);
     setLoading(false);
   }
 
@@ -154,9 +149,12 @@ export function UfwDashboard({
     const result = await installUfwAction(serverId);
     if (result.success) {
       const refreshResult = await loadUfwStateAction(serverId);
+      setStatusChecked(true);
       if (!refreshResult.success) {
+        setSshReachable(false);
         showOperationFailure(refreshResult, tc);
       } else {
+        setSshReachable(true);
         setState(refreshResult.state);
         await onRulesRefresh();
         router.refresh();
@@ -167,76 +165,62 @@ export function UfwDashboard({
     setLoading(false);
   }
 
+  const installEnabled = statusChecked && sshReachable === true && !state.installed;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           <div className="flex w-[160px] shrink-0 flex-col gap-1">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => void handleTestSsh()}
-            disabled={loading}
-          >
-            {t("testSsh")}
-          </Button>
-          <div
-            className={cn(
-              "w-full rounded-md py-1 text-center text-xs font-semibold",
-              state.installed ? "bg-green-600 text-white" : "bg-red-600 text-white",
-            )}
-          >
-            {state.installed ? t("installed") : t("notInstalled")}
-          </div>
-        </div>
-        <div className="flex w-[160px] shrink-0 flex-col gap-1">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => void refresh()}
-            disabled={loading}
-          >
-            {t("refreshStatus")}
-          </Button>
-          <div
-            className={cn(
-              "w-full rounded-md py-1 text-center text-xs font-semibold",
-              state.active ? "bg-green-600 text-white" : "bg-red-600 text-white",
-            )}
-          >
-            {state.active ? t("active") : t("inactive")}
-          </div>
-        </div>
-        {state.installed && state.active ? (
-          <>
-            <div className="flex w-[160px] shrink-0 flex-col gap-1">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleAddRule}
-                disabled={loading}
-              >
-                {tRules("addRule")}
-              </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => void refresh()}
+              disabled={loading}
+            >
+              {t("refreshStatus")}
+            </Button>
+            {statusChecked && sshReachable ? (
               <div
                 className={cn(
                   "w-full rounded-md py-1 text-center text-xs font-semibold",
-                  dbRulesCount > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
+                  state.active ? "bg-green-600 text-white" : "bg-red-600 text-white",
                 )}
               >
-                {t("dbRules", { count: dbRulesCount })}
+                {state.active ? t("active") : t("inactive")}
               </div>
-            </div>
-            <Button
-              className={dashboardActionButtonClass}
-              onClick={() => void handlePreviewApply()}
-              disabled={loading}
-            >
-              {tRules("saveRules")}
-            </Button>
-          </>
-        ) : null}
-          {!state.installed && (
+            ) : null}
+          </div>
+          {state.installed && state.active ? (
+            <>
+              <div className="flex w-[160px] shrink-0 flex-col gap-1">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleAddRule}
+                  disabled={loading}
+                >
+                  {tRules("addRule")}
+                </Button>
+                <div
+                  className={cn(
+                    "w-full rounded-md py-1 text-center text-xs font-semibold",
+                    dbRulesCount > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
+                  )}
+                >
+                  {t("dbRules", { count: dbRulesCount })}
+                </div>
+              </div>
+              <Button
+                className={dashboardActionButtonClass}
+                onClick={() => void handlePreviewApply()}
+                disabled={loading}
+              >
+                {tRules("saveRules")}
+              </Button>
+            </>
+          ) : null}
+          {!state.installed ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
@@ -244,7 +228,7 @@ export function UfwDashboard({
                     dashboardActionButtonClass,
                     "border-yellow-400 bg-yellow-300 text-yellow-950 hover:bg-yellow-400 hover:text-yellow-950",
                   )}
-                  disabled={loading}
+                  disabled={loading || !installEnabled}
                 >
                   {t("installUfw")}
                 </Button>
@@ -262,18 +246,14 @@ export function UfwDashboard({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          )}
+          ) : null}
         </div>
 
         {portScanEnabled || dockerMonitorEnabled ? (
           <div className="ml-auto flex flex-wrap gap-2">
             {portScanEnabled ? (
               <div className="flex w-[160px] shrink-0 flex-col gap-1">
-                <Button
-                  className="w-full"
-                  onClick={onPortScanClick}
-                  disabled={loading}
-                >
+                <Button className="w-full" onClick={onPortScanClick} disabled={loading}>
                   {tPortScan("scanButton")}
                 </Button>
                 <div
@@ -288,11 +268,7 @@ export function UfwDashboard({
             ) : null}
             {dockerMonitorEnabled ? (
               <div className="flex w-[160px] shrink-0 flex-col gap-1">
-                <Button
-                  className="w-full"
-                  onClick={onDockerRefreshClick}
-                  disabled={loading}
-                >
+                <Button className="w-full" onClick={onDockerRefreshClick} disabled={loading}>
                   {tDocker("refreshButton")}
                 </Button>
                 <div
@@ -308,6 +284,17 @@ export function UfwDashboard({
           </div>
         ) : null}
       </div>
+
+      {!statusChecked ? (
+        <p className="text-sm text-muted-foreground">{t("refreshStatusHint")}</p>
+      ) : null}
+      {statusChecked && sshReachable === false ? (
+        <p className="text-sm text-destructive">{t("sshUnavailable")}</p>
+      ) : null}
+      {statusChecked && sshReachable && !state.installed ? (
+        <p className="text-sm text-muted-foreground">{t("ufwNotInstalled")}</p>
+      ) : null}
+
       {operationError ? <p className="text-sm text-destructive">{operationError}</p> : null}
       {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
       <ApplyPreviewDialog

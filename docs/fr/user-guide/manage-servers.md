@@ -21,11 +21,13 @@ Le tableau de bord charge l'**état UFW en cache** depuis le dernier snapshot Po
 
 | Statut | Actions disponibles |
 |--------|---------------------|
-| UFW non installé | **Installer UFW** |
+| UFW non installé | **Actualiser le statut**, puis **Installer UFW** (si nécessaire) |
 | Installé mais inactif | **Activer UFW** |
-| Installé et actif | **Règles**, actualiser, test SSH |
+| Installé et actif | **Règles**, **Actualiser le statut** |
 
-Utilisez **Actualiser** pour récupérer le dernier état UFW via SSH et synchroniser le tableau des règles.
+Cliquez d'abord sur **Actualiser le statut** pour vérifier SSH et détecter si UFW est installé. **Installer UFW** reste désactivé tant qu'une actualisation réussie n'indique pas l'absence d'UFW.
+
+Utilisez **Actualiser le statut** pour récupérer le dernier état UFW via SSH et synchroniser le tableau des règles.
 
 Si UFW est actif mais que l'application **n'a pas encore de snapshot** (première visite après activation), une synchronisation automatique en arrière-plan s'exécute une fois pour remplir le cache.
 

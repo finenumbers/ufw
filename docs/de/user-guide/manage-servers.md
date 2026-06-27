@@ -21,11 +21,13 @@ Das Dashboard lädt den **gecachten UFW-Status** aus dem neuesten Postgres-Snaps
 
 | Status | Verfügbare Aktionen |
 |--------|---------------------|
-| UFW nicht installiert | **UFW installieren** |
+| UFW nicht installiert | **Status aktualisieren**, dann **UFW installieren** (falls nötig) |
 | Installiert, aber inaktiv | **UFW aktivieren** |
-| Installiert und aktiv | **Regeln**, aktualisieren, SSH testen |
+| Installiert und aktiv | **Regeln**, **Status aktualisieren** |
 
-**Aktualisieren** verwenden, um den neuesten UFW-Zustand per SSH abzurufen und die Regeltabelle zu synchronisieren.
+Klicken Sie zuerst auf **Status aktualisieren**, um SSH zu prüfen und festzustellen, ob UFW installiert ist. **UFW installieren** bleibt deaktiviert, bis eine erfolgreiche Aktualisierung fehlendes UFW anzeigt.
+
+**Status aktualisieren** verwenden, um den neuesten UFW-Zustand per SSH abzurufen und die Regeltabelle zu synchronisieren.
 
 Ist UFW aktiv, die App aber **noch ohne Snapshot** (erster Besuch nach der Aktivierung), läuft einmalig automatisch eine Hintergrund-Synchronisation, um den Cache zu füllen.
 

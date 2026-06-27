@@ -3,7 +3,6 @@ import {
   type RunForServerOptions,
 } from "@/lib/queue/queue-registry";
 import { withSshConnection } from "@/lib/ssh/client";
-import { verifySshConnection } from "@/lib/ssh/verify";
 import {
   enableUfw,
   installUfw,
@@ -50,28 +49,6 @@ export async function runSshForServer<T>(
       }
 
       return result;
-    },
-    options,
-  );
-}
-
-export async function testSshConnection(
-  serverId: string,
-  options?: RunForServerOptions,
-) {
-  return runForServer(
-    serverId,
-    async () => {
-      const config = await getServerSshConfig(serverId);
-      return verifySshConnection({
-        host: config.host,
-        port: config.port,
-        username: config.username,
-        password: config.privateKey ? undefined : config.password,
-        privateKey: config.privateKey,
-        passphrase: config.passphrase,
-        expectedHostKeyFingerprint: config.expectedHostKeyFingerprint,
-      });
     },
     options,
   );
