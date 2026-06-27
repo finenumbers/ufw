@@ -31,6 +31,17 @@ Compose e stack Portainer usano per default `ghcr.io/finenumbers/ufw-remote-mana
 | `POSTGRES_PORT` | Porta host Postgres in dev | `5434` |
 | `LOG_LEVEL` | Livello log Pino | `info` |
 
+## Limiti di frequenza (fissi)
+
+Le azioni ripetute sullo stesso server hanno un cooldown di **30 secondi** (non configurabile via variabili d'ambiente):
+
+- Refresh stato UFW e sync regole
+- Avvio port scan
+- Refresh inventario Docker
+- Start, stop e restart container Docker
+
+Da **v0.5.1**, variabili legacy come `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` e `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` sono **ignorate** se ancora presenti in `.env`.
+
 ## Come le variabili raggiungono i container
 
 In `docker-compose.yml`:

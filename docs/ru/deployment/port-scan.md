@@ -22,8 +22,9 @@ PORT_SCAN_ENABLED=true
 | `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Лимит портов для Nmap |
 | `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Таймаут full-port discovery (30 мин) |
 | `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Таймаут enrichment |
-| `PORT_SCAN_RATE_LIMIT_WINDOW_MS` | `900000` | Интервал между сканами на сервер |
 | `PORT_SCAN_HISTORY_LIMIT` | `10` | История сканов на сервер |
+
+Повторные сканы одного сервера ограничены **раз в 30 секунд** (фиксировано в коде с v0.5.1). Устаревшая `PORT_SCAN_RATE_LIMIT_WINDOW_MS` в `.env` **игнорируется**.
 
 ## Сеть
 
@@ -46,7 +47,7 @@ PORT_SCAN_ENABLED=true
 
 ## Безопасность
 
-- Rate limit (по умолчанию 1 скан / 15 мин на сервер)
+- Rate limit: **30 секунд** между повторными сканами на сервер (не настраивается через env)
 - Audit: `PORT_SCAN_STARTED`, `PORT_SCAN_COMPLETED`
 - Скан в очереди serverId вместе с SSH-операциями
 - Connect-scan (`naabu -scan-type c`, `nmap -sT`) — без raw sockets

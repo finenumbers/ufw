@@ -113,9 +113,12 @@ async function persistFindings(
   });
 }
 
-export async function getLatestPortScan(serverId: string): Promise<PortScanView | null> {
+async function findLatestPortScan(
+  serverId: string,
+  status?: PortScanView["status"],
+): Promise<PortScanView | null> {
   const scan = await db.portScan.findFirst({
-    where: { serverId },
+    where: { serverId, ...(status ? { status } : {}) },
     orderBy: { startedAt: "desc" },
     include: {
       findings: {
@@ -128,31 +131,12 @@ export async function getLatestPortScan(serverId: string): Promise<PortScanView 
 }
 
 export async function getLatestSuccessfulPortScan(serverId: string): Promise<PortScanView | null> {
-  const scan = await db.portScan.findFirst({
-    where: { serverId, status: "SUCCESS" },
-    orderBy: { startedAt: "desc" },
-    include: {
-      findings: {
-        orderBy: [{ port: "asc" }, { protocol: "asc" }],
-      },
-    },
-  });
-
-  if (scan) {
-    return toPortScanView(scan);
+  const successful = await findLatestPortScan(serverId, "SUCCESS");
+  if (successful) {
+    return successful;
   }
 
-  const failed = await db.portScan.findFirst({
-    where: { serverId },
-    orderBy: { startedAt: "desc" },
-    include: {
-      findings: {
-        orderBy: [{ port: "asc" }, { protocol: "asc" }],
-      },
-    },
-  });
-
-  return failed ? toPortScanView(failed) : null;
+  return findLatestPortScan(serverId);
 }
 
 export async function getPortScanById(scanId: string): Promise<PortScanView | null> {
@@ -168,7 +152,7 @@ export async function getPortScanById(scanId: string): Promise<PortScanView | nu
   return scan ? toPortScanView(scan) : null;
 }
 
-export async function createPortScanJob(params: {
+async function createPortScanJob(params: {
   serverId: string;
   userId: string;
   targetHost: string;
@@ -189,7 +173,7 @@ export async function createPortScanJob(params: {
   return { scanId: scan.id };
 }
 
-export async function runPortScanPipeline(scanId: string, tracker: OperationTracker): Promise<void> {
+async function runPortScanPipeline(scanId: string, tracker: OperationTracker): Promise<void> {
   const scan = await db.portScan.findUnique({
     where: { id: scanId },
     include: { server: true },

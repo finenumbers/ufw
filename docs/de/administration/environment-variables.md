@@ -31,6 +31,17 @@ Compose und Portainer-Stack verwenden standardmäßig `ghcr.io/finenumbers/ufw-r
 | `POSTGRES_PORT` | Host-Port für Postgres in Dev | `5434` |
 | `LOG_LEVEL` | Pino-Log-Level | `info` |
 
+## Rate Limits (fest)
+
+Wiederholte Server-Aktionen haben eine **30 Sekunden**-Abklingzeit pro Server (nicht über Umgebungsvariablen konfigurierbar):
+
+- UFW-Status-Refresh und Regel-Sync
+- Port-Scan-Start
+- Docker-Inventar-Refresh
+- Docker-Container start, stop, restart
+
+Seit **v0.5.1** werden Legacy-Variablen wie `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` und `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` **ignoriert**, falls sie noch in `.env` stehen.
+
 ## Wie Variablen Container erreichen
 
 In `docker-compose.yml`:

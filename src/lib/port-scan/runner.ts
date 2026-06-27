@@ -61,9 +61,3 @@ export async function runCommand(
     });
   });
 }
-
-export function commandExists(command: string): Promise<boolean> {
-  return runCommand("sh", ["-c", `command -v ${command}`], 5_000).then(
-    (result) => result.exitCode === 0,
-  );
-}

@@ -33,6 +33,17 @@ Legacy `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` are no longer requi
 | `POSTGRES_PORT` | Host port for Postgres in dev | `5434` |
 | `LOG_LEVEL` | Pino log level | `info` |
 
+## Rate limits (fixed)
+
+Repeat server actions use a **30 second** cooldown per server (not configurable via environment variables):
+
+- UFW status refresh and rules sync
+- Port scan start
+- Docker inventory refresh
+- Docker container start, stop, restart
+
+Since **v0.5.1**, legacy variables such as `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS`, and `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` are **ignored** if still present in `.env`.
+
 ## How variables reach containers
 
 In `docker-compose.yml`:

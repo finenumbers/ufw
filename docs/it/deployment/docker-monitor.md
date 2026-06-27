@@ -17,9 +17,9 @@ Optional tuning:
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | Stored inventory snapshots per server |
-| `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` | `120000` | Min interval between inventory refreshes |
-| `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` | `300000` | Rate limit window for start/stop/restart |
 | `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | SSH command timeout for Docker CLI |
+
+Inventory refresh and container control (start/stop/restart) share a **30 second** cooldown per server (fixed in app code since v0.5.1). Legacy `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` and `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` in `.env` are **ignored**.
 
 ## Requirements on managed servers
 
@@ -43,7 +43,7 @@ The app tries `docker …` first, then `sudo docker …` if permission is denied
 - Feature flag (default off)
 - Container ID/name validation — no arbitrary shell from UI
 - Fixed control actions only
-- Rate limits on refresh and control
+- Fixed 30s rate limits on refresh and control (not env-configurable)
 - Audit: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
 
 ## Related docs

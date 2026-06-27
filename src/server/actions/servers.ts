@@ -174,7 +174,7 @@ export async function testServerConnectionAction(serverId: string) {
 
 export async function syncRemoteRulesAction(
   serverId: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: true } | ActionFailureResult> {
   return runRemoteRulesSync(serverId);
 }
 

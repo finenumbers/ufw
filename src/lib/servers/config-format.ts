@@ -44,7 +44,6 @@ export const serversConfigFileSchema = z.object({
 });
 
 export type IdentityConfigEntry = z.infer<typeof identityConfigEntrySchema>;
-export type ServerConfigEntry = z.infer<typeof serverConfigEntrySchema>;
 export type ServersConfigFileV2 = z.infer<typeof serversConfigFileSchema>;
 export type ServersConfigFile = ServersConfigFileV2;
 

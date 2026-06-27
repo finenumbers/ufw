@@ -161,7 +161,7 @@ export async function getDockerInventoryById(
   return snapshot ? toInventoryView(snapshot) : null;
 }
 
-export async function runDockerInventoryRefresh(
+async function runDockerInventoryRefresh(
   snapshotId: string,
   tracker: OperationTracker,
 ): Promise<void> {

@@ -13,7 +13,3 @@ export function isDockerMonitorEnabled(): boolean {
 export function getDockerInventoryHistoryLimit(): number {
   return readInt("DOCKER_INVENTORY_HISTORY_LIMIT", 10);
 }
-
-export function getDockerCommandTimeoutMs(): number {
-  return readInt("DOCKER_COMMAND_TIMEOUT_MS", 60_000);
-}

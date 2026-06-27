@@ -3,11 +3,11 @@ import { z } from "zod";
 import { computeFingerprint } from "@/lib/ufw/fingerprint";
 import type { UnifiedRuleRow } from "@/types/rule";
 
-export const ruleActionSchema = z.enum(["ALLOW", "DENY", "REJECT", "LIMIT"]);
-export const ruleDirectionSchema = z.enum(["IN", "OUT", "ROUTE"]);
-export const ruleProtocolSchema = z.enum(["TCP", "UDP", "ICMP", "ANY"]);
-export const logModeSchema = z.enum(["NONE", "LOG", "LOG_ALL"]);
-export const ruleOriginStateSchema = z.enum([
+const ruleActionSchema = z.enum(["ALLOW", "DENY", "REJECT", "LIMIT"]);
+const ruleDirectionSchema = z.enum(["IN", "OUT", "ROUTE"]);
+const ruleProtocolSchema = z.enum(["TCP", "UDP", "ICMP", "ANY"]);
+const logModeSchema = z.enum(["NONE", "LOG", "LOG_ALL"]);
+const ruleOriginStateSchema = z.enum([
   "MATCHED",
   "REMOTE_ONLY",
   "LOCAL_ONLY",
@@ -15,7 +15,7 @@ export const ruleOriginStateSchema = z.enum([
   "CONFLICT",
 ]);
 
-export const ruleCoreSchema = z.object({
+const ruleCoreSchema = z.object({
   action: ruleActionSchema,
   direction: ruleDirectionSchema.nullish(),
   interface: z.string().nullish(),
@@ -30,7 +30,7 @@ export const ruleCoreSchema = z.object({
   ipv6: z.boolean(),
 });
 
-export const unifiedRuleRowSchema = z.object({
+const unifiedRuleRowSchema = z.object({
   clientRowId: z.string().min(1),
   fingerprint: z.string().min(1),
   core: ruleCoreSchema,
@@ -52,7 +52,7 @@ export const unifiedRuleRowSchema = z.object({
   isPendingSave: z.boolean().optional(),
 });
 
-export const unifiedRuleRowsSchema = z.array(unifiedRuleRowSchema);
+const unifiedRuleRowsSchema = z.array(unifiedRuleRowSchema);
 
 function withComputedFingerprints(value: unknown): unknown {
   if (!Array.isArray(value)) {
@@ -87,14 +87,4 @@ export function parseUnifiedRuleRows(value: unknown): UnifiedRuleRow[] {
   }
 
   return parsed.data;
-}
-
-export function formatUnifiedRuleRowsError(error: unknown): string {
-  if (error instanceof z.ZodError) {
-    const issue = error.errors[0];
-    const path = issue?.path.join(".") || "rows";
-    return `Invalid rule data at ${path}: ${issue?.message ?? "validation failed"}`;
-  }
-
-  return error instanceof Error ? error.message : "Invalid rule data";
 }

@@ -37,29 +37,3 @@ export async function execDocker(
 
   return sudo;
 }
-
-export async function execDockerRaw(
-  client: SshClient,
-  shellCommand: string,
-  options?: { sudoPassword?: string },
-): Promise<{ stdout: string; stderr: string; code: number }> {
-  const direct = await execCommand(client, shellCommand);
-
-  if (direct.code === 0) {
-    return direct;
-  }
-
-  if (!PERMISSION_DENIED.test(`${direct.stdout}\n${direct.stderr}`)) {
-    return direct;
-  }
-
-  const sudo = await execSudo(client, shellCommand, options?.sudoPassword);
-  if (sudo.code !== 0 && PERMISSION_DENIED.test(`${sudo.stdout}\n${sudo.stderr}`)) {
-    return {
-      ...sudo,
-      stderr: `${sudo.stderr}\nDocker permission denied. Add the SSH user to the docker group or configure passwordless sudo for docker.`.trim(),
-    };
-  }
-
-  return sudo;
-}

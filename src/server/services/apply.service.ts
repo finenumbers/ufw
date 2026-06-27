@@ -130,7 +130,7 @@ async function runDbOnlySave(
   await tracker.completeStep("origin_states");
 }
 
-export async function persistPartialApplyMetadata(
+async function persistPartialApplyMetadata(
   serverId: string,
   userId: string,
   detection: UfwDetectionResult,

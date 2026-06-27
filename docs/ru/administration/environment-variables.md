@@ -33,6 +33,17 @@ Compose и Portainer stack по умолчанию используют `ghcr.io
 | `POSTGRES_PORT` | Порт хоста для Postgres в dev | `5434` |
 | `LOG_LEVEL` | Уровень логов Pino | `info` |
 
+## Rate limits (фиксированные)
+
+Повторные действия на одном сервере имеют cooldown **30 секунд** (не настраивается через переменные окружения):
+
+- Обновление статуса UFW и sync правил
+- Запуск port scan
+- Refresh Docker inventory
+- Start, stop, restart Docker-контейнеров
+
+С **v0.5.1** устаревшие переменные `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` и `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` **игнорируются**, если остались в `.env`.
+
 ## Как переменные попадают в контейнеры
 
 В `docker-compose.yml`:

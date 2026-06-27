@@ -144,28 +144,3 @@ export function rebuildApplyPlanAtConfirm(
   const diff = diffDesiredVsRemote(desired, remote);
   return buildApplyPlan(diff, desired, remote);
 }
-
-export function revalidateRemoveCommands(
-  items: ApplyPlanItem[],
-  remote: ParsedRemoteRule[],
-): ApplyPlanItem[] {
-  const remoteByFingerprint = new Map(
-    remote.map((rule) => [rule.fingerprint, rule]),
-  );
-
-  return items.map((item) => {
-    if (item.action !== "REMOVE") {
-      return item;
-    }
-
-    const remoteRule = remoteByFingerprint.get(item.fingerprint);
-    if (remoteRule?.ruleNumber == null) {
-      return { ...item, remoteCommand: undefined };
-    }
-
-    return {
-      ...item,
-      remoteCommand: buildUfwDeleteCommand(remoteRule.ruleNumber),
-    };
-  });
-}

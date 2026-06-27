@@ -39,20 +39,6 @@ export async function listServers() {
   });
 }
 
-export async function listServersWithRuleCounts() {
-  const servers = await listServers();
-  const counts = await db.ruleRecord.groupBy({
-    by: ["serverId"],
-    _count: { id: true },
-  });
-  const countByServerId = new Map(counts.map((entry) => [entry.serverId, entry._count.id]));
-
-  return servers.map((server) => ({
-    ...server,
-    ruleRecordCount: countByServerId.get(server.id) ?? 0,
-  }));
-}
-
 export async function listServersWithInventoryStats() {
   const servers = await listServers();
   const statsByServerId = await getServerInventoryStatsMap(servers.map((server) => server.id));
@@ -432,10 +418,6 @@ export async function testServerConnection(
     await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
     throw error;
   }
-}
-
-export async function getRuleRecordCount(serverId: string): Promise<number> {
-  return db.ruleRecord.count({ where: { serverId } });
 }
 
 async function verifyServerSsh(config: {

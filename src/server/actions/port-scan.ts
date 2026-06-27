@@ -9,7 +9,6 @@ import { isPortScanEnabled } from "@/lib/port-scan/config";
 import { getServerPath } from "@/lib/server-path";
 import type { ActionFailureResult } from "@/types/action-result";
 import {
-  getLatestPortScan,
   getPortScanById,
   startPortScan,
 } from "@/server/services/port-scan.service";
@@ -51,11 +50,6 @@ export async function startPortScanAction(
     const message = error instanceof Error ? error.message : "Port scan failed to start";
     return { success: false, error: message };
   }
-}
-
-export async function getLatestPortScanAction(serverId: string) {
-  await requireUserId();
-  return getLatestPortScan(serverId);
 }
 
 export async function getPortScanByIdAction(scanId: string) {

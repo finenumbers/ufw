@@ -168,7 +168,7 @@ export function buildTableRowsFromSources(
   return rows;
 }
 
-export async function rebuildTableFromSources(
+async function rebuildTableFromSources(
   serverId: string,
   userId: string,
 ): Promise<UnifiedRuleRow[]> {
@@ -193,7 +193,7 @@ export async function rebuildTableFromSources(
   return rows;
 }
 
-export async function syncDraftFromRemoteSnapshot(
+async function syncDraftFromRemoteSnapshot(
   serverId: string,
   userId: string,
 ): Promise<{ skipped: boolean }> {

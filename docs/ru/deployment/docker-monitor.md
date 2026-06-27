@@ -17,9 +17,9 @@ DOCKER_MONITOR_ENABLED=true
 | Переменная | По умолчанию | Назначение |
 |------------|--------------|------------|
 | `DOCKER_INVENTORY_HISTORY_LIMIT` | `10` | История snapshot inventory на сервер |
-| `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` | `120000` | Интервал между refresh inventory |
-| `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` | `300000` | Окно rate limit для start/stop/restart |
 | `DOCKER_COMMAND_TIMEOUT_MS` | `60000` | Таймаут SSH-команд Docker CLI |
+
+Refresh inventory и control (start/stop/restart) ограничены **раз в 30 секунд** на сервер (фиксировано в коде с v0.5.1). Устаревшие `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` и `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` в `.env` **игнорируются**.
 
 ## Требования на managed-серверах
 
@@ -43,7 +43,7 @@ DOCKER_MONITOR_ENABLED=true
 - Feature flag (по умолчанию выключен)
 - Валидация container ID/name — без произвольных shell-команд
 - Только фиксированные control actions
-- Rate limits на refresh и control
+- Фиксированный rate limit **30 секунд** на refresh и control (не через env)
 - Audit: `DOCKER_INVENTORY_REFRESHED`, `DOCKER_CONTAINER_*`
 
 ## См. также

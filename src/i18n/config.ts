@@ -1,6 +1,6 @@
 export const LOCALE_COOKIE = "ufw_locale";
 
-export const localeDisplayOrder = ["en", "de", "es", "fr", "it", "pt-BR", "ru"] as const;
+const localeDisplayOrder = ["en", "de", "es", "fr", "it", "pt-BR", "ru"] as const;
 
 export const locales = localeDisplayOrder;
 

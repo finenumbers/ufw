@@ -3,11 +3,15 @@
   "entry": [
     "src/app/**/*.{ts,tsx}",
     "src/middleware.ts",
-    "src/instrumentation.ts",
     "scripts/**/*.ts"
   ],
   "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts"],
   "ignore": ["**/*.test.ts"],
+  "ignoreBinaries": ["tsx"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreIssues": {
+    "src/components/ui/**": ["exports", "types"]
+  },
   "ignoreDependencies": [
     "pino-pretty",
     "postcss",
@@ -15,7 +19,6 @@
     "eslint",
     "eslint-config-next",
     "tailwindcss",
-    "tsx",
     "@swc/helpers"
   ]
 }

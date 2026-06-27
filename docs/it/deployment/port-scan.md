@@ -22,8 +22,9 @@ Optional tuning:
 | `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Max ports sent to Nmap enrichment |
 | `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Full-port discovery timeout (30 min) |
 | `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Enrichment timeout |
-| `PORT_SCAN_RATE_LIMIT_WINDOW_MS` | `900000` | Min interval between scans per server |
 | `PORT_SCAN_HISTORY_LIMIT` | `10` | Stored scan runs per server |
+
+Repeat scans on the same server are rate-limited to **once every 30 seconds** (fixed in app code since v0.5.1). Legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` in `.env` is **ignored**.
 
 ## Network requirements
 
@@ -46,7 +47,7 @@ Whitelist-only rules (`From = specific IP/CIDR`, `To Port = any`) do **not** cou
 
 ## Security notes
 
-- Rate-limited (one scan per server per 15 minutes by default)
+- Rate-limited (30 seconds between repeat scans per server; not env-configurable)
 - Audit events: `PORT_SCAN_STARTED`, `PORT_SCAN_COMPLETED`
 - Scans run in the per-server queue alongside SSH operations (serialized)
 - Uses connect scans (`naabu -scan-type c`, `nmap -sT`) — no raw socket capabilities required

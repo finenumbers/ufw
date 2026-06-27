@@ -16,7 +16,6 @@ import {
   controlDockerContainer,
   getDockerContainerInspect,
   getDockerInventoryById,
-  getLatestDockerInventory,
   startDockerInventoryRefresh,
 } from "@/server/services/docker-monitor.service";
 import { getServerById } from "@/server/services/server.service";
@@ -57,11 +56,6 @@ export async function refreshDockerInventoryAction(
     const message = error instanceof Error ? error.message : "Docker inventory refresh failed";
     return { success: false, error: message };
   }
-}
-
-export async function getLatestDockerInventoryAction(serverId: string) {
-  await requireUserId();
-  return getLatestDockerInventory(serverId);
 }
 
 export async function getDockerInventoryByIdAction(snapshotId: string) {
