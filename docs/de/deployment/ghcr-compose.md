@@ -20,8 +20,8 @@ Images sind **domänenunabhängig**. Setzen Sie `APP_URL` in `.env` auf Ihre öf
 ### Option A — Git-Tag-Release (empfohlen)
 
 ```bash
-git tag v0.7.0
-git push origin v0.7.0
+git tag v0.7.3
+git push origin v0.7.3
 ```
 
 GitHub Actions veröffentlicht getaggte Images und aktualisiert `latest`. Pakete müssen beim ersten Gebrauch **Public** sein (GitHub → Packages → Einstellungen).

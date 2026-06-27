@@ -48,7 +48,7 @@ The app tries `docker …` first, then `sudo docker …` if permission is denied
 
 ## Progress polling
 
-While inventory refresh runs, the UI polls a lightweight status endpoint. Poll interval backs off: **3s → 5s → 10s**. The operation banner shows step progress.
+While inventory refresh runs, the UI polls a lightweight status endpoint. Polling starts **immediately**, then every **1s** while the operation is active (backs off after ~30 minutes). When the operation banner completes, panels refresh right away. The operation banner polls every **1s** during RUNNING.
 
 ## Related docs
 

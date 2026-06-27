@@ -54,7 +54,7 @@ Whitelist-Regeln (`From = specific IP/CIDR`, `To Port = any`) gelten **nicht** a
 
 ## Fortschritts-Polling
 
-Während ein Scan läuft, pollt die UI einen leichtgewichtigen Status-Endpunkt (keine vollständigen SSH-Neulesungen). Polling-Intervall steigt: **3s → 5s → 10s** im Verlauf. Das Vorgangsbanner zeigt Schrittfortschritt.
+Während ein Scan läuft, pollt die UI einen leichtgewichtigen Status-Endpunkt (keine vollständigen SSH-Neulesungen). Polling startet **sofort**, dann alle **1s** solange die Operation aktiv ist (Backoff nach ~30 Min.). Bei Abschluss im Banner aktualisieren sich die Panels sofort. Das Banner pollt alle **1s** im Status RUNNING.
 
 ## Verwandte Dokumentation
 

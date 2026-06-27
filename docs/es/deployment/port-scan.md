@@ -54,7 +54,7 @@ Las reglas de lista blanca (`From = specific IP/CIDR`, `To Port = any`) **no** c
 
 ## Polling de progreso
 
-Mientras un escaneo se ejecuta, la interfaz consulta un endpoint de estado ligero (no relecturas SSH completas). El intervalo de polling aumenta: **3s → 5s → 10s** a medida avanza la ejecución. El banner de operación muestra el progreso por pasos.
+Mientras un escaneo se ejecuta, la interfaz consulta un endpoint de estado ligero (no relecturas SSH completas). Polling **inmediato**, luego cada **1s** mientras la operación está activa (backoff tras ~30 min). Al completarse en el banner, los paneles se actualizan al instante. El banner consulta la API cada **1s** en RUNNING.
 
 ## Documentación relacionada
 

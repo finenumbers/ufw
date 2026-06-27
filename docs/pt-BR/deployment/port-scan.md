@@ -54,7 +54,7 @@ Regras de whitelist (`From = specific IP/CIDR`, `To Port = any`) **não** contam
 
 ## Polling de progresso
 
-Enquanto uma varredura está em execução, a interface faz polling de um endpoint de status leve (não releituras SSH completas). O intervalo de polling aumenta: **3s → 5s → 10s** conforme a execução progride. O banner de operação mostra progresso por etapa.
+Enquanto uma varredura está em execução, a interface faz polling de um endpoint de status leve (não releituras SSH completas). Polling **imediato**, depois a cada **1s** enquanto a operação está ativa (backoff após ~30 min). Ao concluir no banner, os painéis atualizam na hora. O banner consulta a API a cada **1s** em RUNNING.
 
 ## Documentação relacionada
 

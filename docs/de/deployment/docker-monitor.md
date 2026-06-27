@@ -48,7 +48,7 @@ Die App versucht zuerst `docker …`, dann `sudo docker …` bei Berechtigungsve
 
 ## Fortschritts-Polling
 
-Während die Inventar-Aktualisierung läuft, pollt die UI einen leichtgewichtigen Status-Endpunkt. Polling-Intervall steigt: **3s → 5s → 10s**. Das Vorgangsbanner zeigt Schrittfortschritt.
+Während die Inventar-Aktualisierung läuft, pollt die UI einen leichtgewichtigen Status-Endpunkt. Polling startet **sofort**, dann alle **1s** solange die Operation aktiv ist (Backoff nach ~30 Min.). Bei Abschluss im Banner aktualisieren sich die Panels sofort. Das Banner pollt alle **1s** im Status RUNNING.
 
 ## Verwandte Dokumentation
 

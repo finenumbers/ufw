@@ -54,7 +54,7 @@ Whitelist-only rules (`From = specific IP/CIDR`, `To Port = any`) do **not** cou
 
 ## Progress polling
 
-While a scan runs, the UI polls a lightweight status endpoint (not full SSH re-reads). Poll interval backs off: **3s → 5s → 10s** as the run progresses. The operation banner shows step progress.
+While a scan runs, the UI polls a lightweight status endpoint (not full SSH re-reads). Polling starts **immediately**, then every **1s** while the operation is active (backs off after ~30 minutes). When the operation banner completes, panels refresh right away. The operation banner polls every **1s** during RUNNING.
 
 ## Related docs
 

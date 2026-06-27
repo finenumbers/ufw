@@ -54,7 +54,7 @@ Les règles en liste blanche (`From = specific IP/CIDR`, `To Port = any`) ne com
 
 ## Interrogation de progression
 
-Pendant un scan, l'interface interroge un point de terminaison de statut léger (pas de relectures SSH complètes). L'intervalle d'interrogation augmente : **3s → 5s → 10s** au fil de l'exécution. La bannière d'opération affiche la progression des étapes.
+Pendant un scan, l'interface interroge un point de terminaison de statut léger (pas de relectures SSH complètes). Polling **immédiat**, puis toutes les **1s** tant que l'opération est active (backoff après ~30 min). À la fin dans la bannière, les panneaux se rafraîchissent aussitôt. La bannière interroge l'API toutes les **1s** en RUNNING.
 
 ## Documentation associée
 

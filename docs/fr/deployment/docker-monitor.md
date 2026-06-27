@@ -48,7 +48,7 @@ L'application essaie d'abord `docker …`, puis `sudo docker …` en cas de refu
 
 ## Interrogation de progression
 
-Pendant l'actualisation de l'inventaire, l'interface interroge un point de terminaison de statut léger. L'intervalle d'interrogation augmente : **3s → 5s → 10s**. La bannière d'opération affiche la progression des étapes.
+Pendant l'actualisation de l'inventaire, l'interface interroge un point de terminaison de statut léger. Polling **immédiat**, puis toutes les **1s** tant que l'opération est active (backoff après ~30 min). À la fin dans la bannière, les panneaux se rafraîchissent aussitôt. La bannière interroge l'API toutes les **1s** en RUNNING.
 
 ## Documentation associée
 

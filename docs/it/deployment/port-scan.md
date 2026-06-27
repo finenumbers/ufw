@@ -54,7 +54,7 @@ Le regole whitelist (`From = specific IP/CIDR`, `To Port = any`) **non** contano
 
 ## Polling progresso
 
-Durante una scansione, l'interfaccia effettua polling su un endpoint di stato leggero (non riletture SSH complete). L'intervallo di polling aumenta: **3s → 5s → 10s** man mano che procede l'esecuzione. Il banner operazione mostra il progresso per passo.
+Durante una scansione, l'interfaccia effettua polling su un endpoint di stato leggero (non riletture SSH complete). Polling **immediato**, poi ogni **1s** finché l'operazione è attiva (backoff dopo ~30 min). Al completamento nel banner, i pannelli si aggiornano subito. Il banner interroga l'API ogni **1s** in RUNNING.
 
 ## Documentazione correlata
 

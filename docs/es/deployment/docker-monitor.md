@@ -48,7 +48,7 @@ La app intenta primero `docker …`, luego `sudo docker …` si se deniega permi
 
 ## Polling de progreso
 
-Mientras la actualización de inventario se ejecuta, la interfaz consulta un endpoint de estado ligero. El intervalo de polling aumenta: **3s → 5s → 10s**. El banner de operación muestra el progreso por pasos.
+Mientras la actualización de inventario se ejecuta, la interfaz consulta un endpoint de estado ligero. Polling **inmediato**, luego cada **1s** mientras la operación está activa (backoff tras ~30 min). Al completarse en el banner, los paneles se actualizan al instante. El banner consulta la API cada **1s** en RUNNING.
 
 ## Documentación relacionada
 
