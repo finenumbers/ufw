@@ -10,7 +10,8 @@
     "logout": "Sair"
   },
   "footer": {
-    "documentation": "Documentação"
+    "documentation": "Documentação",
+    "versionTitle": "Versão implantada da aplicação"
   },
   "common": {
     "cancel": "Cancelar",

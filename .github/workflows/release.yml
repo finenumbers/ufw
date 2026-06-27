@@ -40,6 +40,9 @@ jobs:
           context: .
           target: runner
           push: true
+          build-args: |
+            APP_VERSION=${{ env.VERSION }}
+            BUILD_SHA=${{ github.sha }}
           tags: |
             ${{ env.APP_IMAGE }}:${{ github.ref_name }}
             ${{ env.APP_IMAGE }}:${{ env.VERSION }}

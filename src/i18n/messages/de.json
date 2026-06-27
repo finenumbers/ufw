@@ -10,7 +10,8 @@
     "logout": "Abmelden"
   },
   "footer": {
-    "documentation": "Dokumentation"
+    "documentation": "Dokumentation",
+    "versionTitle": "Bereitgestellte Anwendungsversion"
   },
   "common": {
     "cancel": "Abbrechen",

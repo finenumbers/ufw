@@ -10,7 +10,8 @@
     "logout": "Esci"
   },
   "footer": {
-    "documentation": "Documentazione"
+    "documentation": "Documentazione",
+    "versionTitle": "Versione dell'applicazione distribuita"
   },
   "common": {
     "cancel": "Annulla",

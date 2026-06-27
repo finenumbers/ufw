@@ -10,7 +10,8 @@
     "logout": "Déconnexion"
   },
   "footer": {
-    "documentation": "Documentation"
+    "documentation": "Documentation",
+    "versionTitle": "Version de l'application déployée"
   },
   "common": {
     "cancel": "Annuler",

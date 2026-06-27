@@ -10,7 +10,8 @@
     "identities": "SSH-идентификации"
   },
   "footer": {
-    "documentation": "Документация"
+    "documentation": "Документация",
+    "versionTitle": "Версия развёрнутого приложения"
   },
   "common": {
     "cancel": "Отмена",

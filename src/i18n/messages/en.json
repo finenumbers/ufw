@@ -10,7 +10,8 @@
     "logout": "Logout"
   },
   "footer": {
-    "documentation": "Documentation"
+    "documentation": "Documentation",
+    "versionTitle": "Deployed application version"
   },
   "common": {
     "cancel": "Cancel",

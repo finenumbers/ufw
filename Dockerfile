@@ -15,6 +15,10 @@ COPY . .
 
 ENV DATABASE_URL=postgresql://ufw:ufw@postgres:5432/ufw?schema=public
 ENV NEXT_TELEMETRY_DISABLED=1
+ARG APP_VERSION=0.0.0-dev
+ARG BUILD_SHA=unknown
+ENV NEXT_PUBLIC_APP_VERSION=$APP_VERSION
+ENV NEXT_PUBLIC_BUILD_SHA=$BUILD_SHA
 
 RUN npx prisma generate
 RUN npm run build

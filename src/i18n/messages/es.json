@@ -10,7 +10,8 @@
     "logout": "Cerrar sesión"
   },
   "footer": {
-    "documentation": "Documentación"
+    "documentation": "Documentación",
+    "versionTitle": "Versión desplegada de la aplicación"
   },
   "common": {
     "cancel": "Cancelar",

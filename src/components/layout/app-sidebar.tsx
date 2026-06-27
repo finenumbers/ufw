@@ -8,6 +8,7 @@ import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
 import { getDocsUrl } from "@/lib/docs-url";
+import { getAppVersionLabel } from "@/lib/app-version";
 import type { AppLocale } from "@/i18n/config";
 import { getServerPath, isServerPathActive } from "@/lib/server-path";
 import { cn } from "@/lib/utils";
@@ -77,15 +78,18 @@ export function AppSidebar({ servers }: AppSidebarProps) {
         <Button variant="outline" className="w-full" onClick={handleLogout}>
           {t("sidebar.logout")}
         </Button>
-        <div className="space-y-1 pt-2 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between gap-2 pt-2 text-xs text-muted-foreground">
           <a
             href={getDocsUrl(locale)}
             target="_blank"
             rel="noopener noreferrer"
-            className="block underline-offset-4 hover:underline"
+            className="underline-offset-4 hover:underline"
           >
             {t("footer.documentation")}
           </a>
+          <span className="shrink-0 font-mono tabular-nums" title={t("footer.versionTitle")}>
+            {getAppVersionLabel()}
+          </span>
         </div>
       </div>
     </aside>
