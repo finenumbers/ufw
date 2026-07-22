@@ -8,11 +8,9 @@ Nginx Proxy Manager (NPM) debe estar **ya instalado** en su host Docker. Este pr
 Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, red Docker)
 ```
 
-NPM termina HTTPS. La app establece HSTS en producción pero depende de NPM para los certificados.
+NPM termina HTTPS. La app configura HSTS en producción pero depende de NPM para certificados.
 
-## Checklist Proxy Host
-
-Cree o actualice un **Proxy Host** en la interfaz de NPM:
+## Lista de comprobación Proxy Host
 
 | Campo | Valor |
 |-------|-------|
@@ -20,7 +18,7 @@ Cree o actualice un **Proxy Host** en la interfaz de NPM:
 | Scheme | `http` |
 | Forward Hostname / IP | `ufw-app` |
 | Forward Port | `8088` |
-| Websockets Support | **Enabled** |
+| Websockets Support | **Activado** |
 | Block Common Exploits | Recomendado |
 | SSL | Let's Encrypt o certificado existente |
 | Force SSL | Recomendado |
@@ -29,15 +27,11 @@ Cree o actualice un **Proxy Host** en la interfaz de NPM:
 
 El contenedor de la app debe unirse a la **misma red Docker** que NPM.
 
-Definir en `.env`:
-
 ```bash
 NPM_NETWORK=nginxproxymanager_default
 ```
 
-(`docker-compose.prod.yml` conecta `ufw-app` a la red externa `npm_proxy` → `$NPM_NETWORK`.)
-
-Encontrar el nombre de su red:
+`docker-compose.prod.yml` adjunta `ufw-app` a la red externa de `$NPM_NETWORK`.
 
 ```bash
 docker network ls | grep -i proxy
@@ -45,45 +39,37 @@ docker network ls | grep -i proxy
 
 ## APP_URL debe coincidir
 
-`APP_URL` en `.env` debe coincidir exactamente con la URL pública (esquema + host):
-
 ```bash
 APP_URL=https://ufw.example.com
 ```
 
-La discrepancia provoca bucles de redirección de auth o cookies rotas.
+Debe coincidir exactamente con el dominio del Proxy Host NPM (esquema + host). Las cookies Better Auth dependen de esto.
 
-## APP_URL vs esquema Proxy Host
+## HTTP interno es intencional
 
-| Capa | Esquema | Ejemplo |
-|------|---------|---------|
-| Navegador / `APP_URL` | **HTTPS** | `https://ufw.example.com` |
-| NPM → contenedor | **HTTP** | `http://ufw-app:8088` |
+NPM termina TLS. El tráfico NPM → `ufw-app:8088` es HTTP sin cifrar en la red Docker — **por diseño**, no es mala configuración.
 
-NPM termina TLS. El contenedor de la app escucha HTTP sin cifrar dentro de la red Docker — es **por diseño**, no una mala configuración.
-
-Defina `APP_URL` solo a la URL HTTPS pública. Nunca apunte `APP_URL` a `http://ufw-app:8088`.
+**No** configure `APP_URL` a `http://ufw-app:8088`.
 
 ## TRUST_PROXY
 
-Al ejecutar detrás de NPM, definir en `.env` o entorno de stack Portainer:
+Configure en el entorno de la app cuando esté detrás de NPM:
 
-```bash
+```env
 TRUST_PROXY=1
 ```
 
-Esto hace que los límites de tasa en `/setup` usen la IP real del cliente desde `X-Forwarded-For`. Véase [Variables de entorno](../administration/environment-variables.md).
+Asegura que los límites de setup usen la IP real del cliente desde `X-Forwarded-For`.
 
-## Build local (sin GHCR)
+## Alternativa build local
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-Se aplican los mismos ajustes de NPM Proxy Host.
+La misma lista de comprobación NPM aplica.
 
-## Documentación relacionada
+## Documentos relacionados
 
-- [Resumen de despliegue](./overview.md)
+- [Variables de entorno](../administration/environment-variables.md)
 - [GHCR + Compose](./ghcr-compose.md)
-- [Solución de problemas](../troubleshooting.md)

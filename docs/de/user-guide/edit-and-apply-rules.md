@@ -1,53 +1,66 @@
 # Regeln bearbeiten und anwenden
 
-Wenn UFW auf einem Server **installiert und aktiv** ist, können Sie Firewall-Regeln über die **Regeltabelle** im Server-Dashboard verwalten.
+Wenn UFW **installiert und aktiv** ist, ist die **Regeltabelle** auf dem Server-Dashboard die Hauptbearbeitungsoberfläche.
 
-## Regeltabelle
+## Funktionen der Regeltabelle
 
-Funktionen:
-
-- Suche und Spaltenfilter
-- Gruppenabschnitte mit Ein-/Ausklappen
-- Drag-and-Drop-Neuordnung (Reihenfolge ist für UFW relevant)
-- Zeilenfarben nach [Sync-Zustand](../concepts/ufw-rules-and-states.md)
-- Zeile hinzufügen, inline bearbeiten, Zeile löschen
+| Funktion | Beschreibung |
+|----------|--------------|
+| **Suche** | Sichtbare Zeilen filtern |
+| **Spaltenfilter** | Nach Gruppe oder Name filtern |
+| **Gruppenabschnitte** | Gruppierte Zeilen ein-/ausklappen |
+| **Drag-and-Drop** | Regeln neu ordnen (Reihenfolge beeinflusst UFW) |
+| **Zeilenfarben** | [Origin-State](../concepts/ufw-rules-and-states.md)-Indikatoren |
+| **Inline-Bearbeitung** | Doppelklick oder Bearbeiten-Aktion auf Zeile |
+| **Hinzufügen / Löschen** | Toolbar- und Zeilenaktionen |
+| **Mehr laden** | Unendliches Scrollen für große Regelsätze |
 
 ## Vom Server aktualisieren
 
-Nutzen Sie **Status aktualisieren** im Dashboard (oder die Aktualisierung in der Regel-Toolbar), um:
+**Status aktualisieren** auf dem Dashboard (oder Sync aus Toolbar):
 
-1. Den UFW-Zustand per SSH zu erkennen
-2. Einen neuen Snapshot vom Server zu laden
-3. Die Regeltabelle aus Remote-Daten und lokalen Metadaten neu zu befüllen
+1. UFW-Zustand über SSH erkennen
+2. Neuen Snapshot speichern
+3. Tabelle aus Remote + lokalen Metadaten neu seeden
 
-Bei **ungespeicherten Änderungen** zeigt die App vor dem Neuladen vom Server einen Bestätigungsdialog.
+Verwenden nach manuellen CLI-Änderungen auf dem Server oder nach teilweisem Anwenden.
 
-Nutzen Sie dies nach manuellen Änderungen in der Server-CLI oder nach einem teilweisen Anwenden.
+Ungespeicherte Entwurfsänderungen lösen vor dem Neuladen einen Bestätigungsdialog aus.
 
-## Erzwungene Synchronisation
+## Erzwungene Synchronisation vom Server
 
-Warnt die UI vor Drift oder teilweisem Anwenden, nutzen Sie **Erzwungene Synchronisation vom Server**, um die lokale Entwurfsausrichtung durch den tatsächlichen Remote-Snapshot zu ersetzen, bevor Sie weiter bearbeiten.
+Wenn die UI vor Drift oder teilweisem Anwenden warnt, **Erzwungene Synchronisation vom Server** verwenden, um den Entwurf am tatsächlichen Remote-Snapshot auszurichten, bevor weitere Bearbeitungen.
+
+Verfügbar im Apply-Vorschau-Dialog und zugehörigen Warnungen — kein Ersatz für erneute Vorschau, wenn sich Remote zwischen Vorschau und Bestätigung geändert hat.
 
 ## Regeln importieren
 
-Toolbar → CSV, XLSX oder JSON importieren. Importierte Zeilen in der Tabelle prüfen, bevor Sie die Anwenden-Vorschau starten.
+Toolbar → **Importieren** **CSV**, **XLSX** oder **JSON**:
 
-## Anwenden-Workflow
+- Zeilen werden in Entwurf gemerged; Duplikate per Fingerabdruck übersprungen oder gemerged gemäß Importregeln
+- Zeilen in der Tabelle vor Apply-Vorschau validieren
+- Import betrifft nur Entwurf bis zum Anwenden
 
-1. Entwurfsänderungen vornehmen
-2. **Anwenden-Vorschau** — geplante Befehle und Diff-Zusammenfassung prüfen
-3. **Bestätigen** — Ausführung per SSH (wird abgelehnt, wenn sich Remote-UFW seit der Vorschau geändert hat — Vorschau erneut ausführen)
-4. Fortschritt im Vorgangsbanner verfolgen
+## Regeln exportieren
 
-**Regeln speichern** (Anwenden-Vorschau) ist deaktiviert, bis der SSH-Host-Key **verifiziert** ist — führen Sie zuerst **Status aktualisieren** aus, wenn der Server aus der Konfiguration importiert wurde.
+Aktuelle Tabelle nach **XLSX** für Offline-Review oder Backup exportieren. XLSX-Layout entspricht Import-Spaltenreihenfolge für Round-Trip-Workflows.
 
-Details siehe [Entwurf- und Anwenden-Workflow](../concepts/draft-apply-workflow.md).
+## Apply-Workflow
+
+1. Entwurf bearbeiten
+2. **Regeln speichern** — geplante Befehle und Zusammenfassungszähler prüfen
+3. **Bestätigen** — führt über SSH aus (abgelehnt, wenn Remote seit Vorschau geändert)
+4. **Vorgangsbanner** für Befehls-für-Befehl-Fortschritt beobachten
+
+**Regeln speichern** / Anwenden ist deaktiviert, bis SSH-Host-Key **verifiziert** ist — für importierte Server zuerst **Status aktualisieren**.
+
+Siehe [Entwurf-und-Anwenden-Workflow](../concepts/draft-apply-workflow.md).
 
 ## Sicherheitstipps
 
-- Behalten Sie mindestens eine Regel, die SSH aus Ihrem Admin-Netz erlaubt, bevor Sie Deny-Regeln anwenden
-- Führen Sie die Vorschau in Produktion während eines Wartungsfensters aus
-- Prüfen Sie nach dem Anwenden den **Vorgangsverlauf** auf SUCCESS- oder FAILED-Status
+- Mindestens eine Regel behalten, die SSH von Ihrem Admin-Netz erlaubt, vor Deny-Regeln
+- Vorschau in Produktion während eines Wartungsfensters ausführen
+- **Vorgangsverlauf** nach Apply auf ERFOLG oder FEHLER prüfen
 
 ## Verwandte Dokumentation
 

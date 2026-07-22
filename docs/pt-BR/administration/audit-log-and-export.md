@@ -1,37 +1,48 @@
 # Log de auditoria e exportação
 
-Existem duas camadas de registro: **logs de operações** (técnicos) e **eventos de auditoria** (segurança/conformidade).
+Duas trilhas complementares: **logs de operação** (progresso de tarefas) e **eventos de auditoria** (segurança e conformidade).
 
 ## Eventos de auditoria
 
-Gravados na tabela `audit_event`. Exemplos:
+Gravados no Postgres em ações sensíveis. Exemplos:
 
 | Ação | Quando |
-|--------|------|
-| `LOGIN` | Sessão de usuário criada |
-| `LOGOUT` | Sessão excluída |
-| `CONFIG_EXPORT` | Configuração de servidores exportada (após reentrada de senha) |
+|------|--------|
+| `LOGIN` / `LOGOUT` | Início/fim de sessão |
+| `APPLY_PREVIEWED` / `APPLY_CONFIRMED` / `APPLY_COMPLETED` / `APPLY_FAILED` | Fluxo de apply |
+| `SNAPSHOT_LOADED` | Snapshot UFW capturado |
+| `UFW_ENABLE` | Ativação remota após install |
+| `PORT_SCAN_STARTED` / `PORT_SCAN_COMPLETED` | Ciclo de vida de varredura de portas |
+| `CONFIG_EXPORT` / `CONFIG_IMPORT` | Transferência de configuração JSON v2 |
+| CRUD de servidor | Criar/atualizar/excluir registros de servidor |
 
-Visualize em **Histórico de operações** → aba **Eventos de auditoria**.
+Visualize em **Histórico de operações** → aba **Eventos de auditoria** com scroll infinito.
 
-## Logs de operações
+Retenção de auditoria segue armazenamento do banco — sem purge automático salvo operador limpar histórico.
 
-Gravados para trabalho de longa duração: apply, atualização de status, instalação, teste SSH, etc. Inclui metadados de etapas e mensagens de sucesso/falha.
+## Logs de operação
 
-Visualize em **Histórico de operações** → aba **Logs de operações** ou no **banner de operação** ao vivo.
+Registros técnicos com etapas, status, timestamps e mensagens de erro. Veja [Histórico de operações](../user-guide/operations-history.md).
 
-## Trilha de auditoria de exportação de configuração
+## Auditoria de exportação de configuração
 
-Cada exportação bem-sucedida cria um registro de auditoria `CONFIG_EXPORT` com ID de usuário e timestamp. Use isso para rastrear quem baixou arquivos de credenciais em texto plano.
+Cada **Salvar configuração** bem-sucedido cria entrada de auditoria. Arquivo de exportação contém **segredos SSH descriptografados** — proteja como dump de cofre de senhas.
 
-## Retenção
+Fluxo de exportação:
 
-A retenção de snapshots mantém os últimos **10** snapshots por servidor (purge automático dos mais antigos). A retenção de logs de operações pode ser limpa manualmente na interface.
+1. Confirmação de senha (step-up)
+2. Token de download de curta duração
+3. Download JSON via rota API
 
-Planeje política de backup para dados de auditoria se a conformidade exigir retenção longa — veja [Backup e restauração](../operations/backup-restore.md).
+Limite de taxa: 5 exportações por minuto por usuário.
 
-## Documentação relacionada
+## Limpar histórico
+
+**Limpar histórico** na página de operações remove entradas de log de operação conforme ação da UI. Não reverte alterações de servidor ou exclui eventos de auditoria em todos os casos — confirme texto do diálogo para comportamento atual.
+
+Não modifica UFW remoto ou rascunhos locais de regras.
+
+## Documentos relacionados
 
 - [Importar e exportar configuração](../concepts/import-export-config.md)
-- [Histórico de operações](../user-guide/operations-history.md)
-- [SECURITY.md](../../../SECURITY.md)
+- [Modelo de segurança](./security-model.md)

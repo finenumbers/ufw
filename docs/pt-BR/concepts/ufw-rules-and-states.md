@@ -1,38 +1,54 @@
 # Regras UFW e estados
 
-As regras são normalizadas em um modelo de linha unificado com campos **core** (o que o UFW considera) e campos de **interface** (nome, grupo, metadados de cor).
+A tabela de regras mostra uma **visão unificada**: regras UFW remotas, metadados locais e suas edições de rascunho. As **cores** das linhas refletem como cada linha se relaciona com o servidor e o banco de dados.
 
-## Campos core da regra
+## Estrutura da regra
 
-Colunas típicas incluem ação (allow/deny/reject), direção, protocolo, portas, endereços de origem/destino e modo de log. O conjunto exato corresponde à sintaxe expressiva de regras do UFW — veja a tabela de regras na interface.
+Cada linha possui:
 
-## Estados de sincronização (cores das linhas)
+| Camada | Campos |
+|--------|--------|
+| **Núcleo** | action, direction, protocol, addresses, ports, interface, app profile, log mode, comment, IPv6 |
+| **Metadados UI** | group, name, notes (armazenados localmente, não enviados ao UFW exceto em comment) |
+| **Origem** | estado de sync que define a cor da linha |
 
-Cada linha tem um **estado** que mostra como os dados do rascunho local se relacionam com o último snapshot do servidor:
+Fingerprints identificam regras entre recargas remotas e edições locais.
 
-| Estado | Significado |
-|-------|---------|
-| **MATCHED** | Rascunho corresponde ao que o UFW reportou no servidor |
-| **REMOTE_ONLY** | Existe no snapshot do servidor, mas não no seu rascunho local |
-| **LOCAL_ONLY** | No seu rascunho, mas não no servidor (será adicionada na aplicação) |
-| **DRAFT_ONLY** | Edição local ainda não aplicada; difere da linha de base correspondente |
+## Estados de origem
 
-As cores ajudam a identificar deriva antes de aplicar. Após **Ressincronização forçada do servidor**, o rascunho local realinha ao estado remoto.
+| Estado | Significado da cor | Situação típica |
+|--------|-------------------|-----------------|
+| **MATCHED** | Remoto e metadados locais concordam | Regra sincronizada estável |
+| **REMOTE_ONLY** | No servidor, não nos metadados locais | Nova regra remota após refresh |
+| **LOCAL_ONLY** | No BD local, não no servidor | Add pendente ou removida remotamente |
+| **DRAFT_ONLY** | Edição de rascunho ainda não aplicada | Linha nova ou campos núcleo alterados |
+| **CONFLICT** | Mesmo fingerprint, campos núcleo diferentes | Deriva — revisar antes de apply |
+| **DELETED** | Marcada excluída no rascunho | Será removida no apply |
 
-## Impressões digitais
+Cores ajudam a detectar deriva **antes** de aplicar. Após **Ressincronização forçada do servidor**, o rascunho realinha ao snapshot remoto.
 
-Cada regra tem uma impressão digital derivada dos campos core. Usada para corresponder linhas entre snapshots e detectar operações de reordenação/exclusão durante o planejamento da aplicação.
+## Duas contagens de regras
 
-## Agrupamento e ordem
+A UI mostra contagens diferentes em lugares diferentes:
 
-- **Grupos** — organizam regras visualmente; o nome do grupo é metadado da interface
-- **Ordem** — a ordem das regras UFW importa; reordenar pode exigir excluir e recriar no servidor durante a aplicação
+| Local | Rótulo | Conta |
+|-------|--------|-------|
+| Card da **lista de servidores** | regras salvas | Linhas em `ruleRecord` (metadados locais) |
+| Badge do **painel** | na tabela | Linhas na tabela da sessão de rascunho ativa |
 
-## Formatos de importação
+Estas diferem durante edição, importação ou sync. O badge do painel corresponde ao comprimento da tabela visível.
 
-Regras podem ser importadas de **CSV**, **XLSX** ou **JSON** pela barra de ferramentas de regras. Linhas importadas viram entradas de rascunho — ainda exigem aplicação para chegar ao servidor.
+## Ordem importa
 
-## Documentação relacionada
+O UFW avalia regras em ordem. A tabela suporta reordenação por arrastar e soltar. Apply pode emitir operações de resync de ordem quando a numeração remota diverge da ordem do rascunho.
+
+## Metadados remotos vs locais
+
+- **Campos núcleo remotos** vêm de saída parseada de `ufw status numbered`
+- **Group, name, notes** existem apenas no UFW Remote Manager, salvo se copiados para comentários de regra UFW
+- Apply grava campos núcleo no servidor; metadados UI permanecem no Postgres
+
+## Documentos relacionados
 
 - [Fluxo de rascunho e aplicação](./draft-apply-workflow.md)
 - [Editar e aplicar regras](../user-guide/edit-and-apply-rules.md)

@@ -1,99 +1,73 @@
 # Modelo de seguridad
 
-Esta página explica cómo UFW Remote Manager protege credenciales, sesiones y límites de red.
+UFW Remote Manager es una **herramienta de administración privilegiada**: almacena secretos SSH, ejecuta comandos de firewall remotos y expone una interfaz web. Aquí se documentan supuestos de diseño y controles.
 
-Para informar de vulnerabilidades, consulte [SECURITY.md](../../../SECURITY.md) (inglés, referencia canónica).
+## Modelo de amenazas (resumen)
+
+| Activo | Riesgo | Mitigación |
+|--------|--------|------------|
+| Credenciales SSH | Divulgación | AES-256-GCM en reposo; descifrado solo para conexiones |
+| Cookie de sesión | Secuestro | HTTPS, cookies HTTP-only, `BETTER_AUTH_SECRET` |
+| Suplantación de host | MITM en SSH | Huella de clave host en primera conexión; sin verificar bloquea aplicación |
+| Admin no autorizado | Fuerza bruta | Usuario único; límite de tasa de setup; contraseñas robustas |
+| CSRF / XSS | Abuso de cuenta | Valores predeterminados del framework, CSP en producción |
+| Archivo exportación configuración | Fuga de secretos | Reautenticación con contraseña; responsabilidad del operador |
+
+La app **no** implementa ACL por servidor — cualquier admin autenticado puede gestionar todos los servidores.
 
 ## Autenticación
 
-- **Better Auth** con correo/contraseña
-- Cuenta de administrador única tras la configuración inicial — sin registro público
-- Cookies de sesión; `BETTER_AUTH_SECRET` obligatorio en producción
-- Límite de tasa en endpoints de autenticación (en memoria, réplica única)
+- Sesiones Better Auth correo/contraseña
+- Registro desactivado tras el primer usuario (`/setup` una vez)
+- Cerrar sesión limpia sesión; inicio/cierre de sesión auditados
 
-## Cifrado de credenciales
+Ejecute solo por **HTTPS** en producción (`APP_URL` debe usar https salvo localhost).
 
-Las contraseñas SSH y claves privadas se cifran con **AES-256-GCM** antes del almacenamiento.
+## Cifrado en reposo
 
-| Secreto | Propósito |
-|---------|-----------|
-| `APP_ENCRYPTION_KEY` | Cifra/descifra secretos de identidad (32 bytes, base64) |
-| `BETTER_AUTH_SECRET` | Firma tokens de sesión |
+| Secreto | Clave |
+|---------|-------|
+| Contraseñas e claves de identidad | `APP_ENCRYPTION_KEY` (32 bytes) |
+| Firma de sesión | `BETTER_AUTH_SECRET` (mín. 32 caracteres en prod) |
 
-**Si se pierde `APP_ENCRYPTION_KEY`, las credenciales SSH cifradas no se pueden recuperar** — solo reintroducirlas manualmente o restaurarlas desde una copia de exportación de configuración.
+Rotar `APP_ENCRYPTION_KEY` sin reimportar identidades hace inutilizable el texto cifrado almacenado.
+
+## Exposición de red
+
+Compose de producción (`docker-compose.prod.yml`):
+
+- Postgres **no** publicado al host
+- App escucha dentro de la red Docker para NPM
+- SSH destino desde contenedor app hacia servidores gestionados
+
+TLS termina en **Nginx Proxy Manager**. HTTP interno entre NPM y `ufw-app` es intencional — consulte [Nginx Proxy Manager](../deployment/nginx-proxy-manager.md).
 
 ## Seguridad SSH
 
-- La validación del host bloquea SSRF hacia direcciones privadas/metadatos al guardar
-- **Comprobación de resolución DNS:** antes de cada conexión SSH y escaneo de puertos, la IP resuelta se valida de nuevo — bloquea DNS rebinding hacia direcciones privadas/metadatos aunque el nombre de host pareciera seguro al guardar
-- `SSH_ALLOWED_CIDRS` opcional para redes internas
-- Fijación de clave de host en la primera **Actualizar estado** exitosa (conexión SSH), o al guardar con éxito al crear/actualizar un servidor
-- La importación de configuración **no** fija automáticamente las claves de host — los servidores importados permanecen `sshHostKeyVerified: false` hasta que el operador ejecute Actualizar estado
-- La aplicación y la instalación de UFW están bloqueadas hasta que la clave de host esté verificada
-- **Riesgo residual TOFU:** la primera Actualizar estado confía en la clave presentada en ese momento (TOFU SSH estándar). Un atacante que controla la ruta de red en la primera conexión podría fijar una clave maliciosa; para hosts de alto riesgo, verifique la huella fuera de banda
-- Inyección de comandos evitada mediante enums en lista blanca y construcción de comandos UFW saneada
+- Bloqueo predeterminado de IPs destino privadas/metadatos
+- `SSH_ALLOWED_CIDRS` opcional para lab/VPN
+- TOFU de clave host — consulte [Servidores y SSH](../concepts/servers-and-ssh.md)
+- Aplicación bloqueada hasta verificar clave host
 
-## Escaneo de puertos externo (opcional)
+## Endurecimiento de aplicación
 
-Cuando `PORT_SCAN_ENABLED=true`:
+Cabeceras HTTP de producción (CSP, HSTS, etc.) vía `next.config.ts`.
 
-- Los escaneos se ejecutan **solo** hacia registros `Server.host` ya presentes en la base de datos
-- Los hostnames se resuelven a IPv4 y se validan con las mismas reglas que SSH (**sin escaneo sin IP resuelta validada**)
-- Naabu + Nmap se ejecutan dentro de `ufw-app` (escaneos connect, sin destinos arbitrarios)
-- Limitado por servidor; eventos de auditoría registrados
-- Requiere **egreso de red** del contenedor de la aplicación hacia los hosts gestionados en los puertos escaneados — consulte [Escaneo de puertos](../deployment/port-scan.md)
+El endpoint de salud `/api/health` expone versión — sin secretos.
 
+## Auditoría
 
-## Salvaguardas de aplicación y exportación
+Las acciones sensibles escriben filas `auditEvent`: inicio/cierre de sesión, aplicar, snapshot, escaneo de puertos, exportación de configuración, cambios de servidor. Consulte [Registro de auditoría y exportación](./audit-log-and-export.md).
 
-- Los cambios UFW requieren **vista previa + confirmación explícita**
-- Las huellas de reglas se **recalculan en el servidor** en la vista previa de aplicación — huellas de cliente alteradas no pueden reasignar elementos del plan
-- La exportación de configuración requiere **reintroducir la contraseña** y escribe un evento de auditoría `CONFIG_EXPORT`
-- La importación de configuración requiere **reintroducir la contraseña** (mismos límites de tasa que la exportación)
-- Los archivos de exportación contienen **secretos en texto plano** — responsabilidad del operador
+## Réplica única
 
-## Cabeceras de seguridad HTTP (producción)
+Los límites de tasa y colas están **en memoria**. Varias réplicas de app sin estado compartido debilitan límites de tasa y garantías de cola.
 
-Cuando `NODE_ENV=production`:
+## Informar vulnerabilidades
 
-- Content-Security-Policy
-- Strict-Transport-Security (HSTS)
-- X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+Consulte [SECURITY.md](../../../SECURITY.md) en la raíz del repositorio (inglés).
 
-TLS termina en Nginx Proxy Manager; la aplicación recibe HTTP en la red Docker.
-
-### Nota sobre Content-Security-Policy
-
-La CSP actual incluye `'unsafe-inline'` y `'unsafe-eval'` para scripts de Next.js App Router e hidratación. La CSP basada en nonces se pospone hasta que Next.js la admita sin romper los bundles del cliente. No elimine estas directivas sin una pasada de regresión completa.
-
-## Endpoints públicos
-
-| Ruta | Auth | Notas |
-|------|------|-------|
-| `/api/health` | Ninguna | Devuelve `status`, `db`, `version`; `revision` (id git/build) solo en no producción |
-| `/setup` | Ninguna (una vez) | Limitado en tasa; use `TRUST_PROXY=1` detrás de NPM |
-
-## Límite de tasa del setup
-
-El registro inicial de administrador (`/setup`) está limitado a **5 intentos por minuto** por IP de cliente cuando `TRUST_PROXY=1`, en caso contrario por bucket de conexión directa.
-
-## Lista de comprobación de exposición de red
-
-- [ ] UI de administración solo vía proxy inverso HTTPS
-- [ ] Postgres no expuesto al host/internet en producción
-- [ ] Restringir URL de administración (VPN, lista blanca de IP en NPM)
-- [ ] Secretos `.env` fuertes y únicos
-- [ ] Copias de seguridad regulares de Postgres + `.env` fuera del host
-- [ ] Rotar secretos si la exportación o `.env` pudo haber filtrado
-
-## Saneamiento de errores
-
-Los errores orientados al cliente en rutas SSH/aplicación se sanear para evitar filtrar trazas o rutas internas.
-
-Las sesiones expiradas devuelven un mensaje coherente desde las server actions: `Session expired. Please sign in again.` (sin propagar `Unauthorized` en bruto a la UI).
-
-## Documentación relacionada
+## Documentos relacionados
 
 - [Variables de entorno](./environment-variables.md)
-- [Registro de auditoría y exportación](./audit-log-and-export.md)
 - [Arquitectura](../architecture.md)

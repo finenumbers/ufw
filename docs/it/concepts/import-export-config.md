@@ -1,53 +1,49 @@
 # Importazione ed esportazione configurazione
 
-Puoi esportare e importare una **configurazione completa dei server** (tutti i server, identità, metadati regole) come JSON **v2**.
+Esportate e importate un file **JSON v2** contenente tutti i server, le identità SSH (inclusi segreti decifrati) e i metadati correlati. Usate per backup, migrazione o disaster recovery — non per la modifica quotidiana delle regole.
 
-## Esportazione
+L'import/export a livello regola (CSV, XLSX) è separato — vedi [Modificare e applicare regole](../user-guide/edit-and-apply-rules.md).
 
-1. Dalla pagina **Server**, usa **Salva configurazione**
-2. Reinserisci la **password dell'account** (autenticazione step-up)
-3. Scarica il file JSON
+## Flusso export
 
-### Avviso di sicurezza importante
+1. Elenco **Server** → **Salva configurazione**
+2. Inserite la **password** del vostro account (autenticazione step-up)
+3. Scaricate il file JSON (`servers-config-YYYY-MM-DD.json`)
 
-Il file di export contiene **password SSH e chiavi private in testo chiaro**. Trattalo come un segreto:
+L'export include segreti SSH decifrati. Conservate il file crittografato a riposo; eliminate quando non più necessario.
 
-- Conservalo crittografato (vault password manager, disco crittografato)
-- Non committarlo mai in git o inviarlo su canali non sicuri
-- Viene scritto un evento di audit `CONFIG_EXPORT` quando l'export riesce
+Un token a breve durata protegge la route API di download dopo conferma password.
 
-## Importazione
+Limite di frequenza: 5 export al minuto per utente.
 
-1. Usa **Carica configurazione** nella pagina Server
-2. Seleziona file JSON v2
-3. Rivedi il riepilogo: server da creare, aggiornare, eliminare
-4. Reinserisci la **password dell'account** nella finestra di conferma
-5. Conferma — l'importazione avviene in una transazione (upsert prima, eliminazione per ultimo)
+## Flusso import
 
-L'importazione usa gli stessi limiti di frequenza dell'export (10 tentativi al minuto per utente).
+1. **Carica configurazione** → selezionate file JSON
+2. L'**anteprima** mostra il diff: server e identità da creare, aggiornare o eliminare
+3. Confermate con password → l'import applica le modifiche
 
-### Comportamento distruttivo
+L'import attende che le code per server siano idle e blocca se operazioni distruttive confliggono con lavoro attivo.
 
-I server **assenti** dal file di importazione possono essere **eliminati** insieme a tutte le regole e snapshot. Leggi attentamente la finestra di conferma.
+## Formato JSON v2
 
-Le chiavi host SSH importate sono contrassegnate come **non verificate** — esegui **Aggiorna stato** nella dashboard di ogni server prima di applicare le regole.
+| Sezione | Contenuto |
+|---------|----------|
+| **version** | `2` |
+| **identities** | Nome, username, metodo auth, segreti |
+| **servers** | Nome, host, porta, riferimento identità, campi chiave host |
 
-### Limiti di importazione
+File legacy solo array o v1 vengono rifiutati.
 
-- Le importazioni di regole (CSV, XLSX, JSON) sono limitate a **10 000 righe** per file.
-- L'**anteprima** dell'import configurazione è limitata a **10 tentativi al minuto** per utente — attendi e riprova se raggiungi il limite.
+Chiavi duplicate (stesso host + porta + identità) vengono rifiutate al parse.
 
-## Export vs backup Postgres
+## Semantica eliminazione all'import
 
-| Metodo | Contiene | Ideale per |
-|--------|----------|------------|
-| **Export configurazione (JSON)** | Configurazione leggibile + segreti in testo chiaro | Migrazione tra istanze, copia disaster |
-| **Dump Postgres** | Database completo inclusi segreti crittografati | Ripristino completo con la stessa `APP_ENCRYPTION_KEY` |
-| **Backup `.env`** | Segreti di runtime | Obbligatorio per decrittografare credenziali DB dopo ripristino |
+I server presenti nel database ma assenti dal file importato compaiono nel set **elimina** dell'anteprima. Confermate solo se intendete rimuovere quei record server e tutte le regole, bozze e snapshot associati localmente.
 
-Per un disaster recovery completo, esegui backup di **Postgres e `.env`** — vedi [Backup e ripristino](../operations/backup-restore.md).
+UFW remoto sui record server eliminati **non** viene modificato.
 
-## Documentazione correlata
+## Documenti correlati
 
-- [Log di audit ed esportazione](../administration/audit-log-and-export.md)
 - [Identità SSH](./ssh-identities.md)
+- [Backup e ripristino](../operations/backup-restore.md)
+- [Log di audit ed esportazione](../administration/audit-log-and-export.md)

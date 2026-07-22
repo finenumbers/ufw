@@ -1,73 +1,77 @@
 # Управление серверами
 
-Это руководство описывает жизненный цикл сервера: добавление, настройка UFW, обновление, редактирование и удаление.
+Это руководство — lifecycle сервера: add, dashboard, refresh, install UFW, edit, delete и статистика списка.
 
 ## Предварительные требования
 
-Перед добавлением сервера создайте хотя бы одну [SSH-идентификацию](../concepts/ssh-identities.md).
+Создайте хотя бы одну [SSH-идентификацию](../concepts/ssh-identities.md) перед добавлением сервера.
 
 ## Добавление сервера
 
-1. Боковое меню → **Серверы** или **Добавить сервер**
-2. Укажите имя, host, port и выберите идентификацию
-3. Нажмите **Создать сервер** — SSH-подключение проверяется автоматически при сохранении
-4. При успехе откроется dashboard сервера
+1. Боковая панель → **Серверы** → **Добавить сервер**
+2. Имя, host, port, выберите identity
+3. **Создать сервер** — SSH verified automatically on submit
+4. При успехе откройте dashboard сервера
 
-Если проверка не прошла, проверьте доступность host, учётные данные, firewall (SSH с Docker-хоста) и [валидацию host](../concepts/servers-and-ssh.md).
+При failure проверьте reachability, credentials, firewall для SSH с Docker host и [проверку хоста](../concepts/servers-and-ssh.md).
 
 ## Dashboard сервера
 
-Dashboard загружает **кэшированное состояние UFW** из последнего snapshot Postgres — без SSH при первом отображении. Панели port scan и Docker также показывают последние кэшированные результаты из Postgres, если они есть.
+Dashboard загружает **кэшированное UFW state** из latest Postgres snapshot — без SSH при first paint.
 
-| Статус | Доступные действия |
-|--------|-------------------|
-| UFW не установлен | **Обновить статус**, затем **Установить UFW** (после refresh, подтверждающего отсутствие UFW) |
-| Установлен, но неактивен | Только **Обновить статус** — UFW уже установлен; refresh определяет active/inactive |
-| Установлен и активен | **Добавить правило**, **Сохранить правила**, **Обновить статус** |
+При включённом port scan панель scan загружает **latest scan любого статуса** из Postgres (включая in-progress scans с v0.9.2).
 
-Сначала нажмите **Обновить статус**, чтобы проверить SSH и определить, установлен ли UFW. **Установить UFW** заблокирована, пока успешный refresh не покажет, что UFW отсутствует.
+| UFW status | Actions |
+|------------|---------|
+| Not installed | **Обновить статус**, затем **Установить UFW** (после refresh подтверждает отсутствие) |
+| Installed but inactive | **Обновить статус** — install hidden если UFW exists but inactive |
+| Installed and active | **Добавить правило**, **Сохранить правила**, **Обновить статус**, optional **Сканировать порты** |
 
-До **Обновить статус** бейдж UFW может показывать **кэшированный** active/inactive из последнего snapshot.
+**Обновить статус** — live SSH, snapshot update, rules table sync. **Установить UFW** disabled до refresh подтверждает not installed.
 
-**Обновить статус** загружает актуальное состояние UFW по SSH и синхронизирует таблицу правил. При **несохранённых правках** приложение запросит подтверждение перед перезагрузкой с сервера.
+До refresh UFW badge может показывать **cached** label от last snapshot.
 
-Если в Postgres **ещё нет UFW snapshot** (новый сервер, ни разу не обновляли и т. п.), один раз запускается автоматическая фоновая синхронизация.
+### Unsaved edits warning
 
-## Счётчики правил
+При unsaved draft changes refresh asks confirmation перед reload с сервера.
 
-В интерфейсе два разных счётчика:
+### Automatic initial sync
 
-| Место | Подпись | Значение |
-|-------|---------|----------|
-| Карточка в **списке серверов** | сохранённых правил | Число правил в локальных метаданных (`ruleRecord`) |
-| **Бейдж dashboard** под «Добавить правило» | в таблице | Число строк в таблице правил (активная draft-сессия) |
+Когда **нет UFW snapshot** в Postgres (new server, never refreshed), background sync once для cache. Смотрите баннер операций.
 
-Числа могут расходиться при редактировании, sync или import. Бейдж dashboard совпадает с total таблицы правил.
+## Rule and port statistics
 
-## Редактирование сервера
+| Location | Metric | Meaning |
+|----------|--------|---------|
+| Card **списка серверов** | сохранённых правил | Local `ruleRecord` count |
+| Card **списка серверов** | открытых портов | Latest successful scan findings (when enabled) |
+| Badge **dashboard** | в таблице | Visible rules table row count |
 
-1. Откройте сервер → **Редактировать**
-2. Измените имя, host, port или идентификацию
-3. SSH проверяется автоматически при сохранении, если изменились параметры подключения
+Dashboard *в таблице* может differ от *сохранённых правил* while editing или before apply.
 
-На странице редактирования показывается fingerprint host key и предупреждение **unverified** — отдельной кнопки test нет.
+## Edit server
 
-## Удаление сервера
+1. Server page → **Изменить сервер**
+2. Name, host, port или identity
+3. SSH verified on submit when connection parameters changed
 
-**Опасная зона** на странице редактирования:
+Edit page shows host key fingerprint и **unverified** warning when applicable.
 
-- Удаляет все локальные правила, черновики, snapshots сервера
-- **Не** изменяет UFW на удалённом Linux-хосте
+## Delete server
 
-Подтверждайте только если нужно удалить данные управления, а не очистить firewall на сервере.
+**Опасная зона** on edit page:
 
-## Инструменты списка серверов
+- Removes local rules, drafts, snapshots, scans for this server
+- **Does not** change remote UFW
 
-На странице **Серверы**:
+Confirm only when removing management data, not remote firewall rules.
 
-- **Сохранить конфигурацию** / **Загрузить конфигурацию** — полный JSON export/import (см. [Import and export config](../concepts/import-export-config.md))
+## Servers list configuration tools
+
+- **Сохранить конфигурацию** / **Загрузить конфигурацию** — full JSON v2 — см. [Импорт и экспорт конфигурации](../concepts/import-export-config.md)
 
 ## Связанные документы
 
-- [Servers and SSH](../concepts/servers-and-ssh.md)
-- [Edit and apply rules](./edit-and-apply-rules.md)
+- [Серверы и SSH](../concepts/servers-and-ssh.md)
+- [Редактирование и применение правил](./edit-and-apply-rules.md)
+- [Сканирование портов](./port-scan.md)

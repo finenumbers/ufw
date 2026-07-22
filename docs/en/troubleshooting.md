@@ -1,62 +1,71 @@
 # Troubleshooting
 
-Symptom → likely cause → what to do.
+Symptom → likely cause → fix. For concepts see linked docs.
 
-## Authentication
-
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| Redirect loop on login | `APP_URL` mismatch with browser URL | Set `APP_URL` to exact public HTTPS URL; restart app |
-| Login works locally but not via domain | NPM or cookie secure flag | Force SSL in NPM; check `APP_URL` scheme is `https://` |
-| `BETTER_AUTH_SECRET is required` | `.env` not loaded | Use `--env-file .env` in compose |
-| `APP_URL must use HTTPS in production` | Non-HTTPS `APP_URL` for a real domain | Use `https://your-domain`; `http://localhost` is allowed for smoke/CI only |
-| `BETTER_AUTH_SECRET must be at least 32 characters` | Secret too short | Regenerate with `openssl rand -base64 32` |
-
-## Docker / NPM
+## Authentication and setup
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| NPM 502 Bad Gateway | App not on NPM network | Set `NPM_NETWORK`; verify `ufw-app` joins external network |
-| Setup page easy to brute-force | Missing `TRUST_PROXY` | Set `TRUST_PROXY=1` when behind NPM |
-| `ufw-app` unhealthy | DB down or missing secrets | Check `docker logs ufw-app`, postgres health |
-| `ufw-migrate` failed | Migration error | Read `docker logs ufw-migrate`; restore backup if needed |
-| `pull access denied` | Private GHCR package | Set package visibility Public or `docker login ghcr.io` |
+| `/setup` redirects to login | User already exists | Use `/login` |
+| Login fails after deploy | Wrong `APP_URL` or HTTP instead of HTTPS | Match NPM domain; set `APP_URL=https://...` |
+| Setup rate limit too aggressive | Missing `TRUST_PROXY` behind NPM | Set `TRUST_PROXY=1` |
 
-## SSH
+## SSH and server create
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| SSH connection fails on save | Wrong credentials, firewall, host down | Verify identity, port, server allows Docker host IP |
-| Host validation error | Private IP blocked | Set `SSH_ALLOWED_CIDRS` for internal networks |
-| Host key changed | Server reinstall or MITM | Verify fingerprint on server; update after confirmation |
-| Unverified host key | Imported from config | Run **Refresh Status** on the server dashboard |
+| Private IP rejected | Host validation | Use public IP/hostname or `SSH_ALLOWED_CIDRS` |
+| Connection refused | Firewall, wrong port, host down | Verify from Docker host: `ssh -p PORT user@host` |
+| Auth failed | Wrong identity credentials | Edit identity; re-enter secret |
+| Host key warning | First connect or server rebuilt | **Refresh Status** to capture new fingerprint |
 
-## Rules / apply
-
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| Rules page empty / disabled | UFW not active | Install and enable UFW from dashboard |
-| Preview shows unexpected deletes | Draft drift | Force resync from server |
-| Apply rejected — remote changed | UFW changed between preview and confirm | Run **Apply preview** again (not resync) |
-| Partial apply warning | Previous apply interrupted or sync failed | Resync; review remote `ufw status` manually |
-| Stuck operation banner | Stale RUNNING/PENDING after disconnect | Refresh the page |
-| Locked out of SSH | Applied deny rule | Console/out-of-band access; fix UFW on server directly |
-
-## Data
+## UFW and rules
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| Credentials invalid after restore | Wrong `APP_ENCRYPTION_KEY` | Restore matching `.env` from backup |
-| Cannot decrypt identities | Key rotation without re-entry | Re-enter secrets or restore export JSON |
+| Apply disabled | Unverified host key | **Refresh Status** |
+| Apply rejected after preview | Remote UFW changed | **Apply preview** again |
+| Partial apply | Interrupted commands or sync failure | **Force resync from server**; check operations history |
+| Preview shows unexpected deletes | Draft drift | **Force resync from server** |
+| Rules reappear after delete on server | Stale sync (pre-v0.9.2) | Upgrade to v0.9.2+; force resync |
+| Locked out of SSH | Deny rule applied | Console access; fix UFW out-of-band |
 
-## Health API
+## Operations banner
 
-```bash
-docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r.json()).then(console.log)"
-```
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Banner RUNNING forever | Browser disconnected mid-op | Refresh page; wait for sweeper |
+| Table stale after sync | Operation end not detected (rare post-v0.9.2) | Refresh browser |
+| Idle API traffic | Old version polled forever | Upgrade v0.9.2 — idle poll stops |
 
-Expected: `{"status":"ok","db":"ok","version":"…"}` (`revision` only outside production)
+## Port scan
 
-## Still stuck?
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Panel missing | Feature disabled | `PORT_SCAN_ENABLED=true` |
+| Scan failed timeout | Large port range / slow network | Increase `PORT_SCAN_*_TIMEOUT_MS`; check egress |
+| Scan in progress error | Overlap guard | Wait for current scan |
+| No findings | All ports filtered closed | Expected; check scan SUCCESS status |
+| Progress lost on refresh (old) | SSR only loaded SUCCESS scans | Upgrade v0.9.2 |
 
-Email **[apps@finenumbers.com](mailto:apps@finenumbers.com)** with version tag, sanitized logs (no secrets), and steps to reproduce.
+## Docker and migrate
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `EACCES` prisma in app | Wrong container | `docker compose run --rm migrate` |
+| Migrate fails on upgrade | DB permissions or old version | Check `docker compose logs migrate` |
+| App unhealthy | Bad secrets or DB down | Logs: `docker compose logs app` |
+
+## Config import/export
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Import blocked | Active operations on server | Wait for queue idle |
+| Export rate limited | Too many attempts | Wait 60 seconds |
+| Decrypted secrets garbled after restore | Wrong `APP_ENCRYPTION_KEY` | Restore matching `.env` |
+
+## Related docs
+
+- [FAQ](./faq.md)
+- [Operations and concurrency](./concepts/operations-and-concurrency.md)
+- [Environment variables](./administration/environment-variables.md)

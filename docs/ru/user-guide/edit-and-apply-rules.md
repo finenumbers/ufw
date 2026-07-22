@@ -1,55 +1,68 @@
 # Редактирование и применение правил
 
-Когда UFW **установлен и активен** на сервере, **таблица правил** на dashboard сервера позволяет управлять firewall rules.
+Когда UFW **installed and active**, **таблица правил** на dashboard сервера — основная surface редактирования.
 
-## Таблица правил
+## Возможности таблицы правил
 
-Возможности:
+| Feature | Description |
+|---------|-------------|
+| **Search** | Filter visible rows |
+| **Column filters** | Filter by group or name |
+| **Group sections** | Expand/collapse grouped rows |
+| **Drag-and-drop** | Reorder rules (order affects UFW) |
+| **Row colors** | [Origin state](../concepts/ufw-rules-and-states.md) indicators |
+| **Inline edit** | Double-click or edit action on row |
+| **Add / delete** | Toolbar and row actions |
+| **Load more** | Infinite scroll for large rule sets |
 
-- Поиск и фильтры по колонкам
-- Секции групп с expand/collapse
-- Drag-and-drop reorder (порядок важен для UFW)
-- Цвета строк по [состоянию sync](../concepts/ufw-rules-and-states.md)
-- Добавить строку, inline edit, удалить строку
+## Refresh from server
 
-## Обновление с сервера
+**Обновить статус** on dashboard (or sync from toolbar):
 
-Используйте **Обновить статус** на dashboard (или refresh из toolbar правил), чтобы:
+1. Detect UFW state over SSH
+2. Store new snapshot
+3. Re-seed table from remote + local metadata
 
-1. Определить состояние UFW по SSH
-2. Загрузить новый snapshot с сервера
-3. Пересобрать таблицу правил из remote + локальных метаданных
+Use after manual CLI changes on server or after partial apply.
 
-При **несохранённых правках** приложение показывает диалог подтверждения перед перезагрузкой с сервера.
+Unsaved draft edits trigger confirmation dialog before reload.
 
-Используйте после ручных изменений на CLI сервера или после partial apply.
+## Force resync from server
 
-## Force resync
+When UI warns about drift or partial apply, use **Принудительная синхронизация с сервером** to align draft with actual remote snapshot before further edits.
 
-Если UI предупреждает о drift или partial apply, используйте **Force resync from server**, чтобы выровнять черновик по фактическому remote snapshot перед дальнейшим редактированием.
+Available from apply preview dialog and related warnings — not substitute for re-preview when remote changed between preview and confirm.
 
-## Import правил
+## Import rules
 
-Toolbar → import CSV, XLSX или JSON. Проверьте импортированные строки в таблице перед apply preview.
+Toolbar → import **CSV**, **XLSX**, or **JSON**:
+
+- Rows merge into draft; duplicates by fingerprint skipped or merged per import rules
+- Validate rows in table before apply preview
+- Import affects draft only until apply
+
+## Export rules
+
+Export current table to **XLSX** for offline review or backup. XLSX layout matches import column order for round-trip workflows.
 
 ## Apply workflow
 
-1. Внесите правки в черновик
-2. **Apply preview** — просмотрите planned commands и diff summary
-3. **Confirm** — выполнение по SSH (отклоняется, если remote UFW изменился после preview — запустите preview снова)
-4. Следите за operation banner
+1. Edit draft
+2. **Apply preview** — review planned commands and summary counts
+3. **Confirm** — executes over SSH (rejected if remote changed since preview)
+4. Watch **баннер операций** for per-command progress
 
-**Сохранить правила** (apply preview) заблокировано, пока SSH host key **не verified** — сначала выполните **Обновить статус**, если сервер импортирован из конфигурации.
+**Сохранить правила** / apply disabled until SSH host key **verified** — run **Обновить статус** first for imported servers.
 
-Подробнее см. [Draft and apply workflow](../concepts/draft-apply-workflow.md).
+See [Черновик и применение](../concepts/draft-apply-workflow.md).
 
-## Советы по безопасности
+## Safety tips
 
-- Оставьте хотя бы одно правило, разрешающее SSH из admin-сети, перед apply deny rules
-- Запускайте preview в production в maintenance window
-- Проверяйте **Историю операций** после apply на SUCCESS или FAILED
+- Keep at least one rule allowing SSH from admin network before deny rules
+- Run preview on production during maintenance window
+- Check **История операций** after apply for SUCCESS or FAILED
 
 ## Связанные документы
 
-- [UFW rules and states](../concepts/ufw-rules-and-states.md)
-- [Operations history](./operations-history.md)
+- [Правила UFW и состояния](../concepts/ufw-rules-and-states.md)
+- [История операций](./operations-history.md)

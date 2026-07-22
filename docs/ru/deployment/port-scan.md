@@ -1,62 +1,62 @@
-# Внешнее сканирование портов
+# Внешнее сканирование портов (развёртывание)
 
-UFW Remote Manager может выполнять **внешнее сканирование портов** из контейнера `ufw-app` к адресу `host` каждого зарегистрированного сервера. Pipeline использует:
+Administrators enable external port scanning via environment variables. User-facing usage: [Сканирование портов (руководство пользователя)](../user-guide/port-scan.md).
 
-1. **Naabu** — TCP-обнаружение на портах 1–65535 (`host/port/protocol/open`)
-2. **Nmap** — определение сервисов только на обнаруженных портах (`-sV`, XML-вывод)
+## What it does
 
-Результаты отображаются в таблице **под правилами UFW** на странице сервера.
+From the **ufw-app** container, the app scans each registered server's `host` address:
 
-## Включение
+1. **Naabu** — TCP discovery ports 1–65535
+2. **Nmap** — service detection on discovered ports
 
-Установить в окружении приложения (Compose / Portainer):
+Results stored in Postgres and shown on the server page. **No SSH** is used for scanning.
+
+## Enable
 
 ```env
 PORT_SCAN_ENABLED=true
 ```
 
-Дополнительная настройка:
+Restart app container after change. Image must include Naabu and Nmap (official Dockerfile does).
 
-| Переменная | По умолчанию | Назначение |
-|------------|--------------|------------|
-| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Макс. портов для обогащения Nmap |
-| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Таймаут полного обнаружения портов (30 мин) |
-| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Таймаут обогащения |
-| `PORT_SCAN_HISTORY_LIMIT` | `10` | Сохранённых запусков сканирования на сервер |
+## Optional tuning
 
-Повторные сканирования одного сервера ограничены **раз в 30 секунд** (фиксировано в коде приложения с v0.5.1). Legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` в `.env` **игнорируется**.
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Cap ports sent to Nmap |
+| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Discovery timeout (30 min) |
+| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Enrichment timeout (10 min) |
+| `PORT_SCAN_HISTORY_LIMIT` | `10` | Scans retained per server |
 
-## Сетевые требования
+## Network requirements
 
-Контейнер приложения должен достигать **управляемых серверных хостов на сканируемых TCP-портах**, а не только SSH `:22`. Убедитесь, что правила маршрутизации/firewall разрешают egress с Docker-хоста (или сети `ufw-app`) к целевым серверам.
+App container must reach **managed server hosts on scanned TCP ports**, not only SSH `:22`. Allow egress from Docker host (or app network) to target servers.
 
-Эта функция сканирует **только хосты, уже зарегистрированные в UFW Remote Manager** — произвольные цели отклоняются.
+Only **registered server hosts** are scanned — arbitrary targets rejected.
 
-## Столбец покрытия UFW
+## Concurrency (v0.9.2)
 
-Каждый открытый порт сравнивается с последним snapshot UFW с использованием **семантики external-scan**:
+| Topic | Behaviour |
+|-------|-----------|
+| SSH queue | Port scan **does not** use per-server SSH queue — UFW refresh/apply not blocked for 30+ min |
+| Overlap | Only one PENDING/RUNNING scan per server; second start rejected |
+| Rate limit | 30 seconds between scan starts per server (fixed in code) |
+| SSR | Server page loads latest scan of **any status** — in-progress scans resume after refresh |
 
-| Значение | Описание |
-|----------|----------|
-| **Allowed** | Входящий ALLOW/LIMIT от **любого** источника (`From = any`) покрывает этот порт |
-| **Not in UFW** | Порт открыт извне, но не покрыт публичным входящим ALLOW — проверить |
-| **Denied** | Входящий DENY/REJECT от **любого** источника нацелен на этот порт |
-| **Unknown** | UFW неактивен или нет snapshot |
+Findings persist via atomic replace (`deleteMany` + `createMany` in one transaction).
 
-Whitelist-правила (`From = specific IP/CIDR`, `To Port = any`) **не** считаются разрешёнными для external scan. Только правила, явно разрешающие трафик откуда угодно, трактуются как публичная экспозиция.
+## UFW coverage
 
-## Заметки по безопасности
+See [Port scan user guide](../user-guide/port-scan.md#ufw-coverage-values) for column semantics.
 
-- Rate-limited (30 секунд между повторными сканированиями на сервер; не настраивается через env)
-- События аудита: `PORT_SCAN_STARTED`, `PORT_SCAN_COMPLETED`
-- Сканирования выполняются в per-server очереди вместе с SSH-операциями (сериализованы)
-- Использует connect-сканирования (`naabu -scan-type c`, `nmap -sT`) — raw socket capabilities не требуются
+## Security
 
-## Polling прогресса
+- Audit: `PORT_SCAN_STARTED`, `PORT_SCAN_COMPLETED`
+- Connect scans only (`-sT`) — no raw socket capabilities required
+- Disabled by default
 
-Пока сканирование выполняется, интерфейс опрашивает лёгкий status endpoint (не полные SSH-перечитывания). Polling **сразу**, затем каждую **1 с** пока операция активна (backoff после ~30 мин). При завершении в banner панели обновляются немедленно. Banner опрашивает API каждую **1 с** в статусе RUNNING.
+## Связанные документы
 
-## Связанная документация
-
-- [Обзор развёртывания](./overview.md)
-- [Модель безопасности](../administration/security-model.md)
+- [Переменные окружения](../administration/environment-variables.md)
+- [Архитектура](../architecture.md)
+- [Операции и конкурентность](../concepts/operations-and-concurrency.md)

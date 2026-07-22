@@ -1,89 +1,75 @@
 # Nginx Proxy Manager
 
-Nginx Proxy Manager (NPM) должен быть **уже установлен** на вашем Docker-хосте. Этот проект не разворачивает NPM.
+Nginx Proxy Manager (NPM) must **already be installed** on your Docker host. This project does not deploy NPM.
 
-## Поток трафика
+## Traffic flow
 
 ```
-Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, сеть Docker)
+Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, Docker network)
 ```
 
-NPM завершает HTTPS. Приложение устанавливает HSTS в production, но полагается на NPM для сертификатов.
+NPM terminates HTTPS. The app sets HSTS in production but relies on NPM for certificates.
 
-## Checklist Proxy Host
+## Proxy Host checklist
 
-Создайте или обновите **Proxy Host** в интерфейсе NPM:
-
-| Поле | Значение |
-|------|----------|
-| Domain Names | Хост из `APP_URL` (напр. `ufw.example.com`) |
+| Field | Value |
+|-------|-------|
+| Domain Names | Host from `APP_URL` (e.g. `ufw.example.com`) |
 | Scheme | `http` |
 | Forward Hostname / IP | `ufw-app` |
 | Forward Port | `8088` |
 | Websockets Support | **Enabled** |
-| Block Common Exploits | Рекомендуется |
-| SSL | Let's Encrypt или существующий сертификат |
-| Force SSL | Рекомендуется |
+| Block Common Exploits | Recommended |
+| SSL | Let's Encrypt or existing certificate |
+| Force SSL | Recommended |
 
-## Сеть Docker
+## Docker network
 
-Контейнер приложения должен присоединиться к **той же сети Docker**, что и NPM.
-
-Установить в `.env`:
+App container must join the **same Docker network** as NPM.
 
 ```bash
 NPM_NETWORK=nginxproxymanager_default
 ```
 
-(`docker-compose.prod.yml` подключает `ufw-app` к внешней сети `npm_proxy` → `$NPM_NETWORK`.)
-
-Найти имя вашей сети:
+`docker-compose.prod.yml` attaches `ufw-app` to external network from `$NPM_NETWORK`.
 
 ```bash
 docker network ls | grep -i proxy
 ```
 
-## APP_URL должен совпадать
-
-`APP_URL` в `.env` должен точно соответствовать публичному URL (схема + хост):
+## APP_URL must match
 
 ```bash
 APP_URL=https://ufw.example.com
 ```
 
-Несовпадение вызывает циклы редиректа auth или неработающие cookies.
+Must match NPM Proxy Host domain exactly (scheme + host). Better Auth cookies depend on this.
 
-## APP_URL vs схема Proxy Host
+## Internal HTTP is intentional
 
-| Уровень | Схема | Пример |
-|---------|-------|--------|
-| Браузер / `APP_URL` | **HTTPS** | `https://ufw.example.com` |
-| NPM → контейнер | **HTTP** | `http://ufw-app:8088` |
+NPM terminates TLS. Traffic NPM → `ufw-app:8088` is unencrypted HTTP on the Docker network — **by design**, not misconfiguration.
 
-NPM завершает TLS. Контейнер приложения слушает незашифрованный HTTP внутри сети Docker — это **задумано**, а не ошибка конфигурации.
-
-Устанавливайте `APP_URL` только на публичный HTTPS URL. Никогда не указывайте `APP_URL` на `http://ufw-app:8088`.
+Do **not** set `APP_URL` to `http://ufw-app:8088`.
 
 ## TRUST_PROXY
 
-При работе за NPM установите в `.env` или окружении stack Portainer:
+Set in app environment when behind NPM:
 
-```bash
+```env
 TRUST_PROXY=1
 ```
 
-Это заставляет rate limits на `/setup` использовать реальный IP клиента из `X-Forwarded-For`. См. [Переменные окружения](../administration/environment-variables.md).
+Ensures setup rate limits use real client IP from `X-Forwarded-For`.
 
-## Локальная сборка (без GHCR)
+## Local build alternative
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-Применяются те же настройки NPM Proxy Host.
+Same NPM checklist applies.
 
-## Связанная документация
+## Связанные документы
 
-- [Обзор развёртывания](./overview.md)
+- [Переменные окружения](../administration/environment-variables.md)
 - [GHCR + Compose](./ghcr-compose.md)
-- [Устранение неполадок](../troubleshooting.md)

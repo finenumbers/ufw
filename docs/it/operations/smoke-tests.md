@@ -1,6 +1,6 @@
 # Smoke test
 
-Eseguire dopo deploy, aggiornamento o disaster recovery.
+Eseguite dopo deploy, aggiornamento o disaster recovery.
 
 ## Script automatizzato
 
@@ -8,22 +8,15 @@ Eseguire dopo deploy, aggiornamento o disaster recovery.
 ./scripts/smoke-production.sh --env-file .env --ghcr --app-url https://ufw.example.com
 ```
 
-Flag:
-
 | Flag | Scopo |
-|------|-------|
-| `--env-file .env` | Caricare variabili produzione (richiede `NPM_NETWORK` per compose prod) |
-| `--ghcr` | Includere overlay `docker-compose.ghcr.yml` |
-| `--app-url URL` | Verificare anche `/api/health` HTTPS pubblico via curl |
+|------|---------|
+| `--env-file .env` | Carica variabili produzione |
+| `--ghcr` | Include `docker-compose.ghcr.yml` |
+| `--app-url URL` | Controlla `/api/health` HTTPS pubblico |
 
-Lo script verifica:
+Verifica: Postgres healthy, migrate uscito 0, app healthy, JSON health include versione.
 
-- Postgres healthy
-- `ufw-migrate` exited 0
-- `ufw-app` healthy
-- `/api/health` interno restituisce `{"status":"ok","db":"ok","version":"…"}` (`revision` solo fuori produzione)
-
-## Controllo salute manuale
+## Health check manuale
 
 ```bash
 docker compose --env-file .env ps
@@ -32,17 +25,21 @@ docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r
 
 ## Checklist browser
 
-1. `APP_URL/login` — autenticarsi
-2. **Identità SSH** — identità esistente o crearne una
-3. **Server** — verifica SSH al salvataggio riuscita
-4. **Regole** — anteprima applicazione eseguita (conferma opzionale)
-5. **Cronologia operazioni** — voci recenti visibili
+1. `APP_URL/login` — autenticatevi
+2. **Identità SSH** — create o verificate identità
+3. **Server** — create/aggiornate; verifica SSH riesce
+4. **Aggiorna stato** — snapshot UFW creato
+5. **Regole** — anteprima apply gira; conferma opzionale su server test
+6. **Cronologia operazioni** — voci recenti visibili
+7. **Sync iniziale** — server nuovo senza snapshot ottiene sync background
+8. **Scansione porte** (se abilitata) — avviate scan; refresh pagina a metà scan — pannello riprende (v0.9.2)
+9. **Apply** — dopo conferma, conteggio regole corrisponde al remoto
 
 ## Prima installazione
 
-Usare `APP_URL/setup` invece di `/login` per creare l'account admin una volta.
+Usate `APP_URL/setup` una volta per creare account admin.
 
-## Documentazione correlata
+## Documenti correlati
 
 - [Configurazione iniziale](../user-guide/initial-setup.md)
-- [GHCR + Compose](../deployment/ghcr-compose.md)
+- [Gestire i server](../user-guide/manage-servers.md)

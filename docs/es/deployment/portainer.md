@@ -1,31 +1,29 @@
 # Despliegue con Portainer
 
-Despliegue con **Portainer** usando imágenes **GHCR** precompiladas detrás de **Nginx Proxy Manager** existente.
+Despliegue con **Portainer** usando imágenes precompiladas de **GHCR** detrás de **Nginx Proxy Manager** existente.
 
 NPM no está incluido en este stack.
 
 ## Requisitos previos
 
 - Host Docker con Portainer y NPM en ejecución
-- Imágenes GHCR de [releases](https://github.com/finenumbers/ufw/releases)
-- Nombre de red Docker de NPM (p. ej. `nginxproxymanager_default`)
-
-Encuentre la red de NPM:
+- Imágenes GHCR desde [releases](https://github.com/finenumbers/ufw/releases) — etiqueta `latest` actualizada en cada release; fije `GHCR_IMAGE_TAG=v0.9.2` si hace falta
+- Nombre de red Docker NPM (p. ej. `nginxproxymanager_default`)
 
 ```bash
 docker network ls | grep -i proxy
 docker inspect <npm_container> --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
 ```
 
-## Preparar variables de entorno
+## Variables de entorno
 
 ```bash
 ./scripts/generate-production-env.sh .env
 ```
 
-O copie [`.env.production.example`](../../../.env.production.example).
+**Obligatorias:** `APP_URL`, `NPM_NETWORK`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `APP_ENCRYPTION_KEY`, `TRUST_PROXY=1`
 
-**Required:** `APP_URL`, `NPM_NETWORK`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `APP_ENCRYPTION_KEY`. Optional: `GHCR_OWNER`, `GHCR_IMAGE_TAG` (default `latest`).
+**Opcionales:** `GHCR_OWNER`, `GHCR_IMAGE_TAG`, `PORT_SCAN_ENABLED=true`
 
 ## Crear stack
 
@@ -34,31 +32,28 @@ O copie [`.env.production.example`](../../../.env.production.example).
 1. Portainer → **Stacks** → **Add stack**
 2. Nombre: `ufw-remote-manager`
 3. Pegue [`deploy/portainer.stack.yml`](../../../deploy/portainer.stack.yml)
-4. Environment variables → **Advanced mode** → pegue el contenido de `.env`
+4. Environment → **Advanced mode** → pegue secretos de `.env`
 5. **Deploy the stack**
 
 ### Repositorio Git
 
-1. Repository URL: `https://github.com/finenumbers/ufw`
-2. Compose path: `deploy/portainer.stack.yml`
-3. Configure el entorno en la interfaz de Portainer (nunca suba secretos a git)
+1. Repositorio: `https://github.com/finenumbers/ufw`
+2. Ruta Compose: `deploy/portainer.stack.yml`
+3. Configure entorno en interfaz Portainer — nunca suba secretos
 
 ## Configurar NPM
 
-Consulte [Nginx Proxy Manager](./nginx-proxy-manager.md) — reenvíe a `ufw-app:8088`.
+Reenvíe Proxy Host a `ufw-app:8088` — consulte [Nginx Proxy Manager](./nginx-proxy-manager.md).
 
 ## Verificar
 
-1. Contenedores del stack healthy; `ufw-migrate` exited 0
-2. Navegador → `APP_URL/setup` o `/login`
-3. `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
+```bash
+./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```
 
-## Actualización y copia de seguridad
+Abra `APP_URL/setup` en la primera instalación.
 
-- [Actualización y reversión](../operations/upgrade-rollback.md)
-- [Copia de seguridad y restauración](../operations/backup-restore.md)
-
-## Documentación relacionada
+## Documentos relacionados
 
 - [GHCR + Compose](./ghcr-compose.md)
-- [Modelo de seguridad](../administration/security-model.md)
+- [Resumen de despliegue](./overview.md)

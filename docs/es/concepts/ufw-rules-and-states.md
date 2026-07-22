@@ -1,38 +1,54 @@
 # Reglas UFW y estados
 
-Las reglas se normalizan en un modelo de fila unificado con campos **core** (lo que importa a UFW) y campos de **interfaz** (nombre, grupo, metadatos de color).
+La tabla de reglas muestra una **vista unificada**: reglas UFW remotas, metadatos locales y sus ediciones de borrador. Los **colores** de fila reflejan cómo cada fila se relaciona con el servidor y la base de datos.
 
-## Campos core de la regla
+## Estructura de regla
 
-Las columnas habituales incluyen acción (allow/deny/reject), dirección, protocolo, puertos, direcciones origen/destino y modo de registro. El conjunto exacto coincide con la sintaxis expresiva de reglas de UFW — consulte la tabla de reglas en la interfaz.
+Cada fila tiene:
 
-## Estados de sincronización (colores de fila)
+| Capa | Campos |
+|------|--------|
+| **Núcleo** | acción, dirección, protocolo, direcciones, puertos, interfaz, perfil de app, modo de log, comentario, IPv6 |
+| **Metadatos de interfaz** | grupo, nombre, notas (almacenados localmente, no se envían a UFW salvo en comentario) |
+| **Origen** | estado de sincronización que determina el color de fila |
 
-Cada fila tiene un **estado** que muestra cómo los datos del borrador local se relacionan con el último snapshot del servidor:
+Las huellas identifican reglas entre recargas remotas y ediciones locales.
 
-| Estado | Significado |
-|-------|---------|
-| **MATCHED** | El borrador coincide con lo que UFW reportó en el servidor |
-| **REMOTE_ONLY** | Existe en el snapshot del servidor pero no en su borrador local |
-| **LOCAL_ONLY** | En su borrador pero no en el servidor (se añadirá al aplicar) |
-| **DRAFT_ONLY** | Edición local aún no aplicada; difiere de la línea base coincidente |
+## Estados de origen
 
-Los colores ayudan a detectar deriva antes de aplicar. Tras **Resincronización forzada desde el servidor**, el borrador local se realinea con el estado remoto.
+| Estado | Significado del color | Situación típica |
+|--------|----------------------|------------------|
+| **MATCHED** | Remoto y metadatos locales coinciden | Regla sincronizada estable |
+| **REMOTE_ONLY** | En servidor, no en metadatos locales | Regla remota nueva tras actualizar |
+| **LOCAL_ONLY** | En BD local, no en servidor | Añadido pendiente o eliminado remotamente |
+| **DRAFT_ONLY** | Edición de borrador aún no aplicada | Fila nueva o campos núcleo cambiados |
+| **CONFLICT** | Misma huella, campos núcleo distintos | Deriva — revisar antes de aplicar |
+| **DELETED** | Marcada eliminada en borrador | Se eliminará al aplicar |
 
-## Huellas digitales
+Los colores ayudan a detectar deriva **antes** de aplicar. Tras **Resincronización forzada desde el servidor**, el borrador se realinea con el snapshot remoto.
 
-Cada regla tiene una huella derivada de los campos core. Se usa para emparejar filas entre snapshots y detectar operaciones de reordenación/eliminación durante la planificación de aplicación.
+## Dos recuentos de reglas
 
-## Agrupación y orden
+La interfaz muestra recuentos distintos en lugares diferentes:
 
-- **Grupos** — organizan reglas visualmente; el nombre del grupo es metadato de interfaz
-- **Orden** — el orden de reglas UFW importa; reordenar puede requerir eliminar y recrear en el servidor durante la aplicación
+| Ubicación | Etiqueta | Cuenta |
+|-----------|----------|--------|
+| Tarjeta **lista de servidores** | reglas guardadas | Filas en `ruleRecord` (metadatos locales) |
+| Insignia del **panel** | en la tabla | Filas en la tabla de sesión de borrador activa |
 
-## Formatos de importación
+Estos difieren mientras edita, importa o sincroniza. La insignia del panel coincide con la longitud visible de la tabla.
 
-Las reglas pueden importarse desde **CSV**, **XLSX** o **JSON** mediante la barra de herramientas de reglas. Las filas importadas pasan a ser entradas de borrador — aún requieren aplicación para llegar al servidor.
+## El orden importa
 
-## Documentación relacionada
+UFW evalúa reglas en orden. La tabla admite reordenación por arrastre. Aplicar puede emitir operaciones de resincronización de orden cuando la numeración remota diverge del orden de su borrador.
+
+## Metadatos remotos vs locales
+
+- Los **campos núcleo remotos** provienen de la salida parseada de `ufw status numbered`
+- **Grupo, nombre, notas** existen solo en UFW Remote Manager salvo que se copien en comentarios de regla UFW
+- Aplicar escribe campos núcleo en el servidor; metadatos de interfaz permanecen en Postgres
+
+## Documentos relacionados
 
 - [Flujo de borrador y aplicación](./draft-apply-workflow.md)
 - [Editar y aplicar reglas](../user-guide/edit-and-apply-rules.md)

@@ -1,40 +1,42 @@
 # UFW Remote Manager — Documentation (Français)
 
-Guide complet pour les administrateurs et les opérateurs.
+Guide complet pour les administrateurs et opérateurs. Aligné sur la **v0.9.2**.
 
 ## Premiers pas
 
 | Document | Description |
 |----------|-------------|
-| [Introduction](./introduction.md) | Ce qu'est le produit et à qui il s'adresse |
+| [Introduction](./introduction.md) | Périmètre du produit, prérequis, ce qu'il ne fait pas |
 | [Démarrage rapide](./quick-start.md) | Installation Docker locale en quelques minutes |
-| [Architecture](./architecture.md) | Composants, flux de données, limites de sécurité |
+| [Architecture](./architecture.md) | Composants, SSR cache-first, modèle de données, concurrence |
 
 ## Concepts
 
 | Document | Description |
 |----------|-------------|
-| [Identités SSH](./concepts/ssh-identities.md) | Identifiants chiffrés réutilisables |
-| [Serveurs et SSH](./concepts/servers-and-ssh.md) | Validation de l'hôte, clés hôte, tests de connexion |
-| [Règles UFW et états](./concepts/ufw-rules-and-states.md) | Modèle de règles et états de synchronisation codés par couleur |
-| [Workflow brouillon et application](./concepts/draft-apply-workflow.md) | Édition locale, aperçu, confirmation, application via SSH |
-| [Import et export de configuration](./concepts/import-export-config.md) | Sauvegarde complète de la configuration serveur (JSON v2) |
+| [Identités SSH](./concepts/ssh-identities.md) | Identifiants réutilisables chiffrés |
+| [Serveurs et SSH](./concepts/servers-and-ssh.md) | Validation d'hôte, clés hôte, vérification |
+| [Règles UFW et états](./concepts/ufw-rules-and-states.md) | Modèle de règles et couleurs d'état d'origine |
+| [Workflow brouillon et application](./concepts/draft-apply-workflow.md) | Édition, aperçu, confirmation, application via SSH |
+| [Import et export de configuration](./concepts/import-export-config.md) | Sauvegarde JSON v2 complète |
+| [Opérations et concurrence](./concepts/operations-and-concurrency.md) | Bannière, polling, files d'attente, limites de débit |
 
 ## Guide utilisateur
 
 | Document | Description |
 |----------|-------------|
 | [Configuration initiale](./user-guide/initial-setup.md) | Premier compte administrateur et connexion |
-| [Gérer les serveurs](./user-guide/manage-servers.md) | Ajouter, modifier, supprimer des serveurs ; installer/activer UFW |
-| [Éditer et appliquer les règles](./user-guide/edit-and-apply-rules.md) | Édition en tableau, import, aperçu d'application |
+| [Gérer les serveurs](./user-guide/manage-servers.md) | Ajout, modification, suppression ; tableau de bord et synchronisation |
+| [Éditer et appliquer les règles](./user-guide/edit-and-apply-rules.md) | Édition du tableau, import, aperçu d'application |
 | [Historique des opérations](./user-guide/operations-history.md) | Bannière de progression et page d'historique |
+| [Scan de ports](./user-guide/port-scan.md) | Résultats du scan externe et couverture UFW |
 
 ## Administration
 
 | Document | Description |
 |----------|-------------|
 | [Modèle de sécurité](./administration/security-model.md) | Chiffrement, authentification, exposition réseau |
-| [Variables d'environnement](./administration/environment-variables.md) | Toute la configuration d'exécution |
+| [Variables d'environnement](./administration/environment-variables.md) | Référence complète de la configuration runtime |
 | [Journal d'audit et export](./administration/audit-log-and-export.md) | Événements d'audit et export avec réauthentification |
 
 ## Déploiement
@@ -44,14 +46,15 @@ Guide complet pour les administrateurs et les opérateurs.
 | [Vue d'ensemble](./deployment/overview.md) | Choisir une méthode de déploiement |
 | [GHCR + Compose](./deployment/ghcr-compose.md) | Tirer des images préconstruites (recommandé) |
 | [Portainer](./deployment/portainer.md) | Déployer via une stack Portainer |
-| [Nginx Proxy Manager](./deployment/nginx-proxy-manager.md) | Liste de contrôle du proxy inverse HTTPS |
+| [Nginx Proxy Manager](./deployment/nginx-proxy-manager.md) | Checklist du reverse proxy HTTPS |
+| [Scan externe de ports](./deployment/port-scan.md) | Activer le scan, réseau, délais d'expiration |
 
 ## Opérations
 
 | Document | Description |
 |----------|-------------|
 | [Sauvegarde et restauration](./operations/backup-restore.md) | Sauvegardes Postgres et `.env` |
-| [Mise à niveau et retour arrière](./operations/upgrade-rollback.md) | Mises à niveau de version et reprise |
+| [Mise à niveau et retour arrière](./operations/upgrade-rollback.md) | Mises à niveau de version et récupération |
 | [Tests de fumée](./operations/smoke-tests.md) | Vérification post-déploiement |
 
 ## Référence
@@ -60,7 +63,7 @@ Guide complet pour les administrateurs et les opérateurs.
 |----------|-------------|
 | [FAQ](./faq.md) | Questions fréquentes |
 | [Dépannage](./troubleshooting.md) | Symptôme → cause → correction |
-| [À propos de Finenumbers](./about.md) | Auteur du produit et contact |
+| [À propos de Finenumbers](./about.md) | Auteur et contact |
 
 ---
 

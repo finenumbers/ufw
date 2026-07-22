@@ -1,6 +1,6 @@
 # Manage servers
 
-This guide walks through server lifecycle: add, configure UFW, refresh, edit, and delete.
+This guide covers server lifecycle: add, dashboard, refresh, install UFW, edit, delete, and list statistics.
 
 ## Prerequisites
 
@@ -8,66 +8,70 @@ Create at least one [SSH identity](../concepts/ssh-identities.md) before adding 
 
 ## Add a server
 
-1. Sidebar → **Servers** or click **Add Server**
-2. Fill in name, host, port, and select an identity
-3. Click **Create Server** — SSH connection is verified automatically on submit
-4. On success, you land on the server dashboard
+1. Sidebar → **Servers** → **Add Server**
+2. Fill name, host, port, select identity
+3. **Create Server** — SSH verified automatically on submit
+4. On success, open the server dashboard
 
 If verification fails, check host reachability, credentials, firewall allowing SSH from the Docker host, and [host validation](../concepts/servers-and-ssh.md).
 
 ## Server dashboard
 
-The dashboard loads **cached UFW state** from the latest Postgres snapshot — no SSH on first paint. Port scan and Docker panels also load the latest cached results from Postgres when available.
+The dashboard loads **cached UFW state** from the latest Postgres snapshot — no SSH on first paint.
 
-| Status | Actions available |
-|--------|-------------------|
-| UFW not installed | **Refresh Status**, then **Install UFW** (after refresh confirms UFW is missing) |
-| Installed but inactive | **Refresh Status** only — UFW is already installed; use refresh to detect active/inactive state |
-| Installed and active | **Add Rule**, **Save rules**, **Refresh Status** |
+When port scan is enabled, the scan panel loads the **latest scan of any status** from Postgres (including in-progress scans since v0.9.2).
 
-Click **Refresh Status** first to verify SSH and detect whether UFW is installed. **Install UFW** stays disabled until a successful refresh shows UFW is missing.
+| UFW status | Actions |
+|------------|---------|
+| Not installed | **Refresh Status**, then **Install UFW** (after refresh confirms missing) |
+| Installed but inactive | **Refresh Status** — install button hidden if UFW exists but inactive |
+| Installed and active | **Add Rule**, **Save rules**, **Refresh Status**, optional **Scan ports** |
 
-Until you run **Refresh Status**, the UFW badge may show a **cached** active/inactive label from the last snapshot.
+**Refresh Status** runs live SSH, updates snapshot, and syncs the rules table. **Install UFW** stays disabled until refresh confirms UFW is not installed.
 
-Use **Refresh Status** to pull the latest UFW state over SSH and sync the rules table. If you have unsaved rule edits, the app asks for confirmation before reloading from the server.
+Until refresh, the UFW badge may show a **cached** label from the last snapshot.
 
-If the app has **no UFW snapshot yet** in Postgres (new server, never refreshed, etc.), an automatic background sync runs once to populate the cache.
+### Unsaved edits warning
 
-## Rule counts
+If you have unsaved draft changes, refresh asks for confirmation before reloading from the server.
 
-Two different counters appear in the UI:
+### Automatic initial sync
 
-| Location | Label | Meaning |
-|----------|-------|---------|
-| **Servers list** card | saved rules | Count of rules stored in local metadata (`ruleRecord`) |
-| **Dashboard** badge under Add Rule | in table | Count of rows in the rules table (active draft session) |
+When **no UFW snapshot exists** in Postgres (new server, never refreshed), a background sync operation runs once to populate the cache. Watch the operation banner.
 
-These numbers can differ while you edit, sync, or import rules. The dashboard badge matches the rules table total.
+## Rule and port statistics
+
+| Location | Metric | Meaning |
+|----------|--------|---------|
+| **Servers list** card | saved rules | Local `ruleRecord` count |
+| **Servers list** card | open ports | Latest successful scan findings (when enabled) |
+| **Dashboard** badge | in table | Visible rules table row count |
+
+Dashboard *in table* can differ from *saved rules* while editing or before apply.
 
 ## Edit a server
 
-1. Open server → **Edit**
+1. Server page → **Edit**
 2. Change name, host, port, or identity
-3. SSH connection is verified automatically on submit when connection parameters changed
+3. SSH verified on submit when connection parameters changed
 
-The edit page shows the stored host key fingerprint and an **unverified** warning when applicable — it does not have a separate test button.
+Edit page shows host key fingerprint and **unverified** warning when applicable.
 
 ## Delete a server
 
-**Danger zone** on edit page or server settings:
+**Danger zone** on edit page:
 
-- Deletes all local rules, drafts, snapshots for this server
-- Does **not** modify remote UFW
+- Removes local rules, drafts, snapshots, scans for this server
+- Does **not** change remote UFW
 
-Confirm only if you intend to remove management data, not to clear remote firewall rules.
+Confirm only when removing management data, not when clearing remote firewall rules.
 
-## Servers list tools
+## Servers list configuration tools
 
-From the main servers page you can:
-
-- **Save configuration** / **Load configuration** — full JSON export/import (see [Import and export config](../concepts/import-export-config.md))
+- **Save configuration** / **Load configuration** — full JSON v2 export/import — see [Import and export config](../concepts/import-export-config.md)
 
 ## Related docs
 
 - [Servers and SSH](../concepts/servers-and-ssh.md)
 - [Edit and apply rules](./edit-and-apply-rules.md)
+- [Port scan](./port-scan.md)

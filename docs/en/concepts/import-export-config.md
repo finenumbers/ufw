@@ -1,53 +1,49 @@
-# Import and export configuration
+# Import and export config
 
-You can export and import a **full server configuration** (all servers, identities, rules metadata) as JSON **v2**.
+Export and import a **JSON v2** file containing all servers, SSH identities (including decrypted secrets), and related metadata. Use for backup, migration, or disaster recovery — not for day-to-day rule editing.
 
-## Export
+Rule-level import/export (CSV, XLSX) is separate — see [Edit and apply rules](../user-guide/edit-and-apply-rules.md).
 
-1. From the **Servers** page, use **Save configuration**
-2. Re-enter your **account password** (step-up authentication)
-3. Download JSON file
+## Export flow
 
-### Important security warning
+1. **Servers** list → **Save configuration**
+2. Enter your account **password** (step-up authentication)
+3. Download JSON file (`servers-config-YYYY-MM-DD.json`)
 
-The export file contains **plaintext SSH passwords and private keys**. Treat it like a secret:
+Export includes decrypted SSH secrets. Store the file encrypted at rest; delete when no longer needed.
 
-- Store encrypted (password manager vault, encrypted disk)
-- Never commit to git or send over unsecured channels
-- A `CONFIG_EXPORT` audit event is written when export succeeds
+A short-lived token gates the download API after password confirmation.
 
-## Import
+Rate limit: 5 exports per minute per user.
 
-1. Use **Load configuration** on the Servers page
-2. Select JSON v2 file
-3. Review the summary: servers to create, update, delete
-4. Re-enter your **account password** on the confirmation dialog
-5. Confirm — import runs in a transaction (upsert first, delete last)
+## Import flow
 
-Import uses the same rate limits as export (10 attempts per minute per user).
+1. **Load configuration** → select JSON file
+2. **Preview** shows diff: servers and identities to create, update, or delete
+3. Confirm with password → import applies changes
 
-### Destructive behavior
+Import waits for per-server queues to become idle and blocks if destructive operations would conflict with active work.
 
-Servers **missing** from the import file can be **deleted** along with all their rules and snapshots. Read the confirmation dialog carefully.
+## JSON v2 format
 
-Imported SSH host keys are marked **unverified** — run **Refresh Status** on each server dashboard before applying rules.
+| Section | Contents |
+|---------|----------|
+| **version** | `2` |
+| **identities** | Name, username, auth method, secrets |
+| **servers** | Name, host, port, identity reference, host key fields |
 
-### Import limits
+Legacy array-only or v1 files are rejected.
 
-- Rule imports (CSV, XLSX, JSON) are capped at **10 000 rows** per file.
-- Config import **preview** is rate-limited to **10 attempts per minute** per user — wait and retry if you hit the limit.
+Duplicate keys (same host + port + identity) are rejected at parse time.
 
-## Export vs Postgres backup
+## Delete semantics on import
 
-| Method | Contains | Best for |
-|--------|----------|----------|
-| **Config export (JSON)** | Human-readable config + plaintext secrets | Migration between instances, disaster copy |
-| **Postgres dump** | Full database including encrypted secrets | Complete restore with same `APP_ENCRYPTION_KEY` |
-| **`.env` backup** | Runtime secrets | Required to decrypt DB credentials after restore |
+Servers present in the database but absent from the imported file appear in the preview **delete** set. Confirm only if you intend to remove those server records and all associated rules, drafts, and snapshots locally.
 
-For full disaster recovery, back up **both** Postgres and `.env` — see [Backup and restore](../operations/backup-restore.md).
+Remote UFW on deleted server records is **not** modified.
 
 ## Related docs
 
-- [Audit log and export](../administration/audit-log-and-export.md)
 - [SSH identities](./ssh-identities.md)
+- [Backup and restore](../operations/backup-restore.md)
+- [Audit log and export](../administration/audit-log-and-export.md)

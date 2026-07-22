@@ -1,49 +1,66 @@
 # Deployment overview
 
-Choose how to run UFW Remote Manager in production. All paths assume **HTTPS** via an existing reverse proxy (Nginx Proxy Manager recommended).
+Choose how to run UFW Remote Manager in production. All paths use Docker; PostgreSQL is required.
 
-![Deploy flow](../../assets/deploy-flow.svg)
+## Recommended path
 
-## Comparison
+**GHCR pre-built images + Compose overlays + Nginx Proxy Manager**
 
-| Method | Best for | Build images? |
-|--------|----------|---------------|
-| [GHCR + Compose](./ghcr-compose.md) | Most self-hosters | No — pull from GitHub Packages |
-| [Portainer](./portainer.md) | GUI stack management | No — pull GHCR images |
-| Local Compose build | Air-gapped or fork development | Yes — `docker compose build` |
+```bash
+./scripts/generate-production-env.sh .env
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env up -d
+./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```
 
-Nginx Proxy Manager is **always external** — not included in this repository.
+See [GHCR + Compose](./ghcr-compose.md) and [Nginx Proxy Manager](./nginx-proxy-manager.md).
 
-## Stack services
+## Deployment methods
 
-| Container | Purpose |
-|-----------|---------|
-| `ufw-postgres` | Database |
-| `ufw-migrate` | Runs DB migrations once per deploy |
-| `ufw-app` | Web application (includes Naabu/Nmap when port scan enabled) |
+| Method | When to use | Build on server? |
+|--------|-------------|------------------|
+| **GHCR + Compose** | Default production | No — `docker compose pull` |
+| **Local Compose build** | Air-gapped or fork development | Yes — `docker compose build` |
+| **Portainer stack** | GUI-driven ops | Optional — uses GHCR or build |
 
-## Recommended production path
+## Compose file layers
 
-1. Pull image tag **`latest`** (or pin e.g. `v0.6.1`) from GHCR
-2. Generate `.env` on server: `./scripts/generate-production-env.sh .env`
-3. Deploy with Compose + `docker-compose.prod.yml` + `docker-compose.ghcr.yml`
-4. Configure NPM Proxy Host → `ufw-app:8088`
-5. Open `APP_URL/setup`, create admin
-6. Run `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
-7. Optional: enable [external port scanning](./port-scan.md) with `PORT_SCAN_ENABLED=true`
+| File | Purpose |
+|------|---------|
+| `docker-compose.yml` | Base: postgres, migrate, app |
+| `docker-compose.prod.yml` | Production: no published ports, NPM network, prod env |
+| `docker-compose.ghcr.yml` | Pull images from GHCR instead of local build |
 
-## Universal images
+Combine with `-f` flags. Always pass `--env-file .env` in production.
 
-Set `APP_URL` in `.env` at deploy time. The same GHCR image works for any domain — no per-customer image build.
+## Migration container
 
-## Secrets discipline
+On each `up`, **ufw-migrate** runs `prisma migrate deploy` once and exits. Do **not** run `prisma migrate` manually inside **ufw-app** — use the migrate service:
 
-- Generate secrets on the server only
-- File mode `600` for `.env`
-- Never store secrets in Portainer stack git repo or public tickets
+```bash
+docker compose run --rm migrate
+```
+
+v0.9.2 has **no new migration** beyond prior releases — upgrade is pull and up.
+
+## Optional features at deploy time
+
+| Feature | Enable |
+|---------|--------|
+| Port scan | `PORT_SCAN_ENABLED=true` — see [External port scanning](./port-scan.md) |
+| Private SSH targets | `SSH_ALLOWED_CIDRS=10.0.0.0/8,...` |
+
+Legacy remote container inventory was **removed in v0.9.0** — no env flag.
+
+## Version pinning
+
+| Strategy | Setting |
+|----------|---------|
+| Track latest release | `GHCR_IMAGE_TAG=latest` (default) |
+| Pin version | `GHCR_IMAGE_TAG=v0.9.2` |
 
 ## Related docs
 
-- [Nginx Proxy Manager](./nginx-proxy-manager.md)
+- [GHCR + Compose](./ghcr-compose.md)
+- [Portainer](./portainer.md)
 - [Environment variables](../administration/environment-variables.md)
-- [Smoke tests](../operations/smoke-tests.md)
+- [Upgrade and rollback](../operations/upgrade-rollback.md)

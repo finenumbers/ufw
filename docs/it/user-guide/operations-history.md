@@ -1,54 +1,68 @@
 # Cronologia operazioni
 
-Le attività di lunga durata (applicazione, aggiornamento, installazione UFW, port scan) sono tracciate nei **log operazioni** e mostrate nell'interfaccia.
+I task di lunga durata — apply, sync, refresh, installazione UFW, scansione porte — sono tracciati nei **log operazioni** e mostrati nell'UI.
 
-## Banner operazione
+## Banner operazioni
 
-Mentre un'operazione è in corso, appare un banner in cima all'app:
+Mentre il lavoro è in corso, un banner appare in cima:
 
-- Tipo operazione e stato (RUNNING, SUCCESS, FAILED)
-- Elenco passi espandibile con stato per passo
-- Chiusura automatica in caso di successo dopo un breve ritardo
+| Elemento | Descrizione |
+|---------|-------------|
+| Stato | IN CORSO, IN ATTESA, SUCCESSO, ERRORE, PARZIALE |
+| Passaggi | Stato per passaggio espandibile |
+| Messaggio | Testo progresso o errore tradotto |
 
-Il banner effettua polling degli aggiornamenti durante l'esecuzione.
+**SUCCESSO** si chiude automaticamente dopo ~10 secondi. **ERRORE** e **PARZIALE** restano fino alla chiusura.
 
-Se un banner resta bloccato su **RUNNING** o **PENDING** dopo una disconnessione del browser, aggiornare la pagina. Le operazioni obsolete vengono eliminate automaticamente da una pulizia in background (tipicamente entro 30–60 minuti).
+### Comportamento polling (v0.9.2)
+
+- Poll ~**1 secondo** mentre l'operazione è IN CORSO o IN ATTESA
+- **Smette di fare polling quando idle** — nessun loop background a 5 secondi
+- Riprende quando inizia una nuova operazione
+- Al completamento, invia evento così le pagine server aggiornano i dati SSR
+
+Vedi [Operazioni e concorrenza](../concepts/operations-and-concurrency.md).
+
+### Banner bloccato
+
+Se il banner mostra IN CORSO dopo disconnessione, aggiornate la pagina. Lo sweeper in background contrassegna operazioni RUNNING antiche come fallite entro ~30–60 minuti.
 
 ## Pagina operazioni
 
 Barra laterale → **Cronologia operazioni** (`/operations`)
 
-Due schede:
-
 | Scheda | Contenuto |
-|--------|-----------|
-| **Operazioni** | Log tecnico operazioni — applicazione, sync, aggiornamento, port scan, ecc. |
-| **Audit** | Eventi rilevanti per la sicurezza — login, logout, export configurazione |
+|-----|---------|
+| **Operazioni** | Log tecnico — apply, sync, refresh, scansione porte, errori creazione server |
+| **Audit** | Eventi sicurezza — login, logout, export configurazione, azioni UFW |
 
-Entrambe supportano lo scroll infinito per voci più vecchie.
+Entrambe le schede supportano scroll infinito per voci più vecchie.
 
-## Tipi di operazione
+## Tipi operazione
 
-Il database memorizza nomi di tipo con punti (ad esempio `ufw.refresh`). L'interfaccia li traduce con chiavi con underscore (ad esempio `ufw_refresh`).
+Il database memorizza nomi con punti; l'UI li traduce.
 
-Esempi attivi:
+| Tipo | Descrizione |
+|------|-------------|
+| `apply.rules` | Sessione apply UFW |
+| `ufw.refresh` | Aggiorna stato — SSH live + sync regole |
+| `ufw.sync` | Sync iniziale in background senza snapshot |
+| `ufw.install` | Installazione e attivazione UFW remota |
+| `port.scan` | Scansione porte esterna |
+| `server.create` | Creazione server con errore SSH |
 
-- `apply_rules` / `apply.rules` — applicazione UFW
-- `ufw_refresh` / `ufw.refresh` — Aggiorna stato (lettura SSH live + sync regole)
-- `ufw_sync` / `ufw.sync` — sync iniziale in background quando non esiste uno snapshot
-- `ufw_install` / `ufw.install` — installazione UFW (l'abilitazione avviene durante l'installazione)
-- `port_scan` / `port.scan` — port scan esterno
-- `server_create` / `server.create` — nuovo server aggiunto
+Legacy (solo voci storiche):
 
-Legacy (solo voci storiche nel log):
-
-- `ssh_test` — dalle versioni precedenti a v0.7.4; non viene più creato
+- `ssh_test` — pre v0.7.4; non più creato
 
 ## Cancellare la cronologia
 
-Gli amministratori possono cancellare la cronologia operazioni vecchia dall'interfaccia (gli eventi audit possono essere conservati secondo la policy di retention). La cancellazione non influisce su stato del server o regole.
+**Cancella cronologia** rimuove vecchie voci log operazioni dall'UI/database per azione di retention. Non influisce su server, regole o UFW remoto.
 
-## Documentazione correlata
+La scheda Audit può conservare eventi secondo policy — vedi [Log di audit ed esportazione](../administration/audit-log-and-export.md).
 
-- [Log audit ed export](../administration/audit-log-and-export.md)
-- [Flusso bozza e applicazione](../concepts/draft-apply-workflow.md)
+## Documenti correlati
+
+- [Operazioni e concorrenza](../concepts/operations-and-concurrency.md)
+- [Workflow bozza e applicazione](../concepts/draft-apply-workflow.md)
+- [Scansione porte](./port-scan.md)

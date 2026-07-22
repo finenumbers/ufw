@@ -1,52 +1,43 @@
 # Identità SSH
 
-Un'**identità SSH** è un insieme riutilizzabile di credenziali (nome utente + password o chiave privata) archiviato **crittografato** nel database dell'applicazione. I server fanno riferimento alle identità invece di incorporare segreti inline.
-
-## Perché esistono le identità
-
-| Senza identità | Con identità |
-|--------------------|-----------------|
-| Credenziali duplicate su ogni server | Un'identità condivisa da molti server |
-| Ruotare una chiave significa modificare ogni server | Aggiorna l'identità una volta; tutti i server collegati usano le nuove credenziali |
-| Audit più difficile | Mappatura chiara: identità → server |
+Un'**identità SSH** memorizza credenziali di connessione riutilizzabili: nome utente, metodo di autenticazione e segreti crittografati. Ogni **server** fa riferimento a un'identità.
 
 ## Metodi di autenticazione
 
-- **Password** — nome utente e password crittografati a riposo
-- **Chiave privata** — nome utente e chiave privata PEM crittografati a riposo
+| Metodo | Segreto memorizzato | Uso tipico |
+|--------|---------------|-------------|
+| **Password** | Password SSH | Lab semplice o host legacy |
+| **Chiave privata** | Chiave privata PEM | Chiavi di produzione senza passphrase |
+| **Chiave privata + passphrase** | Chiave e passphrase | Chiavi private crittografate |
 
-I segreti sono crittografati con **AES-256-GCM** usando `APP_ENCRYPTION_KEY` da `.env`. Se perdi questa chiave, le credenziali crittografate non possono essere recuperate.
+I segreti sono crittografati a riposo con **AES-256-GCM** usando `APP_ENCRYPTION_KEY`. Vengono decifrati solo in memoria all'apertura di una connessione SSH.
 
-## Creare un'identità
+## Creazione e modifica
 
-1. Apri **Identità SSH** nella barra laterale (`/identities`)
-2. Clicca **Aggiungi identità**
-3. Inserisci nome, nome utente, metodo di autenticazione e segreto
-4. Salva — le credenziali vengono crittografate prima dell'archiviazione
+1. Barra laterale → **Identità SSH**
+2. **Aggiungi identità** o aprite una riga esistente → **Modifica**
+3. Campi obbligatori: nome visualizzato, nome utente SSH, metodo auth, segreto/i
 
-## Modifica ed eliminazione
+In **modifica**, lasciare vuoti i campi password/chiave mantiene il segreto esistente invariato.
 
-- **Modifica** — puoi lasciare vuoti i campi password/chiave per mantenere i segreti esistenti invariati
-- **Elimina** — bloccato se un server usa ancora l'identità; riassegna o elimina prima quei server
+La validazione rifiuta nomi vuoti e combinazioni auth non valide prima del salvataggio.
 
-## Relazione con i server
+## Collegamento ai server
 
-```mermaid
-flowchart LR
-  Identity[SSH_Identity] --> ServerA[Server_A]
-  Identity --> ServerB[Server_B]
-  Identity --> ServerC[Server_C]
-```
+Creando o modificando un server, selezionate un'identità dal menu a tendina. Cambiare l'identità di un server attiva la verifica SSH al salvataggio se i parametri di connessione sono cambiati.
 
-Ogni record server memorizza un riferimento a un'identità. Cambiare l'identità su un server richiede un **Test SSH** riuscito prima del salvataggio.
+## Eliminazione di un'identità
+
+L'eliminazione è bloccata finché un server fa ancora riferimento all'identità. L'UI elenca i server collegati. Riassegnate o eliminate prima quei server.
 
 ## Note di sicurezza
 
-- I segreti dell'identità non compaiono nell'interfaccia dopo il salvataggio (solo segnaposto in modifica)
-- L'**esportazione** della configurazione include segreti in testo chiaro — vedi [Importazione ed esportazione configurazione](./import-export-config.md)
-- Esegui backup di `.env` con `APP_ENCRYPTION_KEY` — vedi [Backup e ripristino](../operations/backup-restore.md)
+- I segreti delle identità compaiono nell'**export configurazione** (JSON v2) dopo conferma password — trattate gli export come altamente sensibili
+- Ruotare `APP_ENCRYPTION_KEY` senza reinserire i segreti rende il ciphertext esistente illeggibile — pianificate la rotazione chiavi con attenzione
+- Un'identità può essere condivisa da molti server (stesso utente admin, stessa chiave)
 
-## Documentazione correlata
+## Documenti correlati
 
 - [Server e SSH](./servers-and-ssh.md)
-- [Gestire i server](../user-guide/manage-servers.md)
+- [Importazione ed esportazione configurazione](./import-export-config.md)
+- [Modello di sicurezza](../administration/security-model.md)

@@ -1,38 +1,46 @@
 # Черновик и применение
 
-UFW Remote Manager никогда не отправляет изменения межсетевого экрана молча. Каждое изменение следует цепочке **редактирование → предпросмотр → подтверждение → применение**.
+UFW Remote Manager никогда не отправляет изменения межсетевого экрана молча. Каждая мутация следует **edit → preview → confirm → apply**.
 
-![Рабочий процесс применения](../../assets/ufw-apply-workflow.svg)
+![Apply workflow](../../assets/ufw-apply-workflow.svg)
 
 ## Шаги
 
 ### 1. Редактирование черновика
 
-Изменяйте правила в таблице: добавление, правка, удаление, изменение порядка, импорт. Изменения живут в **локальном черновике**, пока не будут применены.
+Изменяйте правила в таблице: add, edit, delete, reorder, import. Изменения живут в **локальном черновике** до apply.
 
-### 2. Предпросмотр применения
+### 2. Preview apply
 
-Нажмите **Apply preview**. Приложение:
+Нажмите **Apply preview** (flow **Сохранить правила**). App:
 
-1. Загружает текущее состояние UFW с сервера (SSH-снимок)
-2. Вычисляет **план** — команды, которые приведут UFW в соответствие с вашим черновиком
-3. Показывает добавленные, удалённые и переупорядоченные правила
+1. Загружает текущее UFW state с сервера (SSH)
+2. Строит **plan** — UFW commands для выравнивания remote с черновиком
+3. Показывает added, removed, updated и reordered rules
 
-Внимательно просмотрите предпросмотр. Обратите внимание на правила, которые могут лишить вас доступа (например, блокировка SSH).
+Проверьте внимательно. Обратите внимание на правила, которые могут заблокировать SSH.
 
-### 3. Подтверждение
+### 3. Confirm
 
-Подтвердите в диалоге. Только после этого команды UFW выполняются по SSH.
+Подтвердите в диалоге. Только тогда UFW commands выполняются по SSH.
 
-### 4. Выполнение применения
+Если remote UFW изменился с preview, apply **отклоняется** — выполните preview снова.
 
-Команды выполняются на сервере последовательно (очередь на сервер, concurrency 1). Прогресс отображается в **баннере операций** с пошаговым статусом.
+### 4. Apply execution
 
-### 5. Синхронизация после применения
+Команды выполняются последовательно на сервере в **per-server queue**. Прогресс — в **баннере операций** со step-by-step status.
 
-После успеха приложение обновляет снимок и синхронизирует исходные состояния черновика, чтобы цвета строк отражали новую реальность.
+### 5. Post-apply sync
 
-## Диаграмма последовательности
+После успешного UFW execution, всё ещё в очереди:
+
+1. Persist нового snapshot из live detection
+2. Sync `ruleRecord` rows из detection (не stale cache)
+3. Обновление draft origin states для соответствия цветов реальности
+
+С v0.9.2 post-apply rule records строятся из **live detection data**, предотвращая возврат удалённых remote rules в БД.
+
+## Sequence diagram
 
 ```mermaid
 sequenceDiagram
@@ -42,37 +50,39 @@ sequenceDiagram
   participant Remote as Linux_UFW
 
   User->>App: Edit draft rules
-  User->>App: Preview apply
+  User->>App: Apply preview
   App->>Remote: SSH read snapshot
   App->>App: Build plan diff
   User->>App: Confirm apply
   App->>Remote: SSH read snapshot
   alt Remote changed since preview
-    App-->>User: Reject — re-preview required
+    App-->>User: Reject needsRePreview
   else Plan matches
     App->>Remote: SSH ufw commands
-    App->>DB: Update snapshot and audit
+    App->>DB: Snapshot rule records draft sync
   end
 ```
 
-## Частичное применение и расхождение
+## Partial apply и drift
 
-Удалённый UFW может измениться между предпросмотром и подтверждением, или применение может прерваться на полпути. Приложение обрабатывает три различных случая:
+| Сценарий | Session status | Действие |
+|----------|----------------|----------|
+| Remote UFW изменился **между preview и confirm** | Rejected (`needsRePreview`) | Снова **Apply preview** — не force resync |
+| UFW commands **прерваны** на сервере | `PARTIAL` (`needsResync`) | **Принудительная синхронизация с сервером**, затем review |
+| UFW ok, но **post-apply sync failed** | `PARTIAL` (`needsResync`) | **Принудительная синхронизация с сервером** — remote UFW уже изменён |
 
-| Сценарий | Статус сессии | Что делать |
-|----------|---------------|------------|
-| Удалённый UFW **изменился между предпросмотром и подтверждением** | Применение отклонено (`needsRePreview`) | Снова запустите **Apply preview** — не используйте force resync |
-| Команды UFW **прерваны** на сервере | `PARTIAL` (`needsResync`) | **Force resync from server**, затем проверьте перед редактированием |
-| Команды UFW выполнены, но **post-apply sync не удался** | `PARTIAL` (`needsResync`) | **Force resync from server** — удалённый UFW уже изменён |
+**Не игнорируйте partial apply warnings** — слепое продолжение может дать duplicate rules или ordering errors.
 
-**Не игнорируйте предупреждения о частичном применении** — продолжение вслепую может привести к дублированию правил или ошибкам порядка.
+## DB-only apply
 
-## Защита доступа по SSH
+Если preview показывает только metadata changes (без UFW command diff), confirm обновляет локальные records без remote UFW commands.
 
-Планировщик применения включает меры защиты вокруг правил SSH-доступа там, где это настроено — см. тесты в `src/lib/ufw/commands.allow-ssh.test.ts`. Всё равно проверяйте предпросмотр вручную для продакшен-серверов.
+## Allow SSH safeguard
+
+Apply planner включает safeguards вокруг SSH access rules где настроено. Всё равно проверяйте preview вручную на production servers.
 
 ## Связанные документы
 
 - [Правила UFW и состояния](./ufw-rules-and-states.md)
 - [Редактирование и применение правил](../user-guide/edit-and-apply-rules.md)
-- [История операций](../user-guide/operations-history.md)
+- [Операции и конкурентность](./operations-and-concurrency.md)

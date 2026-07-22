@@ -1,37 +1,48 @@
 # Log di audit ed esportazione
 
-Esistono due livelli di logging: **log operazioni** (tecnico) ed **eventi di audit** (sicurezza/conformità).
+Due tracce complementari: **log operazioni** (progresso task) ed **eventi di audit** (sicurezza e compliance).
 
 ## Eventi di audit
 
-Scritti nella tabella `audit_event`. Esempi:
+Scritti in Postgres su azioni sensibili. Esempi:
 
 | Azione | Quando |
 |--------|------|
-| `LOGIN` | Sessione utente creata |
-| `LOGOUT` | Sessione eliminata |
-| `CONFIG_EXPORT` | Configurazione server esportata (dopo reinserimento password) |
+| `LOGIN` / `LOGOUT` | Inizio/fine sessione |
+| `APPLY_PREVIEWED` / `APPLY_CONFIRMED` / `APPLY_COMPLETED` / `APPLY_FAILED` | Workflow apply |
+| `SNAPSHOT_LOADED` | Snapshot UFW acquisito |
+| `UFW_ENABLE` | Attivazione remota dopo install |
+| `PORT_SCAN_STARTED` / `PORT_SCAN_COMPLETED` | Ciclo di vita scansione porte |
+| `CONFIG_EXPORT` / `CONFIG_IMPORT` | Trasferimento configurazione JSON v2 |
+| CRUD server | Creazione/aggiornamento/eliminazione record server |
 
-Visualizza su **Cronologia operazioni** → scheda **Audit**.
+Visualizzate su **Cronologia operazioni** → scheda **Audit** con scroll infinito.
+
+La retention audit segue l'archiviazione database — nessuna purge automatica salvo cancellazione cronologia da operatore.
 
 ## Log operazioni
 
-Scritti per lavoro di lunga durata: apply, refresh, installazione, port scan, ecc. Include metadati passaggi e messaggi successo/errore.
+Record tecnici con passaggi, stato, timestamp e messaggi di errore. Vedi [Cronologia operazioni](../user-guide/operations-history.md).
 
-Visualizza su **Cronologia operazioni** → scheda **Operazioni** o nel **banner operazioni** live.
+## Audit export configurazione
 
-## Traccia audit export configurazione
+Ogni **Salva configurazione** riuscita crea una voce audit. Il file export contiene **segreti SSH decifrati** — proteggetelo come un dump password vault.
 
-Ogni export riuscito crea un record audit `CONFIG_EXPORT` con ID utente e timestamp. Usalo per tracciare chi ha scaricato file credenziali in testo chiaro.
+Flusso export:
 
-## Retention
+1. Conferma password (step-up)
+2. Token download a breve durata
+3. Download JSON via route API
 
-La retention snapshot mantiene gli ultimi **10** snapshot per server (eliminazione automatica dei più vecchi). La retention log operazioni può essere cancellata manualmente dall'interfaccia.
+Limite di frequenza: 5 export al minuto per utente.
 
-Pianifica policy di backup per dati audit se la conformità richiede retention lunga — vedi [Backup e ripristino](../operations/backup-restore.md).
+## Cancellare la cronologia
 
-## Documentazione correlata
+**Cancella cronologia** sulla pagina operazioni rimuove voci log operazioni per azione UI. Non annulla modifiche server né elimina eventi audit in tutti i casi — confermate il testo della finestra di dialogo per il comportamento attuale.
+
+Non modifica UFW remoto o bozze regola locali.
+
+## Documenti correlati
 
 - [Importazione ed esportazione configurazione](../concepts/import-export-config.md)
-- [Cronologia operazioni](../user-guide/operations-history.md)
-- [SECURITY.md](../../../SECURITY.md)
+- [Modello di sicurezza](./security-model.md)

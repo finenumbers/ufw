@@ -1,53 +1,49 @@
 # Import et export de configuration
 
-Vous pouvez exporter et importer une **configuration serveur complète** (tous les serveurs, identités, métadonnées de règles) au format JSON **v2**.
+Exportez et importez un fichier **JSON v2** contenant tous les serveurs, identités SSH (y compris secrets déchiffrés) et métadonnées associées. À utiliser pour sauvegarde, migration ou reprise après sinistre — pas pour l'édition quotidienne des règles.
 
-## Export
+L'import/export au niveau des règles (CSV, XLSX) est séparé — voir [Éditer et appliquer les règles](../user-guide/edit-and-apply-rules.md).
 
-1. Depuis la page **Serveurs**, utilisez **Enregistrer la configuration**
-2. Saisissez à nouveau votre **mot de passe de compte** (authentification renforcée)
-3. Téléchargez le fichier JSON
+## Flux d'export
 
-### Avertissement de sécurité important
+1. Liste **Serveurs** → **Enregistrer la configuration**
+2. Saisir le **mot de passe** de votre compte (authentification renforcée)
+3. Télécharger le fichier JSON (`servers-config-YYYY-MM-DD.json`)
 
-Le fichier d'export contient **des mots de passe SSH et des clés privées en clair**. Traitez-le comme un secret :
+L'export inclut les secrets SSH déchiffrés. Stockez le fichier chiffré au repos ; supprimez-le lorsqu'il n'est plus nécessaire.
 
-- Stockez-le chiffré (coffre-fort de gestionnaire de mots de passe, disque chiffré)
-- Ne le commitez jamais dans git ni ne l'envoyez sur des canaux non sécurisés
-- Un événement d'audit `CONFIG_EXPORT` est écrit lors d'un export réussi
+Un jeton à courte durée de vie protège l'API de téléchargement après confirmation du mot de passe.
 
-## Import
+Limite de débit : 5 exports par minute par utilisateur.
 
-1. Utilisez **Charger la configuration** sur la page Serveurs
-2. Sélectionnez le fichier JSON v2
-3. Examinez le résumé : serveurs à créer, mettre à jour, supprimer
-4. Saisissez à nouveau votre **mot de passe de compte** dans la boîte de dialogue de confirmation
-5. Confirmez — l'import s'exécute dans une transaction (upsert d'abord, suppression en dernier)
+## Flux d'import
 
-L'import utilise les mêmes limites de débit que l'export (10 tentatives par minute par utilisateur).
+1. **Charger la configuration** → sélectionner le fichier JSON
+2. L'**aperçu** montre le diff : serveurs et identités à créer, mettre à jour ou supprimer
+3. Confirmer avec mot de passe → l'import applique les modifications
 
-### Comportement destructif
+L'import attend que les files d'attente par serveur deviennent inactives et bloque si des opérations destructives entreraient en conflit avec un travail actif.
 
-Les serveurs **absents** du fichier d'import peuvent être **supprimés** avec toutes leurs règles et snapshots. Lisez attentivement la boîte de dialogue de confirmation.
+## Format JSON v2
 
-Les clés hôte SSH importées sont marquées **Non vérifiées** — exécutez **Actualiser le statut** sur chaque tableau de bord serveur avant d'appliquer les règles.
+| Section | Contenu |
+|---------|---------|
+| **version** | `2` |
+| **identities** | Nom, nom d'utilisateur, méthode d'auth, secrets |
+| **servers** | Nom, hôte, port, référence d'identité, champs de clé hôte |
 
-### Limites d'import
+Les fichiers legacy array-only ou v1 sont rejetés.
 
-- Les imports de règles (CSV, XLSX, JSON) sont limités à **10 000 lignes** par fichier.
-- L'**aperçu** d'import de configuration est limité à **10 tentatives par minute** par utilisateur — attendez et réessayez si vous atteignez la limite.
+Les clés en double (même hôte + port + identité) sont rejetées à l'analyse.
 
-## Export vs sauvegarde Postgres
+## Sémantique de suppression à l'import
 
-| Méthode | Contient | Idéal pour |
-|---------|----------|------------|
-| **Export de configuration (JSON)** | Configuration lisible + secrets en clair | Migration entre instances, copie de secours |
-| **Dump Postgres** | Base complète incluant secrets chiffrés | Restauration complète avec le même `APP_ENCRYPTION_KEY` |
-| **Sauvegarde `.env`** | Secrets d'exécution | Requis pour déchiffrer les identifiants DB après restauration |
+Les serveurs présents en base de données mais absents du fichier importé apparaissent dans l'ensemble **suppression** de l'aperçu. Confirmez uniquement si vous entendez retirer ces enregistrements serveur et toutes les règles, brouillons et snapshots associés localement.
 
-Pour une reprise après sinistre complète, sauvegardez **à la fois** Postgres **et** `.env` — voir [Sauvegarde et restauration](../operations/backup-restore.md).
+UFW distant sur les enregistrements serveur supprimés **n'est pas** modifié.
 
 ## Documentation associée
 
-- [Journal d'audit et export](../administration/audit-log-and-export.md)
 - [Identités SSH](./ssh-identities.md)
+- [Sauvegarde et restauration](../operations/backup-restore.md)
+- [Journal d'audit et export](../administration/audit-log-and-export.md)

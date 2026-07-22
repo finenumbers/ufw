@@ -1,6 +1,12 @@
-# Início rápido (local)
+# Início rápido
 
-Execute o UFW Remote Manager na sua máquina com Docker. Este caminho é para **avaliação e desenvolvimento**, não para produção.
+Execute o UFW Remote Manager localmente com Docker. Este caminho é para **avaliação e desenvolvimento**, não para produção.
+
+## Pré-requisitos
+
+- Docker e Docker Compose
+- Git
+- Porta **8088** livre em localhost (configurável via `APP_PORT`)
 
 ## 1. Clonar e configurar
 
@@ -10,7 +16,7 @@ cd ufw
 cp .env.example .env
 ```
 
-O `.env` padrão usa valores adequados para desenvolvimento. **Não** use esses padrões em produção.
+Os valores padrão do `.env` funcionam para uso local. Segredos pré-preenchidos servem apenas para desenvolvimento — gere novos para qualquer implantação compartilhada ou de produção.
 
 ## 2. Iniciar a stack
 
@@ -18,50 +24,86 @@ O `.env` padrão usa valores adequados para desenvolvimento. **Não** use esses 
 docker compose up -d --build
 ```
 
-Aguarde até que todos os containers estejam saudáveis:
+Isso inicia:
+
+| Serviço | Função |
+|---------|--------|
+| **postgres** | Banco de dados PostgreSQL |
+| **migrate** | Executa `prisma migrate deploy` uma vez e encerra |
+| **app** | UI Next.js na porta 8088 |
+
+Verifique o status:
 
 ```bash
 docker compose ps
+docker compose logs -f app
 ```
 
-Você deve ver `ufw-postgres` (healthy), `ufw-migrate` (exited 0) e `ufw-app` (healthy).
+## 3. Criar a conta de administrador
 
-## 3. Abrir a interface
+Abra **http://localhost:8088/setup**
 
-Abra **http://localhost:8088** no navegador.
+- O registro está disponível **apenas uma vez** — enquanto não existir usuário
+- Após a configuração, `/setup` redireciona para login
+- Use uma senha forte; esta é a única conta de administrador
 
-- **Primeira visita:** `/setup` — crie a única conta de administrador
-- **Visitas posteriores:** `/login`
+## 4. Criar uma identidade SSH
 
-## 4. Primeiro fluxo na interface
+1. Barra lateral → **Identidades SSH** → **Adicionar identidade**
+2. Escolha autenticação: senha, chave privada ou chave com passphrase
+3. Salve — as credenciais são criptografadas com `APP_ENCRYPTION_KEY`
 
-1. **Identidades SSH** (`/identities`) — crie credenciais (senha ou chave privada)
-2. **Adicionar servidor** — escolha a identidade, informe host/porta; o teste SSH roda antes de salvar
-3. Na página do servidor — instale/ative o UFW se necessário, depois abra **Regras**
-4. Edite regras, execute **Salvar regras**, confirme para enviar alterações via SSH
+Veja [Identidades SSH](./concepts/ssh-identities.md).
 
-## Comandos úteis
+## 5. Adicionar um servidor
 
-```bash
-docker compose logs -f app          # logs da aplicação
-docker compose down                 # parar a stack
-docker compose down -v              # parar e excluir o volume do banco de dados
+1. Barra lateral → **Servidores** → **Adicionar servidor**
+2. Informe nome, host, porta, selecione identidade
+3. **Criar servidor** verifica SSH automaticamente
+
+Em caso de sucesso, você acessa o painel do servidor. O badge UFW mostra estado em cache (vazio até a primeira atualização).
+
+## 6. Atualizar e trabalhar com regras
+
+1. Clique em **Atualizar status** — leitura SSH ao vivo; cria o primeiro snapshot UFW
+2. Se UFW estiver ausente, use **Instalar UFW** (após a atualização confirmar que não está instalado)
+3. Com UFW ativo, edite regras na tabela
+4. Pré-visualização de apply → revisar → **Confirmar** para enviar alterações
+
+Se ainda não existir snapshot, um **sync inicial** automático em segundo plano pode executar uma vez — veja [Gerenciar servidores](./user-guide/manage-servers.md).
+
+## Opcional: habilitar varredura de portas localmente
+
+Adicione ao `.env`:
+
+```env
+PORT_SCAN_ENABLED=true
 ```
 
-## Desenvolvimento no host (opcional)
+Reconstrua/reinicie o container do app. A varredura exige Naabu e Nmap na imagem (incluídos no Dockerfile oficial).
 
-Execute apenas o Postgres no Docker e a aplicação no host:
+## Desenvolvimento sem app Docker completo
+
+Execute apenas Postgres no Docker, app no host:
 
 ```bash
 docker compose up -d postgres
 npm install
-npm run db:generate
 npm run db:migrate
 npm run dev
 ```
 
-Use a porta **5434** em `DATABASE_URL` para acesso pelo host (veja `.env.example`).
+O app escuta em **http://localhost:8088** (veja `package.json`).
 
-## Produção
+## Parar e resetar
 
-Para implantação HTTPS atrás do Nginx Proxy Manager, veja [Visão geral da implantação](./deployment/overview.md).
+```bash
+docker compose down          # parar containers
+docker compose down -v       # parar e excluir volume do banco
+```
+
+## Próximos passos
+
+- [Arquitetura](./architecture.md)
+- [Implantação em produção](./deployment/overview.md)
+- [Modelo de segurança](./administration/security-model.md)

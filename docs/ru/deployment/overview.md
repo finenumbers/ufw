@@ -1,49 +1,66 @@
 # Обзор развёртывания
 
-Выберите, как запускать UFW Remote Manager в production. Все пути предполагают **HTTPS** через существующий reverse proxy (рекомендуется Nginx Proxy Manager).
+Выберите способ запуска UFW Remote Manager в продакшене. Все пути используют Docker; PostgreSQL обязателен.
 
-![Схема развёртывания](../../assets/deploy-flow.svg)
+## Рекомендуемый путь
 
-## Сравнение
+**GHCR pre-built images + Compose overlays + Nginx Proxy Manager**
 
-| Метод | Лучше всего для | Собирать образы? |
-|-------|-----------------|------------------|
-| [GHCR + Compose](./ghcr-compose.md) | Большинства self-hosters | Нет — pull из GitHub Packages |
-| [Portainer](./portainer.md) | GUI-управления stack | Нет — pull образов GHCR |
-| Локальная сборка Compose | Air-gapped или fork-разработки | Да — `docker compose build` |
+```bash
+./scripts/generate-production-env.sh .env
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env up -d
+./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```
 
-Nginx Proxy Manager **всегда внешний** — не включён в этот репозиторий.
+See [GHCR + Compose](./ghcr-compose.md) and [Nginx Proxy Manager](./nginx-proxy-manager.md).
 
-## Сервисы stack
+## Deployment methods
 
-| Контейнер | Назначение |
-|-----------|------------|
-| `ufw-postgres` | База данных |
-| `ufw-migrate` | Выполняет миграции БД один раз за deploy |
-| `ufw-app` | Веб-приложение (включает Naabu/Nmap при включённом сканировании портов) |
+| Method | When to use | Build on server? |
+|--------|-------------|------------------|
+| **GHCR + Compose** | Default production | No — `docker compose pull` |
+| **Local Compose build** | Air-gapped or fork development | Yes — `docker compose build` |
+| **Portainer stack** | GUI-driven ops | Optional — uses GHCR or build |
 
-## Рекомендуемый production-путь
+## Compose file layers
 
-1. Pull тега образа **`latest`** (или зафиксировать напр. `v0.6.1`) из GHCR
-2. Сгенерировать `.env` на сервере: `./scripts/generate-production-env.sh .env`
-3. Развернуть с Compose + `docker-compose.prod.yml` + `docker-compose.ghcr.yml`
-4. Настроить NPM Proxy Host → `ufw-app:8088`
-5. Открыть `APP_URL/setup`, создать admin
-6. Запустить `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
-7. Опционально: включить [внешнее сканирование портов](./port-scan.md) с `PORT_SCAN_ENABLED=true`
+| File | Purpose |
+|------|---------|
+| `docker-compose.yml` | Base: postgres, migrate, app |
+| `docker-compose.prod.yml` | Production: no published ports, NPM network, prod env |
+| `docker-compose.ghcr.yml` | Pull images from GHCR instead of local build |
 
-## Универсальные образы
+Combine with `-f` flags. Always pass `--env-file .env` in production.
 
-Установите `APP_URL` в `.env` при deploy. Один и тот же GHCR-образ работает для любого домена — без сборки образа на клиента.
+## Migration container
 
-## Дисциплина секретов
+On each `up`, **ufw-migrate** runs `prisma migrate deploy` once and exits. Do **not** run `prisma migrate` manually inside **ufw-app** — use migrate service:
 
-- Генерировать секреты только на сервере
-- Режим файла `600` для `.env`
-- Никогда не хранить секреты в git-репозитории stack Portainer или публичных тикетах
+```bash
+docker compose run --rm migrate
+```
 
-## Связанная документация
+v0.9.2 has **no new migration** beyond prior releases — upgrade is pull and up.
 
-- [Nginx Proxy Manager](./nginx-proxy-manager.md)
+## Optional features at deploy time
+
+| Feature | Enable |
+|---------|--------|
+| Port scan | `PORT_SCAN_ENABLED=true` — see [Внешнее сканирование портов](./port-scan.md) |
+| Private SSH targets | `SSH_ALLOWED_CIDRS=10.0.0.0/8,...` |
+
+Legacy remote container inventory was **removed in v0.9.0** — no env flag.
+
+## Version pinning
+
+| Strategy | Setting |
+|----------|---------|
+| Track latest release | `GHCR_IMAGE_TAG=latest` (default) |
+| Pin version | `GHCR_IMAGE_TAG=v0.9.2` |
+
+## Связанные документы
+
+- [GHCR + Compose](./ghcr-compose.md)
+- [Portainer](./portainer.md)
 - [Переменные окружения](../administration/environment-variables.md)
-- [Smoke-тесты](../operations/smoke-tests.md)
+- [Обновление и откат](../operations/upgrade-rollback.md)

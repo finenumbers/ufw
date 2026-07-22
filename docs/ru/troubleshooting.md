@@ -1,62 +1,71 @@
 # Устранение неполадок
 
-Симптом → вероятная причина → что делать.
+Симптом → вероятная причина → решение. Концепции — в связанных документах.
 
-## Аутентификация
-
-| Симптом | Причина | Решение |
-|---------|---------|---------|
-| Цикл редиректа при входе | `APP_URL` не совпадает с URL браузера | Установить `APP_URL` на точный публичный HTTPS URL; перезапустить app |
-| Вход работает локально, но не через домен | NPM или cookie secure flag | Force SSL в NPM; проверить, что схема `APP_URL` — `https://` |
-| `BETTER_AUTH_SECRET is required` | `.env` не загружен | Использовать `--env-file .env` в compose |
-| `APP_URL must use HTTPS in production` | Не-HTTPS `APP_URL` для реального домена | Использовать `https://your-domain`; `http://localhost` разрешён только для smoke/CI |
-| `BETTER_AUTH_SECRET must be at least 32 characters` | Секрет слишком короткий | Перегенерировать с `openssl rand -base64 32` |
-
-## Docker / NPM
+## Аутентификация и настройка
 
 | Симптом | Причина | Решение |
 |---------|---------|---------|
-| NPM 502 Bad Gateway | App не в сети NPM | Установить `NPM_NETWORK`; проверить, что `ufw-app` присоединяется к внешней сети |
-| Страница setup легко подвергается brute-force | Отсутствует `TRUST_PROXY` | Установить `TRUST_PROXY=1` за NPM |
-| `ufw-app` unhealthy | БД недоступна или секреты отсутствуют | Проверить `docker logs ufw-app`, health postgres |
-| `ufw-migrate` failed | Ошибка миграции | Прочитать `docker logs ufw-migrate`; восстановить backup при необходимости |
-| `pull access denied` | Приватный GHCR package | Видимость Public или `docker login ghcr.io` |
+| `/setup` перенаправляет на login | Пользователь уже существует | Используйте `/login` |
+| Ошибка входа после deploy | Неверный `APP_URL` или HTTP вместо HTTPS | Совпадение с доменом NPM; `APP_URL=https://...` |
+| Слишком жёсткий setup rate limit | Нет `TRUST_PROXY` за NPM | `TRUST_PROXY=1` |
 
-## SSH
+## SSH и создание сервера
 
 | Симптом | Причина | Решение |
 |---------|---------|---------|
-| Тест SSH не проходит | Неверные credentials, firewall, хост недоступен | Проверить identity, port; сервер разрешает IP Docker-хоста |
-| Ошибка валидации хоста | Приватный IP заблокирован | Установить `SSH_ALLOWED_CIDRS` для внутренних сетей |
-| Host key изменился | Переустановка сервера или MITM | Проверить fingerprint на сервере; обновить после подтверждения |
-| Непроверенный host key | Импортирован из config | Запустить тест SSH со страницы редактирования сервера |
+| Private IP отклонён | Проверка хоста | Публичный IP/hostname или `SSH_ALLOWED_CIDRS` |
+| Connection refused | Firewall, неверный port, host down | С хоста Docker: `ssh -p PORT user@host` |
+| Auth failed | Неверные credentials identity | Измените identity; введите секрет заново |
+| Предупреждение host key | Первое подключение или rebuild сервера | **Обновить статус** для нового fingerprint |
 
-## Правила / применение
-
-| Симптом | Причина | Решение |
-|---------|---------|---------|
-| Страница правил пуста / отключена | UFW не активен | Установить и включить UFW с dashboard |
-| Предпросмотр показывает неожиданные удаления | Drift черновика | Принудительная ресинхронизация с сервера |
-| Применение отклонено — remote изменился | UFW изменился между предпросмотром и подтверждением | Запустить **Apply preview** снова (не resync) |
-| Предупреждение частичного применения | Предыдущее применение прервано или sync failed | Resync; проверить удалённый `ufw status` вручную |
-| Зависший баннер операции | Устаревший RUNNING/PENDING после отключения | Обновить страницу |
-| Заблокирован SSH | Применено deny-правило | Console/out-of-band доступ; исправить UFW на сервере напрямую |
-
-## Данные
+## UFW и правила
 
 | Симптом | Причина | Решение |
 |---------|---------|---------|
-| Credentials invalid после restore | Неверный `APP_ENCRYPTION_KEY` | Восстановить соответствующий `.env` из backup |
-| Невозможно расшифровать identities | Ротация ключа без повторного ввода | Повторно ввести секреты или восстановить export JSON |
+| Apply отключён | Host key не проверен | **Обновить статус** |
+| Apply отклонён после preview | Remote UFW изменился | Снова **Apply preview** |
+| Частичный apply | Прерванные команды или sync | **Принудительная синхронизация с сервером**; история операций |
+| Preview показывает неожиданные delete | Draft drift | **Принудительная синхронизация с сервером** |
+| Правила возвращаются после delete на сервере | Stale sync (до v0.9.2) | Обновление до v0.9.2+; force resync |
+| Потерян SSH-доступ | Применено deny rule | Console; исправьте UFW out-of-band |
 
-## Health API
+## Баннер операций
 
-```bash
-docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r.json()).then(console.log)"
-```
+| Симптом | Причина | Решение |
+|---------|---------|---------|
+| Баннер ВЫПОЛНЯЕТСЯ бесконечно | Браузер отключился mid-op | Обновите страницу; дождитесь sweeper |
+| Таблица stale после sync | Конец операции не обнаружен (редко после v0.9.2) | Обновите браузер |
+| Idle API traffic | Старая версия poll forever | Обновление v0.9.2 — idle poll прекращается |
 
-Ожидается: `{"status":"ok","db":"ok","version":"…"}` (`revision` только вне production)
+## Сканирование портов
 
-## Всё ещё не работает?
+| Симптом | Причина | Решение |
+|---------|---------|---------|
+| Панель отсутствует | Feature disabled | `PORT_SCAN_ENABLED=true` |
+| Scan failed timeout | Большой диапазон / медленная сеть | Увеличьте `PORT_SCAN_*_TIMEOUT_MS`; проверьте egress |
+| Scan in progress error | Overlap guard | Дождитесь текущего scan |
+| Нет findings | Все порты filtered/closed | Ожидаемо; проверьте SUCCESS scan |
+| Progress lost on refresh (старое) | SSR загружал только SUCCESS scans | Обновление v0.9.2 |
 
-Напишите на **[apps@finenumbers.com](mailto:apps@finenumbers.com)** с version tag, санитизированными логами (без секретов) и шагами воспроизведения.
+## Docker и migrate
+
+| Симптом | Причина | Решение |
+|---------|---------|---------|
+| `EACCES` prisma в app | Неверный container | `docker compose run --rm migrate` |
+| Migrate fails on upgrade | DB permissions или старая версия | `docker compose logs migrate` |
+| App unhealthy | Плохие secrets или DB down | `docker compose logs app` |
+
+## Import/export конфигурации
+
+| Симптом | Причина | Решение |
+|---------|---------|---------|
+| Import blocked | Активные операции на сервере | Дождитесь idle queue |
+| Export rate limited | Слишком много попыток | Подождите 60 секунд |
+| Расшифрованные secrets повреждены после restore | Неверный `APP_ENCRYPTION_KEY` | Восстановите matching `.env` |
+
+## Связанные документы
+
+- [FAQ](./faq.md)
+- [Операции и конкурентность](./concepts/operations-and-concurrency.md)
+- [Переменные окружения](./administration/environment-variables.md)

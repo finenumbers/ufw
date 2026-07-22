@@ -1,73 +1,77 @@
 # Gestire i server
 
-Questa guida illustra il ciclo di vita del server: aggiunta, configurazione UFW, aggiornamento, modifica ed eliminazione.
+Questa guida copre il ciclo di vita del server: aggiungere, dashboard, aggiornare, installare UFW, modificare, eliminare e statistiche elenco.
 
 ## Prerequisiti
 
-Creare almeno un'[identità SSH](../concepts/ssh-identities.md) prima di aggiungere un server.
+Create almeno un'[identità SSH](../concepts/ssh-identities.md) prima di aggiungere un server.
 
 ## Aggiungere un server
 
-1. Barra laterale → **Server** o fare clic su **Aggiungi server**
-2. Compilare nome, host, porta e selezionare un'identità
-3. Fare clic su **Crea server** — la connessione SSH viene verificata automaticamente all'invio
-4. In caso di successo, si arriva alla dashboard del server
+1. Barra laterale → **Server** → **Aggiungi server**
+2. Compilate nome, host, porta, selezionate identità
+3. **Crea server** — SSH verificato automaticamente all'invio
+4. In caso di successo, aprite la dashboard del server
 
-Se la verifica fallisce, controllare raggiungibilità dell'host, credenziali, firewall che consenta SSH dall'host Docker e [validazione host](../concepts/servers-and-ssh.md).
+Se la verifica fallisce, controllate raggiungibilità host, credenziali, firewall che consente SSH dall'host Docker e [validazione host](../concepts/servers-and-ssh.md).
 
-## Dashboard del server
+## Dashboard server
 
-La dashboard carica lo **stato UFW in cache** dall'ultimo snapshot Postgres — nessun SSH al primo rendering. I pannelli port scan e Docker caricano anche gli ultimi risultati in cache da Postgres, se disponibili.
+La dashboard carica lo **stato UFW in cache** dall'ultimo snapshot Postgres — nessuna SSH al primo render.
 
-| Stato | Azioni disponibili |
-|-------|-------------------|
-| UFW non installato | **Aggiorna stato**, poi **Installa UFW** (dopo un aggiornamento che conferma l'assenza di UFW) |
-| Installato ma inattivo | Solo **Aggiorna stato** — UFW è già installato; usare l'aggiornamento per rilevare lo stato attivo/inattivo |
-| Installato e attivo | **Aggiungi regola**, **Salva regole**, **Aggiorna stato** |
+Con scansione porte abilitata, il pannello scan carica l'**ultima scansione di qualsiasi stato** da Postgres (incluse scansioni in corso da v0.9.2).
 
-Fare clic prima su **Aggiorna stato** per verificare SSH e rilevare se UFW è installato. **Installa UFW** resta disabilitato finché un aggiornamento riuscito non indica l'assenza di UFW.
+| Stato UFW | Azioni |
+|------------|---------|
+| Non installato | **Aggiorna stato**, poi **Installa UFW** (dopo che l'aggiornamento conferma l'assenza) |
+| Installato ma inattivo | **Aggiorna stato** — pulsante installa nascosto se UFW esiste ma è inattivo |
+| Installato e attivo | **Aggiungi regola**, **Salva regole**, **Aggiorna stato**, opzionale **Scan ports** |
 
-Finché non si esegue **Aggiorna stato**, il badge UFW può mostrare un'etichetta attivo/inattivo **in cache** dall'ultimo snapshot.
+**Aggiorna stato** esegue SSH live, aggiorna lo snapshot e sincronizza la tabella regole. **Installa UFW** resta disabilitato finché l'aggiornamento non conferma che UFW non è installato.
 
-Usare **Aggiorna stato** per recuperare l'ultimo stato UFW via SSH e sincronizzare la tabella delle regole. Se sono presenti **modifiche non salvate** alle regole, l'app chiede conferma prima di ricaricare dal server.
+Fino all'aggiornamento, il badge UFW può mostrare un'etichetta **cache** dall'ultimo snapshot.
 
-Se l'app **non ha ancora uno snapshot UFW** in Postgres (server nuovo, mai aggiornato, ecc.), viene eseguita una volta una sincronizzazione automatica in background per popolare la cache.
+### Avviso modifiche non salvate
 
-## Conteggio regole
+Se avete modifiche bozza non salvate, l'aggiornamento chiede conferma prima di ricaricare dal server.
 
-Nell'interfaccia compaiono due contatori distinti:
+### Sync iniziale automatica
 
-| Posizione | Etichetta | Significato |
-|-----------|-----------|-------------|
-| Scheda nell'**elenco server** | regole salvate | Numero di regole memorizzate nei metadati locali (`ruleRecord`) |
-| Badge **dashboard** sotto Aggiungi regola | in tabella | Numero di righe nella tabella regole (sessione bozza attiva) |
+Quando **nessuno snapshot UFW esiste** in Postgres (server nuovo, mai aggiornato), un'operazione sync in background viene eseguita una volta per popolare la cache. Osservate il banner operazioni.
 
-Questi numeri possono differire durante modifica, sincronizzazione o importazione. Il badge della dashboard corrisponde al totale della tabella regole.
+## Statistiche regole e porte
+
+| Posizione | Metrica | Significato |
+|----------|--------|---------|
+| Scheda **elenco server** | regole salvate | Conteggio locale `ruleRecord` |
+| Scheda **elenco server** | porte aperte | Ultimi risultati scan riusciti (se abilitato) |
+| Badge **dashboard** | in tabella | Conteggio righe tabella regole visibile |
+
+*In tabella* sulla dashboard può differire da *regole salvate* durante modifica o prima dell'apply.
 
 ## Modificare un server
 
-1. Aprire il server → **Modifica**
-2. Cambiare nome, host, porta o identità
-3. La connessione SSH viene verificata automaticamente all'invio se i parametri di connessione sono cambiati
+1. Pagina server → **Modifica**
+2. Modificate nome, host, porta o identità
+3. SSH verificato all'invio quando i parametri di connessione sono cambiati
 
-La pagina di modifica mostra l'impronta della chiave host memorizzata e un avviso **non verificata** se applicabile — non c'è un pulsante di test separato.
+La pagina modifica mostra l'impronta chiave host e avviso **non verificata** se applicabile.
 
 ## Eliminare un server
 
-**Zona pericolosa** nella pagina di modifica o nelle impostazioni del server:
+**Zona pericolosa** sulla pagina modifica:
 
-- Elimina tutte le regole locali, bozze e snapshot per questo server
-- **Non modifica** l'UFW remoto
+- Rimuove regole locali, bozze, snapshot, scansioni per questo server
+- **Non** modifica UFW remoto
 
-Confermare solo se si intende rimuovere i dati di gestione, non per cancellare le regole firewall remote.
+Confermate solo quando rimuovete dati di gestione, non quando cancellate regole firewall remote.
 
-## Strumenti elenco server
+## Strumenti configurazione elenco server
 
-Dalla pagina principale dei server è possibile:
+- **Salva configurazione** / **Carica configurazione** — export/import JSON v2 completo — vedi [Importazione ed esportazione configurazione](../concepts/import-export-config.md)
 
-- **Salva configurazione** / **Carica configurazione** — export/import JSON completo (vedere [Import ed export configurazione](../concepts/import-export-config.md))
-
-## Documentazione correlata
+## Documenti correlati
 
 - [Server e SSH](../concepts/servers-and-ssh.md)
 - [Modificare e applicare regole](./edit-and-apply-rules.md)
+- [Scansione porte](./port-scan.md)

@@ -1,52 +1,43 @@
 # Identités SSH
 
-Une **identité SSH** est un ensemble réutilisable d'identifiants (nom d'utilisateur + mot de passe ou clé privée) stocké **chiffré** dans la base de données de l'application. Les serveurs référencent des identités au lieu d'intégrer les secrets inline.
-
-## Pourquoi les identités existent
-
-| Sans identités | Avec identités |
-|----------------|----------------|
-| Identifiants dupliqués sur chaque serveur | Une identité partagée par plusieurs serveurs |
-| Rotation d'une clé = modifier chaque serveur | Mettre à jour l'identité une fois ; tous les serveurs liés utilisent les nouveaux identifiants |
-| Audit plus difficile | Correspondance claire : identité → serveurs |
+Une **identité SSH** stocke des identifiants de connexion réutilisables : nom d'utilisateur, méthode d'authentification et secrets chiffrés. Chaque **serveur** référence une identité.
 
 ## Méthodes d'authentification
 
-- **Mot de passe** — nom d'utilisateur et mot de passe chiffrés au repos
-- **Clé privée** — nom d'utilisateur et clé privée PEM chiffrés au repos
+| Méthode | Secret stocké | Usage typique |
+|---------|---------------|---------------|
+| **Mot de passe** | Mot de passe SSH | Lab simple ou hôtes legacy |
+| **Clé privée** | Clé privée PEM | Clés de production sans passphrase |
+| **Clé privée + passphrase** | Clé et passphrase | Clés privées chiffrées |
 
-Les secrets sont chiffrés avec **AES-256-GCM** via `APP_ENCRYPTION_KEY` depuis `.env`. Si vous perdez cette clé, les identifiants chiffrés ne peuvent pas être récupérés.
+Les secrets sont chiffrés au repos avec **AES-256-GCM** via `APP_ENCRYPTION_KEY`. Ils ne sont déchiffrés qu'en mémoire lors de l'ouverture d'une connexion SSH.
 
-## Créer une identité
+## Création et modification
 
-1. Ouvrir **Identités SSH** dans la barre latérale (`/identities`)
-2. Cliquer sur **Ajouter une identité**
-3. Saisir le nom, le nom d'utilisateur, la méthode d'authentification et le secret
-4. Enregistrer — les identifiants sont chiffrés avant le stockage
+1. Barre latérale → **Identités SSH**
+2. **Ajouter une identité** ou ouvrir une ligne existante → **Modifier**
+3. Champs obligatoires : nom d'affichage, nom d'utilisateur SSH, méthode d'auth, secret(s)
 
-## Modification et suppression
+Lors de la **modification**, laisser les champs mot de passe/clé vides conserve le secret existant inchangé.
 
-- **Modifier** — vous pouvez laisser les champs mot de passe/clé vides pour conserver les secrets existants
-- **Supprimer** — bloqué si un serveur utilise encore l'identité ; réassignez ou supprimez d'abord ces serveurs
+La validation rejette les noms vides et les combinaisons d'auth invalides avant l'enregistrement.
 
-## Relation avec les serveurs
+## Liaison aux serveurs
 
-```mermaid
-flowchart LR
-  Identity[SSH_Identity] --> ServerA[Server_A]
-  Identity --> ServerB[Server_B]
-  Identity --> ServerC[Server_C]
-```
+Lors de la création ou modification d'un serveur, sélectionnez une identité dans la liste déroulante. Changer l'identité d'un serveur déclenche une vérification SSH à l'enregistrement si les paramètres de connexion ont changé.
 
-Chaque enregistrement serveur stocke une référence à une identité. Changer l'identité d'un serveur exécute une **vérification SSH** automatiquement à l'enregistrement.
+## Suppression d'une identité
+
+La suppression est bloquée tant qu'un serveur référence encore l'identité. L'interface liste les serveurs liés. Réassignez ou supprimez d'abord ces serveurs.
 
 ## Notes de sécurité
 
-- Les secrets d'identité n'apparaissent jamais dans l'interface après l'enregistrement (seulement des placeholders en modification)
-- L'**export** de configuration inclut des secrets en clair — voir [Import et export de configuration](./import-export-config.md)
-- Sauvegardez `.env` avec `APP_ENCRYPTION_KEY` — voir [Sauvegarde et restauration](../operations/backup-restore.md)
+- Les secrets d'identité apparaissent dans l'**export de configuration** (JSON v2) après confirmation du mot de passe — traitez les exports comme hautement sensibles
+- Faire tourner `APP_ENCRYPTION_KEY` sans ressaisir les secrets rend le ciphertext existant illisible — planifiez la rotation des clés avec soin
+- Une identité peut être partagée par plusieurs serveurs (même utilisateur admin, même clé)
 
 ## Documentation associée
 
 - [Serveurs et SSH](./servers-and-ssh.md)
-- [Gérer les serveurs](../user-guide/manage-servers.md)
+- [Import et export de configuration](./import-export-config.md)
+- [Modèle de sécurité](../administration/security-model.md)

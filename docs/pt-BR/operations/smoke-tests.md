@@ -1,6 +1,6 @@
-# Testes smoke
+# Testes de fumaça
 
-Executar após deploy, atualização ou disaster recovery.
+Execute após deploy, atualização ou recuperação de desastre.
 
 ## Script automatizado
 
@@ -8,41 +8,38 @@ Executar após deploy, atualização ou disaster recovery.
 ./scripts/smoke-production.sh --env-file .env --ghcr --app-url https://ufw.example.com
 ```
 
-Flags:
-
 | Flag | Propósito |
 |------|-----------|
-| `--env-file .env` | Carregar variáveis de produção (requer `NPM_NETWORK` para compose prod) |
-| `--ghcr` | Incluir overlay `docker-compose.ghcr.yml` |
-| `--app-url URL` | Verificar também `/api/health` HTTPS público via curl |
+| `--env-file .env` | Carregar variáveis de produção |
+| `--ghcr` | Incluir `docker-compose.ghcr.yml` |
+| `--app-url URL` | Verificar HTTPS público `/api/health` |
 
-O script verifica:
+Verifica: Postgres healthy, migrate exited 0, app healthy, health JSON inclui versão.
 
-- Postgres healthy
-- `ufw-migrate` exited 0
-- `ufw-app` healthy
-- `/api/health` interno retorna `{"status":"ok","db":"ok","version":"…"}` (`revision` apenas fora de produção)
-
-## Verificação de saúde manual
+## Health check manual
 
 ```bash
 docker compose --env-file .env ps
 docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r.json()).then(console.log)"
 ```
 
-## Checklist do navegador
+## Checklist no navegador
 
 1. `APP_URL/login` — autenticar
-2. **Identidades SSH** — identidade existente ou criar uma
-3. **Servidores** — verificação SSH ao salvar bem-sucedida
-4. **Regras** — pré-visualização de aplicação executada (confirmação opcional)
-5. **Histórico de operações** — entradas recentes visíveis
+2. **Identidades SSH** — criar ou verificar identidade
+3. **Servidores** — criar/atualizar; verificação SSH ok
+4. **Atualizar status** — snapshot UFW criado
+5. **Regras** — apply preview executa; confirm opcional em servidor de teste
+6. **Histórico de operações** — entradas recentes visíveis
+7. **Sync inicial** — servidor novo sem snapshot recebe sync em segundo plano
+8. **Varredura de portas** (se habilitada) — iniciar scan; refresh mid-scan — painel retoma (v0.9.2)
+9. **Apply** — após confirmar, contagem de regras corresponde ao remoto
 
 ## Primeira instalação
 
-Use `APP_URL/setup` em vez de `/login` para criar a conta admin uma vez.
+Use `APP_URL/setup` uma vez para criar conta admin.
 
-## Documentação relacionada
+## Documentos relacionados
 
 - [Configuração inicial](../user-guide/initial-setup.md)
-- [GHCR + Compose](../deployment/ghcr-compose.md)
+- [Gerenciar servidores](../user-guide/manage-servers.md)

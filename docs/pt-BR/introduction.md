@@ -2,24 +2,27 @@
 
 **UFW Remote Manager** é uma aplicação web auto-hospedada para gerenciar **UFW (Uncomplicated Firewall)** em servidores Linux remotos via **SSH**. Você edita regras de firewall no navegador, visualiza alterações, confirma explicitamente e as aplica com segurança — com trilha de auditoria completa.
 
-Repositório: [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw)
+Repositório: [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw) · Versão atual: **v0.9.2**
 
 ## Para quem é?
 
-- **Administradores de sistemas** que gerenciam vários servidores Linux e preferem uma interface estruturada a sessões CLI `ufw` manuais
+- **Administradores de sistemas** que gerenciam vários servidores Linux e preferem uma interface estruturada a sessões CLI `ufw` repetidas
 - **Pequenas equipes** que precisam de um lugar central para rascunhos de firewall, pré-visualizações de aplicação e histórico de operações
-- **Self-hosters** que executam sua própria infraestrutura atrás de um proxy reverso (Nginx Proxy Manager recomendado)
+- **Self-hosters** que executam infraestrutura atrás de um proxy reverso (Nginx Proxy Manager recomendado)
 
 ## O que faz
 
-- Conectar a servidores Linux via SSH (senha ou chave privada)
-- Detectar, instalar e ativar UFW remotamente
-- Carregar regras UFW ao vivo, editá-las em uma tabela (com grupos, nomes, busca, reordenação)
-- Fluxo **rascunho → pré-visualização → confirmação → aplicação** com visualização de diff
-- Carregamento rápido do painel do servidor a partir de snapshots UFW em cache (SSH ao vivo apenas na atualização)
-- Importar regras de CSV, XLSX ou JSON; exportar/importar configuração completa de servidores
-- Criptografar credenciais SSH em repouso; fixar chaves de host SSH; auditar ações sensíveis
-- Interface multilíngue (inglês, alemão, francês, espanhol, italiano, português, russo)
+| Capacidade | Descrição |
+|------------|-------------|
+| **Gestão SSH** | Conexão com senha ou chave privada; fixação de chave host na primeira conexão |
+| **Ciclo de vida UFW** | Detectar, instalar e ativar UFW remotamente |
+| **Tabela de regras** | Editar regras com grupos, nomes, busca, filtros, reordenação por arrastar e soltar |
+| **Rascunho → aplicação** | Pré-visualizar diff, confirmar, executar comandos UFW via SSH |
+| **Painéis rápidos** | Páginas de servidor carregam de snapshots Postgres em cache; SSH ao vivo apenas na atualização |
+| **Importar / exportar** | Regras de CSV, XLSX, JSON; configuração completa de servidores + identidades como JSON v2 |
+| **Varredura de portas (opcional)** | Varredura TCP externa com mapeamento de cobertura UFW |
+| **Segurança** | Credenciais criptografadas em repouso; log de auditoria; senha step-up para exportação de configuração |
+| **Idiomas** | Interface em inglês, alemão, francês, espanhol, italiano, português (Brasil), russo |
 
 ## O que não faz
 
@@ -27,23 +30,34 @@ Repositório: [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw)
 |-------------|-----------|
 | Substitui seu proxy reverso | **Não.** Nginx Proxy Manager (ou similar) termina HTTPS separadamente |
 | Gerencia `iptables` bruto sem UFW | **Não.** Destinado a servidores onde UFW é o front-end do firewall |
+| Inventário / controle de containers Docker | **Não.** Removido na v0.9.0 — não faz parte do escopo atual |
 | SaaS multi-tenant | **Não.** Self-hosted de instância única; uma conta admin após a configuração |
 | Cluster de alta disponibilidade | **Não.** Projetado para **uma réplica do app** (limites de taxa em memória) |
-| Alterações automáticas de firewall sem confirmação | **Não.** Aplicar sempre requer confirmação explícita do usuário |
+| Alterações automáticas de firewall | **Não.** Aplicar sempre requer confirmação explícita do usuário |
+
+## Inventário e estatísticas
+
+Após a v0.9.0, **inventário** na lista de servidores significa:
+
+- **Regras salvas** — contagem de regras armazenadas nos metadados locais (`ruleRecord`)
+- **Portas abertas** — contagem da última varredura externa bem-sucedida (quando habilitada)
+
+Não há painel de containers Docker nem monitoramento remoto de containers.
 
 ## Requisitos
 
 ### Host de gestão (onde o Docker roda)
 
 - Docker e Docker Compose
-- Opcional: Portainer, instalação existente do Nginx Proxy Manager
-- Acesso de rede do container do app aos servidores de destino via SSH (porta 22 ou personalizada)
+- Opcional: Portainer, Nginx Proxy Manager existente
+- Rede do container do app aos servidores de destino via SSH (porta 22 ou personalizada)
+- Para varredura de portas: egress do host do app para portas TCP de destino (não apenas `:22`)
 
 ### Servidores de destino (hosts Linux gerenciados)
 
 - Linux com UFW disponível (`apt install ufw` ou equivalente)
-- Acesso SSH com privilégios suficientes para executar comandos `ufw`
-- Conectividade de saída do host de gestão para a porta SSH do servidor
+- Acesso SSH com privilégios para executar comandos `ufw`
+- Porta SSH acessível a partir do host de gestão
 
 ### Produção
 
@@ -53,5 +67,5 @@ Repositório: [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw)
 ## Próximos passos
 
 - [Início rápido](./quick-start.md) — executar localmente no Docker
-- [Arquitetura](./architecture.md) — como os componentes se encaixam
+- [Arquitetura](./architecture.md) — componentes, fluxo de dados, concorrência
 - [Visão geral de implantação](./deployment/overview.md) — produção atrás do NPM

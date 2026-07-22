@@ -1,36 +1,52 @@
 # UFW rules and states
 
-Rules are normalized into a unified row model with **core** fields (what UFW cares about) and **UI** fields (name, group, color metadata).
+The rules table shows a **unified view**: remote UFW rules, local metadata, and your draft edits. Row **colors** reflect how each row relates to the server and the database.
 
-## Rule core fields
+## Rule structure
 
-Typical columns include action (allow/deny/reject), direction, protocol, ports, source/destination addresses, and logging mode. The exact set matches UFW’s expressive rule syntax — see the rules table in the UI.
+Each row has:
 
-## Sync states (row colors)
+| Layer | Fields |
+|-------|--------|
+| **Core** | action, direction, protocol, addresses, ports, interface, app profile, log mode, comment, IPv6 |
+| **UI metadata** | group, name, notes (stored locally, not sent to UFW unless in comment) |
+| **Origin** | sync state driving row color |
 
-Each row has a **state** that shows how local draft data relates to the last server snapshot:
+Fingerprints identify rules across remote reloads and local edits.
 
-| State | Meaning |
-|-------|---------|
-| **MATCHED** | Draft matches what UFW reported on the server |
-| **REMOTE_ONLY** | Exists on server snapshot but not in your local draft |
-| **LOCAL_ONLY** | In your draft but not on the server (will be added on apply) |
-| **DRAFT_ONLY** | Local edit not yet applied; differs from matched baseline |
+## Origin states
 
-Colors help you spot drift before applying. After **Force resync from server**, local draft realigns to remote state.
+| State | Color meaning | Typical situation |
+|-------|---------------|-------------------|
+| **MATCHED** | Remote and local metadata agree | Stable synced rule |
+| **REMOTE_ONLY** | On server, not in local metadata | New remote rule after refresh |
+| **LOCAL_ONLY** | In local DB, not on server | Pending add or removed remotely |
+| **DRAFT_ONLY** | Draft edit not yet applied | New row or changed core fields |
+| **CONFLICT** | Same fingerprint, different core fields | Drift — review before apply |
+| **DELETED** | Marked deleted in draft | Will be removed on apply |
 
-## Fingerprints
+Colors help spot drift **before** applying. After **Force resync from server**, the draft realigns to the remote snapshot.
 
-Each rule has a fingerprint derived from core fields. Used to match rows across snapshots and detect reorder/delete operations during apply planning.
+## Two rule counts
 
-## Grouping and ordering
+The UI shows different counts in different places:
 
-- **Groups** — organize rules visually; group name is UI metadata
-- **Order** — UFW rule order matters; reordering may require delete-and-recreate on the server during apply
+| Location | Label | Counts |
+|----------|-------|--------|
+| **Servers list** card | saved rules | Rows in `ruleRecord` (local metadata) |
+| **Dashboard** badge | in table | Rows in active draft session table |
 
-## Import formats
+These differ while you edit, import, or sync. The dashboard badge matches the visible table length.
 
-Rules can be imported from **CSV**, **XLSX**, or **JSON** via the rules toolbar. Imported rows become draft entries — still require apply to reach the server.
+## Order matters
+
+UFW evaluates rules in order. The table supports drag-and-drop reorder. Apply may emit order-resync operations when remote numbering diverges from your draft order.
+
+## Remote vs local metadata
+
+- **Remote core fields** come from parsed `ufw status numbered` output
+- **Group, name, notes** exist only in UFW Remote Manager unless copied into UFW rule comments
+- Apply writes core fields to the server; UI metadata stays in Postgres
 
 ## Related docs
 

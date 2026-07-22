@@ -1,48 +1,45 @@
 # Smoke-тесты
 
-Запускать после deploy, обновления или disaster recovery.
+Run after deploy, upgrade, or disaster recovery.
 
-## Автоматизированный скрипт
+## Automated script
 
 ```bash
 ./scripts/smoke-production.sh --env-file .env --ghcr --app-url https://ufw.example.com
 ```
 
-Флаги:
+| Flag | Purpose |
+|------|---------|
+| `--env-file .env` | Load production variables |
+| `--ghcr` | Include `docker-compose.ghcr.yml` |
+| `--app-url URL` | Check public HTTPS `/api/health` |
 
-| Флаг | Назначение |
-|------|------------|
-| `--env-file .env` | Загрузить production variables (требует `NPM_NETWORK` для prod compose) |
-| `--ghcr` | Включить overlay `docker-compose.ghcr.yml` |
-| `--app-url URL` | Также проверить публичный HTTPS `/api/health` через curl |
+Verifies: Postgres healthy, migrate exited 0, app healthy, health JSON includes version.
 
-Скрипт проверяет:
-
-- Postgres healthy
-- `ufw-migrate` exited 0
-- `ufw-app` healthy
-- Внутренний `/api/health` возвращает `{"status":"ok","db":"ok","version":"…"}` (`revision` только вне production)
-
-## Ручная проверка health
+## Manual health check
 
 ```bash
 docker compose --env-file .env ps
 docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r.json()).then(console.log)"
 ```
 
-## Checklist браузера
+## Browser checklist
 
-1. `APP_URL/login` — аутентификация
-2. **SSH Identities** — идентичность существует или создайте
-3. **Servers** — тест SSH успешен
-4. **Rules** — предпросмотр применения выполняется (подтверждение опционально)
-5. **Operations history** — недавние записи видны
+1. `APP_URL/login` — authenticate
+2. **SSH-идентификации** — create or verify identity
+3. **Серверы** — create/update; SSH verification succeeds
+4. **Обновить статус** — UFW snapshot created
+5. **Rules** — apply preview runs; optional confirm on test server
+6. **История операций** — recent entries visible
+7. **Initial sync** — new server without snapshot gets background sync
+8. **Port scan** (if enabled) — start scan; refresh page mid-scan — panel resumes (v0.9.2)
+9. **Apply** — after confirm, rule count matches remote
 
-## Первая установка
+## First install
 
-Используйте `APP_URL/setup` вместо `/login` для однократного создания admin-аккаунта.
+Use `APP_URL/setup` once to create admin account.
 
-## Связанная документация
+## Связанные документы
 
 - [Первоначальная настройка](../user-guide/initial-setup.md)
-- [GHCR + Compose](../deployment/ghcr-compose.md)
+- [Управление серверами](../user-guide/manage-servers.md)

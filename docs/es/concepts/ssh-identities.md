@@ -1,52 +1,43 @@
 # Identidades SSH
 
-Una **identidad SSH** es un conjunto reutilizable de credenciales (nombre de usuario + contraseña o clave privada) almacenado **cifrado** en la base de datos de la aplicación. Los servidores referencian identidades en lugar de incrustar secretos directamente.
-
-## Por qué existen las identidades
-
-| Sin identidades | Con identidades |
-|--------------------|-----------------|
-| Credenciales duplicadas en cada servidor | Una identidad compartida por muchos servidores |
-| Rotar una clave implica editar cada servidor | Actualice la identidad una vez; todos los servidores vinculados usan las nuevas credenciales |
-| Más difícil de auditar | Mapeo claro: identidad → servidores |
+Una **identidad SSH** almacena credenciales de conexión reutilizables: nombre de usuario, método de autenticación y secretos cifrados. Cada **servidor** referencia una identidad.
 
 ## Métodos de autenticación
 
-- **Contraseña** — nombre de usuario y contraseña cifrados en reposo
-- **Clave privada** — nombre de usuario y clave privada PEM cifrados en reposo
+| Método | Secreto almacenado | Uso típico |
+|--------|-------------------|------------|
+| **Contraseña** | Contraseña SSH | Laboratorio simple o hosts heredados |
+| **Clave privada** | Clave privada PEM | Claves de producción sin frase de contraseña |
+| **Clave privada + frase de contraseña** | Clave y frase de contraseña | Claves privadas cifradas |
 
-Los secretos se cifran con **AES-256-GCM** usando `APP_ENCRYPTION_KEY` de `.env`. Si pierde esta clave, las credenciales cifradas no se pueden recuperar.
+Los secretos se cifran en reposo con **AES-256-GCM** usando `APP_ENCRYPTION_KEY`. Solo se descifran en memoria al abrir una conexión SSH.
 
-## Crear una identidad
+## Crear y editar
 
-1. Abra **Identidades SSH** en la barra lateral (`/identities`)
-2. Haga clic en **Añadir identidad**
-3. Introduzca nombre, nombre de usuario, método de autenticación y secreto
-4. Guarde — las credenciales se cifran antes del almacenamiento
+1. Barra lateral → **Identidades SSH**
+2. **Añadir identidad** o abra una fila existente → **Editar**
+3. Campos obligatorios: nombre visible, usuario SSH, método de auth, secreto(s)
 
-## Editar y eliminar
+Al **editar**, dejar campos de contraseña/clave vacíos conserva el secreto existente sin cambios.
 
-- **Editar** — puede dejar los campos de contraseña/clave vacíos para conservar los secretos existentes
-- **Eliminar** — bloqueado si algún servidor sigue usando la identidad; reasigne o elimine esos servidores primero
+La validación rechaza nombres vacíos y combinaciones de auth inválidas antes de guardar.
 
-## Relación con los servidores
+## Vinculación a servidores
 
-```mermaid
-flowchart LR
-  Identity[SSH_Identity] --> ServerA[Server_A]
-  Identity --> ServerB[Server_B]
-  Identity --> ServerC[Server_C]
-```
+Al crear o editar un servidor, seleccione una identidad del desplegable. Cambiar la identidad de un servidor activa verificación SSH al guardar si cambiaron parámetros de conexión.
 
-Cada registro de servidor almacena una referencia a una identidad. Cambiar la identidad de un servidor requiere una **prueba SSH** exitosa antes de guardar.
+## Eliminar una identidad
+
+La eliminación se bloquea mientras algún servidor siga referenciando la identidad. La interfaz lista servidores vinculados. Reasigne o elimine esos servidores primero.
 
 ## Notas de seguridad
 
-- Los secretos de identidad nunca aparecen en la interfaz tras guardar (solo marcadores de posición al editar)
-- La **exportación** de configuración incluye secretos en texto plano — consulte [Importar y exportar configuración](./import-export-config.md)
-- Haga copia de seguridad de `.env` con `APP_ENCRYPTION_KEY` — consulte [Copia de seguridad y restauración](../operations/backup-restore.md)
+- Los secretos de identidad aparecen en la **exportación de configuración** (JSON v2) tras confirmación de contraseña — trate las exportaciones como altamente sensibles
+- Rotar `APP_ENCRYPTION_KEY` sin volver a introducir secretos hace ilegible el texto cifrado existente — planifique la rotación de claves con cuidado
+- Una identidad puede compartirse entre muchos servidores (mismo usuario admin, misma clave)
 
-## Documentación relacionada
+## Documentos relacionados
 
 - [Servidores y SSH](./servers-and-ssh.md)
-- [Administrar servidores](../user-guide/manage-servers.md)
+- [Importar y exportar configuración](./import-export-config.md)
+- [Modelo de seguridad](../administration/security-model.md)

@@ -1,26 +1,20 @@
 # О Finenumbers
 
-**UFW Remote Manager** разработан **Finenumbers** — Оператор телефонной связи для бизнеса Finenumbers.
+**UFW Remote Manager** разработан [Finenumbers](https://finenumbers.com).
 
-| | |
-|---|---|
-| **Сайт** | [finenumbers.com](https://finenumbers.com) |
-| **Контакт** | [apps@finenumbers.com](mailto:apps@finenumbers.com) |
-| **Исходный код** | [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw) |
-| **Лицензия** | MIT — см. [LICENSE](../../LICENSE) |
+Finenumbers создаёт инструменты бизнес-коммуникаций. UFW Remote Manager — open-source self-hosted утилита для команд, управляющих межсетевыми экранами Linux-серверов по SSH.
 
-## О продукте
+## Контакты
 
-Finenumbers создаёт операционные инструменты для команд инфраструктуры и коммуникаций. UFW Remote Manager решает практическую задачу: централизованное, аудируемое управление UFW на Linux-серверах без входа на каждый хост при каждом изменении правила.
+- Email: [apps@finenumbers.com](mailto:apps@finenumbers.com)
+- Репозиторий: [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw)
+- Документация: [docs/README.md](../../README.md)
 
-Приложение **self-hosted** — ваши данные, SSH-учётные данные и правила межсетевого экрана остаются на инфраструктуре под вашим контролем.
+## Лицензия
 
-## Обратная связь и поддержка
+MIT — см. [LICENSE](https://github.com/finenumbers/ufw/blob/main/LICENSE) в репозитории.
 
-- **Вопросы по продукту:** [apps@finenumbers.com](mailto:apps@finenumbers.com)
-- **Проблемы безопасности:** [SECURITY.md](../../SECURITY.md) (ответственное раскрытие)
-- **Документация:** [Центр документации](../../README.md)
+## Связанные документы
 
-## Языки документации
-
-Полная документация доступна на английском, немецком, французском, испанском, итальянском, португальском (Бразилия) и русском — см. [языковой центр](../../README.md).
+- [Введение](./introduction.md)
+- [Центр документации](../../README.md)

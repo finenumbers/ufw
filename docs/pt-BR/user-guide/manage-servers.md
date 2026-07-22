@@ -1,6 +1,6 @@
 # Gerenciar servidores
 
-Este guia percorre o ciclo de vida do servidor: adicionar, configurar UFW, atualizar, editar e excluir.
+Este guia cobre o ciclo de vida do servidor: adicionar, painel, refresh, instalar UFW, editar, excluir e estatísticas da lista.
 
 ## Pré-requisitos
 
@@ -8,66 +8,70 @@ Crie pelo menos uma [identidade SSH](../concepts/ssh-identities.md) antes de adi
 
 ## Adicionar um servidor
 
-1. Barra lateral → **Servidores** ou clique em **Adicionar servidor**
-2. Preencha nome, host, porta e selecione uma identidade
-3. Clique em **Criar servidor** — a conexão SSH é verificada automaticamente ao enviar
-4. Em caso de sucesso, você chega ao painel do servidor
+1. Barra lateral → **Servidores** → **Adicionar servidor**
+2. Preencha nome, host, porta, selecione identidade
+3. **Criar servidor** — SSH verificado automaticamente no envio
+4. Em sucesso, abra o painel do servidor
 
-Se a verificação falhar, verifique acessibilidade do host, credenciais, firewall permitindo SSH do host Docker e [validação de host](../concepts/servers-and-ssh.md).
+Se a verificação falhar, verifique reachability, credenciais, firewall permitindo SSH do host Docker e [validação de host](../concepts/servers-and-ssh.md).
 
 ## Painel do servidor
 
-O painel carrega o **estado UFW em cache** do último snapshot Postgres — sem SSH na primeira renderização. Os painéis de port scan e Docker também carregam os últimos resultados em cache do Postgres, quando disponíveis.
+O painel carrega **estado UFW em cache** do último snapshot Postgres — sem SSH na primeira renderização.
 
-| Status | Ações disponíveis |
-|--------|-------------------|
-| UFW não instalado | **Atualizar status**, depois **Instalar UFW** (após atualização que confirma ausência de UFW) |
-| Instalado mas inativo | Apenas **Atualizar status** — UFW já está instalado; use a atualização para detectar estado ativo/inativo |
-| Instalado e ativo | **Adicionar regra**, **Salvar regras**, **Atualizar status** |
+Quando varredura de portas está habilitada, o painel de scan carrega o **último scan de qualquer status** do Postgres (incluindo scans em andamento desde v0.9.2).
 
-Clique primeiro em **Atualizar status** para verificar SSH e detectar se o UFW está instalado. **Instalar UFW** permanece desabilitado até uma atualização bem-sucedida indicar ausência de UFW.
+| Status UFW | Ações |
+|------------|-------|
+| Não instalado | **Atualizar status**, depois **Instalar UFW** (após refresh confirmar ausência) |
+| Instalado mas inativo | **Atualizar status** — botão install oculto se UFW existe mas inativo |
+| Instalado e ativo | **Adicionar regra**, **Salvar regras**, **Atualizar status**, **Scan ports** opcional |
 
-Até executar **Atualizar status**, o badge UFW pode mostrar um rótulo ativo/inativo **em cache** do último snapshot.
+**Atualizar status** executa SSH ao vivo, atualiza snapshot e sincroniza a tabela de regras. **Instalar UFW** permanece desabilitado até refresh confirmar que UFW não está instalado.
 
-Use **Atualizar status** para obter o último estado UFW via SSH e sincronizar a tabela de regras. Se houver **edições não salvas** nas regras, o app pede confirmação antes de recarregar do servidor.
+Até refresh, o badge UFW pode mostrar rótulo **cache** do último snapshot.
 
-Se o app **ainda não tiver snapshot UFW** no Postgres (servidor novo, nunca atualizado, etc.), uma sincronização automática em segundo plano é executada uma vez para preencher o cache.
+### Aviso de edições não salvas
 
-## Contagem de regras
+Se houver alterações de rascunho não salvas, refresh pede confirmação antes de recarregar do servidor.
 
-Dois contadores diferentes aparecem na interface:
+### Sync inicial automático
 
-| Local | Rótulo | Significado |
-|-------|--------|-------------|
-| Cartão na **lista de servidores** | regras salvas | Contagem de regras armazenadas nos metadados locais (`ruleRecord`) |
-| Badge do **painel** abaixo de Adicionar regra | na tabela | Contagem de linhas na tabela de regras (sessão de rascunho ativa) |
+Quando **não existe snapshot UFW** no Postgres (servidor novo, nunca atualizado), uma operação de sync em segundo plano executa uma vez para popular o cache. Observe o banner de operações.
 
-Esses números podem diferir durante edição, sincronização ou importação. O badge do painel corresponde ao total da tabela de regras.
+## Estatísticas de regras e portas
+
+| Local | Métrica | Significado |
+|-------|---------|-------------|
+| Card da **lista de servidores** | regras salvas | Contagem local `ruleRecord` |
+| Card da **lista de servidores** | portas abertas | Findings do último scan bem-sucedido (quando habilitado) |
+| Badge do **painel** | na tabela | Contagem de linhas visíveis na tabela de regras |
+
+*Na tabela* no painel pode diferir de *regras salvas* durante edição ou antes de apply.
 
 ## Editar um servidor
 
-1. Abrir servidor → **Editar**
-2. Alterar nome, host, porta ou identidade
-3. A conexão SSH é verificada automaticamente ao enviar se os parâmetros de conexão mudaram
+1. Página do servidor → **Editar servidor**
+2. Altere nome, host, porta ou identidade
+3. SSH verificado no envio quando parâmetros de conexão mudaram
 
-A página de edição mostra a impressão digital da chave host armazenada e um aviso **não verificada** quando aplicável — não há botão de teste separado.
+A página de edição mostra impressão digital da chave host e aviso **não verificada** quando aplicável.
 
 ## Excluir um servidor
 
-**Zona de perigo** na página de edição ou configurações do servidor:
+**Zona de perigo** na página de edição:
 
-- Exclui todas as regras locais, rascunhos e snapshots deste servidor
-- **Não modifica** o UFW remoto
+- Remove regras locais, rascunhos, snapshots, scans deste servidor
+- **Não** altera UFW remoto
 
-Confirme apenas se pretende remover dados de gestão, não para limpar regras de firewall remotas.
+Confirme apenas ao remover dados de gestão, não ao limpar regras de firewall remotas.
 
-## Ferramentas da lista de servidores
+## Ferramentas de configuração na lista de servidores
 
-Na página principal de servidores você pode:
+- **Salvar configuração** / **Carregar configuração** — exportação/importação JSON v2 completa — veja [Importar e exportar configuração](../concepts/import-export-config.md)
 
-- **Salvar configuração** / **Carregar configuração** — exportação/importação JSON completa (veja [Importar e exportar configuração](../concepts/import-export-config.md))
-
-## Documentação relacionada
+## Documentos relacionados
 
 - [Servidores e SSH](../concepts/servers-and-ssh.md)
 - [Editar e aplicar regras](./edit-and-apply-rules.md)
+- [Varredura de portas](./port-scan.md)

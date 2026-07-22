@@ -1,49 +1,66 @@
 # Bereitstellungsübersicht
 
-Wählen Sie, wie UFW Remote Manager in der Produktion betrieben wird. Alle Wege setzen **HTTPS** über einen bestehenden Reverse Proxy voraus (Nginx Proxy Manager empfohlen).
+Wählen Sie, wie UFW Remote Manager in Produktion läuft. Alle Pfade nutzen Docker; PostgreSQL ist erforderlich.
 
-![Bereitstellungsablauf](../../assets/deploy-flow.svg)
+## Empfohlener Pfad
 
-## Vergleich
+**GHCR vorgefertigte Images + Compose-Overlays + Nginx Proxy Manager**
 
-| Methode | Am besten für | Images bauen? |
-|---------|---------------|---------------|
-| [GHCR + Compose](./ghcr-compose.md) | Die meisten Self-Hoster | Nein — von GitHub Packages abrufen |
-| [Portainer](./portainer.md) | GUI-Stack-Verwaltung | Nein — GHCR-Images abrufen |
-| Lokaler Compose-Build | Air-gapped oder Fork-Entwicklung | Ja — `docker compose build` |
+```bash
+./scripts/generate-production-env.sh .env
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env up -d
+./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```
 
-Nginx Proxy Manager ist **immer extern** — nicht in diesem Repository enthalten.
+Siehe [GHCR + Compose](./ghcr-compose.md) und [Nginx Proxy Manager](./nginx-proxy-manager.md).
 
-## Stack-Dienste
+## Bereitstellungsmethoden
 
-| Container | Zweck |
-|-----------|-------|
-| `ufw-postgres` | Datenbank |
-| `ufw-migrate` | Führt DB-Migrationen einmal pro Deploy aus |
-| `ufw-app` | Webanwendung (enthält Naabu/Nmap bei aktiviertem Port-Scan) |
+| Methode | Wann verwenden | Build auf Server? |
+|---------|----------------|-------------------|
+| **GHCR + Compose** | Standard-Produktion | Nein — `docker compose pull` |
+| **Lokaler Compose-Build** | Air-gapped oder Fork-Entwicklung | Ja — `docker compose build` |
+| **Portainer-Stack** | GUI-gesteuerte Ops | Optional — GHCR oder Build |
 
-## Empfohlener Produktionsweg
+## Compose-Datei-Schichten
 
-1. Image-Tag **`latest`** abrufen (oder z. B. `v0.6.1` pinnen) von GHCR
-2. `.env` auf dem Server generieren: `./scripts/generate-production-env.sh .env`
-3. Mit Compose + `docker-compose.prod.yml` + `docker-compose.ghcr.yml` bereitstellen
-4. NPM Proxy Host konfigurieren → `ufw-app:8088`
-5. `APP_URL/setup` öffnen, Admin anlegen
-6. `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"` ausführen
-7. Optional: [externen Port-Scan](./port-scan.md) mit `PORT_SCAN_ENABLED=true` aktivieren
+| Datei | Zweck |
+|-------|-------|
+| `docker-compose.yml` | Basis: postgres, migrate, app |
+| `docker-compose.prod.yml` | Produktion: keine veröffentlichten Ports, NPM-Netzwerk, Prod-Env |
+| `docker-compose.ghcr.yml` | Images von GHCR ziehen statt lokalem Build |
 
-## Universelle Images
+Mit `-f`-Flags kombinieren. In Produktion immer `--env-file .env` übergeben.
 
-`APP_URL` in `.env` zum Deploy-Zeitpunkt setzen. Dasselbe GHCR-Image funktioniert für jede Domain — kein Image-Build pro Kunde.
+## Migrate-Container
 
-## Geheimnis-Disziplin
+Bei jedem `up` führt **ufw-migrate** `prisma migrate deploy` einmal aus und beendet sich. **`prisma migrate` nicht manuell in ufw-app** ausführen — Migrate-Service verwenden:
 
-- Geheimnisse nur auf dem Server generieren
-- Dateimodus `600` für `.env`
-- Geheimnisse niemals in Portainer-Stack-Git-Repo oder öffentlichen Tickets speichern
+```bash
+docker compose run --rm migrate
+```
+
+v0.9.2 hat **keine neue Migration** über vorherige Releases hinaus — Upgrade ist pull und up.
+
+## Optionale Features beim Deploy
+
+| Feature | Aktivieren |
+|---------|------------|
+| Portscan | `PORT_SCAN_ENABLED=true` — siehe [Externer Portscan](./port-scan.md) |
+| Private SSH-Ziele | `SSH_ALLOWED_CIDRS=10.0.0.0/8,...` |
+
+Docker-Container-Monitor wurde **in v0.9.0 entfernt** — kein Env-Flag.
+
+## Versions-Pinning
+
+| Strategie | Einstellung |
+|-----------|-------------|
+| Neuestes Release verfolgen | `GHCR_IMAGE_TAG=latest` (Standard) |
+| Version pinnen | `GHCR_IMAGE_TAG=v0.9.2` |
 
 ## Verwandte Dokumentation
 
-- [Nginx Proxy Manager](./nginx-proxy-manager.md)
+- [GHCR + Compose](./ghcr-compose.md)
+- [Portainer](./portainer.md)
 - [Umgebungsvariablen](../administration/environment-variables.md)
-- [Smoke-Tests](../operations/smoke-tests.md)
+- [Upgrade und Rollback](../operations/upgrade-rollback.md)

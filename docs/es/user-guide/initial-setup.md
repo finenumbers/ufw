@@ -1,44 +1,47 @@
 # Configuración inicial
 
-En el primer arranque, UFW Remote Manager **no tiene usuarios**. Debe crear la cuenta de administrador una sola vez.
+El primer arranque crea la única cuenta de administrador. Después, el registro queda desactivado permanentemente.
 
 ## Página de configuración (`/setup`)
 
-1. Abra la URL de la aplicación (p. ej. `http://localhost:8088` o su `APP_URL`)
-2. Se le redirige automáticamente a `/setup`
-3. Introduzca nombre, correo electrónico, contraseña y confirmación de contraseña
-4. Haga clic en **Completar configuración**
+Disponible cuando **no existe ningún usuario** en la base de datos:
 
-Tras el éxito, queda con sesión iniciada y se le redirige a la lista de servidores.
+1. Abra `http://localhost:8088/setup` (o su `APP_URL/setup`)
+2. Introduzca correo y contraseña
+3. Envíe — quedará autenticado y redirigido a la app
 
-## Política de un solo administrador
+Si ya existe un usuario, `/setup` redirige a `/login`.
 
-El registro queda **deshabilitado** tras existir la primera cuenta. No hay alta autogestionada para usuarios adicionales en la versión actual.
+## Inicio de sesión (`/login`)
 
-Para añadir otra persona, compartirían las credenciales de administrador (no recomendado) o operarían con una cuenta de administrador por instancia.
+Use el correo y contraseña de la configuración. Las sesiones las gestiona Better Auth (cookies HTTP-only).
 
-## Sesión e inicio de sesión
+Cerrar sesión: barra lateral → **Cerrar sesión**.
 
-- Las sesiones duran **7 días** con renovación deslizante
-- Cierre sesión mediante **Cerrar sesión** en la barra lateral
-- Página de inicio de sesión: `/login`
+## Modelo de administrador único
 
-## Primer arranque en producción
+No hay interfaz de gestión de usuarios. Una cuenta por instalación. Para acceso compartido, use un gestor de contraseñas de equipo y procedimientos operativos — no usuarios separados de la app.
 
-Tras desplegar detrás de HTTPS:
+## Límite de tasa de setup
 
-1. Configure NPM Proxy Host → `ufw-app:8088`
-2. Establezca `APP_URL=https://your-domain.example` en `.env`
-3. Abra `https://your-domain.example/setup`
-4. Complete la configuración antes de exponer la URL ampliamente
+Los intentos de setup están limitados a **5 por minuto por IP cliente** para ralentizar fuerza bruta en instalaciones nuevas.
 
-Ejecute prueba de humo tras la configuración:
+Cuando la app corre detrás de Nginx Proxy Manager en producción, configure:
 
-```bash
-./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```env
+TRUST_PROXY=1
 ```
 
-## Documentación relacionada
+Sin ello, los límites de tasa usan un bucket compartido único y pueden ser menos precisos detrás de un proxy.
+
+## Primera visita en producción
+
+1. Despliegue el stack — consulte [Resumen de despliegue](../deployment/overview.md)
+2. Abra `https://su-dominio/setup` (debe coincidir con `APP_URL`)
+3. Complete la configuración antes de exponer la URL ampliamente
+4. Ejecute [pruebas de humo](../operations/smoke-tests.md)
+
+## Documentos relacionados
 
 - [Inicio rápido](../quick-start.md)
 - [Modelo de seguridad](../administration/security-model.md)

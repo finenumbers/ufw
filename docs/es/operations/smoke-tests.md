@@ -1,6 +1,6 @@
-# Pruebas smoke
+# Pruebas de humo
 
-Ejecutar tras despliegue, actualización o recuperación ante desastres.
+Ejecute tras despliegue, actualización o recuperación ante desastres.
 
 ## Script automatizado
 
@@ -8,41 +8,38 @@ Ejecutar tras despliegue, actualización o recuperación ante desastres.
 ./scripts/smoke-production.sh --env-file .env --ghcr --app-url https://ufw.example.com
 ```
 
-Flags:
-
 | Flag | Propósito |
 |------|-----------|
-| `--env-file .env` | Cargar variables de producción (requiere `NPM_NETWORK` para compose prod) |
-| `--ghcr` | Incluir overlay `docker-compose.ghcr.yml` |
-| `--app-url URL` | Comprobar también `/api/health` HTTPS público vía curl |
+| `--env-file .env` | Cargar variables de producción |
+| `--ghcr` | Incluir `docker-compose.ghcr.yml` |
+| `--app-url URL` | Comprobar HTTPS público `/api/health` |
 
-El script verifica:
+Verifica: Postgres saludable, migrate salió 0, app saludable, JSON health incluye versión.
 
-- Postgres healthy
-- `ufw-migrate` exited 0
-- `ufw-app` healthy
-- `/api/health` interno devuelve `{"status":"ok","db":"ok","version":"…"}` (`revision` solo fuera de producción)
-
-## Comprobación de salud manual
+## Comprobación manual de salud
 
 ```bash
 docker compose --env-file .env ps
 docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r.json()).then(console.log)"
 ```
 
-## Checklist del navegador
+## Lista de comprobación del navegador
 
 1. `APP_URL/login` — autenticarse
-2. **Identidades SSH** — identidad existente o crear una
-3. **Servidores** — verificación SSH al guardar exitosa
-4. **Reglas** — vista previa de aplicación se ejecuta (confirmación opcional)
-5. **Historial de operaciones** — entradas recientes visibles
+2. **Identidades SSH** — crear o verificar identidad
+3. **Servidores** — crear/actualizar; verificación SSH exitosa
+4. **Actualizar estado** — snapshot UFW creado
+5. **Reglas** — vista previa de aplicación ejecuta; confirmación opcional en servidor de prueba
+6. **Historial de operaciones** — entradas recientes visibles
+7. **Sincronización inicial** — servidor nuevo sin snapshot recibe sync en segundo plano
+8. **Escaneo de puertos** (si activado) — iniciar escaneo; actualizar página a mitad — panel reanuda (v0.9.2)
+9. **Aplicar** — tras confirmar, recuento de reglas coincide con remoto
 
 ## Primera instalación
 
-Use `APP_URL/setup` en lugar de `/login` para crear la cuenta admin una vez.
+Use `APP_URL/setup` una vez para crear cuenta de administrador.
 
-## Documentación relacionada
+## Documentos relacionados
 
 - [Configuración inicial](../user-guide/initial-setup.md)
-- [GHCR + Compose](../deployment/ghcr-compose.md)
+- [Administrar servidores](../user-guide/manage-servers.md)

@@ -1,73 +1,77 @@
 # Server verwalten
 
-Dieser Leitfaden führt durch den Server-Lebenszyklus: hinzufügen, UFW konfigurieren, aktualisieren, bearbeiten und löschen.
+Dieser Leitfaden behandelt den Server-Lebenszyklus: hinzufügen, Dashboard, aktualisieren, UFW installieren, bearbeiten, löschen und Listenstatistiken.
 
 ## Voraussetzungen
 
-Legen Sie mindestens eine [SSH-Identität](../concepts/ssh-identities.md) an, bevor Sie einen Server hinzufügen.
+Erstellen Sie mindestens eine [SSH-Identität](../concepts/ssh-identities.md), bevor Sie einen Server hinzufügen.
 
 ## Server hinzufügen
 
-1. Seitenleiste → **Server** oder **Server hinzufügen** klicken
-2. Name, Host, Port ausfüllen und Identität auswählen
-3. **Server erstellen** klicken — die SSH-Verbindung wird beim Absenden automatisch verifiziert
-4. Bei Erfolg landen Sie auf dem Server-Dashboard
+1. Seitenleiste → **Server** → **Server hinzufügen**
+2. Name, Host, Port ausfüllen, Identität auswählen
+3. **Server erstellen** — SSH wird beim Absenden automatisch verifiziert
+4. Bei Erfolg Server-Dashboard öffnen
 
-Schlägt die Verifizierung fehl, prüfen Sie Host-Erreichbarkeit, Zugangsdaten, Firewall (SSH vom Docker-Host erlaubt) und [Host-Validierung](../concepts/servers-and-ssh.md).
+Schlägt die Verifizierung fehl, prüfen Sie Host-Erreichbarkeit, Zugangsdaten, Firewall die SSH vom Docker-Host erlaubt und [Host-Validierung](../concepts/servers-and-ssh.md).
 
 ## Server-Dashboard
 
-Das Dashboard lädt den **gecachten UFW-Status** aus dem neuesten Postgres-Snapshot — kein SSH beim ersten Rendern. Port-Scan- und Docker-Panels laden ebenfalls die neuesten gecachten Ergebnisse aus Postgres, sofern verfügbar.
+Das Dashboard lädt **gecacheten UFW-Zustand** aus dem neuesten Postgres-Snapshot — kein SSH beim ersten Paint.
 
-| Status | Verfügbare Aktionen |
-|--------|---------------------|
-| UFW nicht installiert | **Status aktualisieren**, dann **UFW installieren** (nach Aktualisierung, die bestätigt, dass UFW fehlt) |
-| Installiert, aber inaktiv | Nur **Status aktualisieren** — UFW ist bereits installiert; Aktualisierung nutzen, um den Aktiv/Inaktiv-Zustand zu erkennen |
-| Installiert und aktiv | **Regel hinzufügen**, **Regeln speichern**, **Status aktualisieren** |
+Wenn Portscan aktiviert ist, lädt das Scan-Panel den **neuesten Scan beliebigen Status** aus Postgres (einschließlich laufender Scans seit v0.9.2).
 
-Klicken Sie zuerst auf **Status aktualisieren**, um SSH zu prüfen und festzustellen, ob UFW installiert ist. **UFW installieren** bleibt deaktiviert, bis eine erfolgreiche Aktualisierung fehlendes UFW anzeigt.
+| UFW-Status | Aktionen |
+|------------|----------|
+| Nicht installiert | **Status aktualisieren**, dann **UFW installieren** (nachdem Refresh fehlendes bestätigt) |
+| Installiert aber inaktiv | **Status aktualisieren** — Install-Button ausgeblendet, wenn UFW existiert aber inaktiv |
+| Installiert und aktiv | **Regel hinzufügen**, **Regeln speichern**, **Status aktualisieren**, optional **Scan ports** |
 
-Bis Sie **Status aktualisieren** ausführen, kann das UFW-Abzeichen ein **gecachtes** Aktiv/Inaktiv-Label aus dem letzten Snapshot anzeigen.
+**Status aktualisieren** führt Live-SSH aus, aktualisiert Snapshot und synchronisiert Regeltabelle. **UFW installieren** bleibt deaktiviert, bis Refresh bestätigt, dass UFW nicht installiert ist.
 
-Nutzen Sie **Status aktualisieren**, um den neuesten UFW-Zustand per SSH abzurufen und die Regeltabelle zu synchronisieren. Bei **ungespeicherten Regeländerungen** fragt die App vor dem Neuladen vom Server zur Bestätigung.
+Bis zum Refresh kann das UFW-Badge ein **gecachtes** Label vom letzten Snapshot zeigen.
 
-Hat die App **noch keinen UFW-Snapshot** in Postgres (neuer Server, nie aktualisiert usw.), läuft einmalig automatisch eine Hintergrund-Synchronisation, um den Cache zu füllen.
+### Warnung bei ungespeicherten Änderungen
 
-## Regelzähler
+Bei ungespeicherten Entwurfsänderungen fragt Refresh vor dem Neuladen vom Server zur Bestätigung.
 
-In der UI erscheinen zwei verschiedene Zähler:
+### Automatischer Initial-Sync
 
-| Ort | Bezeichnung | Bedeutung |
-|-----|-------------|-----------|
-| Karte in der **Serverliste** | gespeicherte Regeln | Anzahl der in lokalen Metadaten gespeicherten Regeln (`ruleRecord`) |
-| Abzeichen im **Dashboard** unter Regel hinzufügen | in Tabelle | Anzahl der Zeilen in der Regeltabelle (aktive Entwurfssitzung) |
+Wenn **kein UFW-Snapshot** in Postgres existiert (neuer Server, nie aktualisiert), läuft einmalig ein Hintergrund-Sync-Vorgang, um den Cache zu füllen. Vorgangsbanner beobachten.
 
-Diese Zahlen können sich beim Bearbeiten, Synchronisieren oder Importieren unterscheiden. Das Dashboard-Abzeichen entspricht der Gesamtzahl in der Regeltabelle.
+## Regel- und Port-Statistiken
+
+| Ort | Metrik | Bedeutung |
+|-----|--------|-----------|
+| **Serverliste**-Karte | gespeicherte Regeln | Lokale `ruleRecord`-Anzahl |
+| **Serverliste**-Karte | offene Ports | Funde des letzten erfolgreichen Scans (wenn aktiviert) |
+| **Dashboard**-Badge | in Tabelle | Sichtbare Regeltabellen-Zeilenanzahl |
+
+Dashboard *in Tabelle* kann sich von *gespeicherte Regeln* unterscheiden während Bearbeitung oder vor Apply.
 
 ## Server bearbeiten
 
-1. Server öffnen → **Bearbeiten**
+1. Serverseite → **Bearbeiten**
 2. Name, Host, Port oder Identität ändern
-3. Die SSH-Verbindung wird beim Absenden automatisch verifiziert, wenn Verbindungsparameter geändert wurden
+3. SSH wird beim Absenden verifiziert, wenn sich Verbindungsparameter geändert haben
 
-Die Bearbeitungsseite zeigt den gespeicherten Host-Key-Fingerabdruck und bei Bedarf eine Warnung **Nicht verifiziert** — es gibt keine separate Test-Schaltfläche.
+Bearbeitungsseite zeigt Host-Key-Fingerabdruck und **nicht verifiziert**-Warnung wenn zutreffend.
 
 ## Server löschen
 
-**Gefahrenbereich** auf der Bearbeitungsseite oder in den Servereinstellungen:
+**Gefahrenbereich** auf der Bearbeitungsseite:
 
-- Löscht alle lokalen Regeln, Entwürfe, Snapshots für diesen Server
-- **Ändert nicht** Remote-UFW
+- Entfernt lokale Regeln, Entwürfe, Snapshots, Scans für diesen Server
+- Ändert **nicht** Remote-UFW
 
-Nur bestätigen, wenn Sie Verwaltungsdaten entfernen wollen, nicht um Remote-Firewall-Regeln zu löschen.
+Nur bestätigen beim Entfernen von Verwaltungsdaten, nicht beim Löschen von Remote-Firewall-Regeln.
 
-## Werkzeuge auf der Serverliste
+## Konfigurationstools der Serverliste
 
-Von der Hauptserverseite aus können Sie:
-
-- **Konfiguration speichern** / **Konfiguration laden** — vollständiger JSON-Export/Import (siehe [Konfiguration importieren und exportieren](../concepts/import-export-config.md))
+- **Konfiguration speichern** / **Konfiguration laden** — vollständiger JSON-v2-Export/Import — siehe [Konfiguration importieren und exportieren](../concepts/import-export-config.md)
 
 ## Verwandte Dokumentation
 
 - [Server und SSH](../concepts/servers-and-ssh.md)
 - [Regeln bearbeiten und anwenden](./edit-and-apply-rules.md)
+- [Portscan](./port-scan.md)

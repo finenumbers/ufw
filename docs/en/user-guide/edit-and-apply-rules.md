@@ -1,53 +1,66 @@
 # Edit and apply rules
 
-When UFW is **installed and active** on a server, the **rules table** on the server dashboard lets you manage firewall rules.
+When UFW is **installed and active**, the **rules table** on the server dashboard is the main editing surface.
 
-## Rules table
+## Rules table features
 
-Features:
-
-- Search and column filters
-- Group sections with expand/collapse
-- Drag-and-drop reorder (order matters for UFW)
-- Row colors by [sync state](../concepts/ufw-rules-and-states.md)
-- Add row, edit inline, delete row
+| Feature | Description |
+|---------|-------------|
+| **Search** | Filter visible rows |
+| **Column filters** | Filter by group or name |
+| **Group sections** | Expand/collapse grouped rows |
+| **Drag-and-drop** | Reorder rules (order affects UFW) |
+| **Row colors** | [Origin state](../concepts/ufw-rules-and-states.md) indicators |
+| **Inline edit** | Double-click or edit action on row |
+| **Add / delete** | Toolbar and row actions |
+| **Load more** | Infinite scroll for large rule sets |
 
 ## Refresh from server
 
-Use **Refresh Status** on the dashboard (or refresh from the rules toolbar) to:
+**Refresh Status** on the dashboard (or sync from toolbar):
 
 1. Detect UFW state over SSH
-2. Load a new snapshot from the server
-3. Re-seed the rules table from remote + local metadata
+2. Store new snapshot
+3. Re-seed table from remote + local metadata
 
-If you have **unsaved edits**, the app shows a confirmation dialog before reloading from the server.
+Use after manual CLI changes on the server or after partial apply.
 
-Use this after manual changes on the server CLI or after a partial apply.
+Unsaved draft edits trigger a confirmation dialog before reload.
 
-## Force resync
+## Force resync from server
 
-If the UI warns about drift or partial apply, use **Force resync from server** to replace local draft alignment with the actual remote snapshot before editing further.
+When the UI warns about drift or partial apply, use **Force resync from server** to align the draft with the actual remote snapshot before further edits.
+
+Available from the apply preview dialog and related warnings — not a substitute for re-preview when remote changed between preview and confirm.
 
 ## Import rules
 
-Toolbar → import CSV, XLSX, or JSON. Validate imported rows in the table before apply preview.
+Toolbar → import **CSV**, **XLSX**, or **JSON**:
+
+- Rows merge into draft; duplicates by fingerprint skipped or merged per import rules
+- Validate rows in the table before apply preview
+- Import affects draft only until apply
+
+## Export rules
+
+Export current table to **XLSX** for offline review or backup. XLSX layout matches import column order for round-trip workflows.
 
 ## Apply workflow
 
-1. Make draft edits
-2. **Apply preview** — review planned commands and diff summary
-3. **Confirm** — executes over SSH (rejected if remote UFW changed since preview — run preview again)
-4. Watch the operation banner for progress
+1. Edit draft
+2. **Apply preview** — review planned commands and summary counts
+3. **Confirm** — executes over SSH (rejected if remote changed since preview)
+4. Watch **operation banner** for per-command progress
 
-**Save rules** (apply preview) is disabled until the SSH host key is **verified** — run **Refresh Status** first if the server was imported from configuration.
+**Save rules** / apply is disabled until SSH host key is **verified** — run **Refresh Status** first for imported servers.
 
-See [Draft and apply workflow](../concepts/draft-apply-workflow.md) for details.
+See [Draft and apply workflow](../concepts/draft-apply-workflow.md).
 
 ## Safety tips
 
-- Always keep at least one rule allowing SSH from your admin network before applying deny rules
+- Keep at least one rule allowing SSH from your admin network before deny rules
 - Run preview on production during a maintenance window
-- Check **Operations history** after apply for SUCCESS or FAILED status
+- Check **Operations history** after apply for SUCCESS or FAILED
 
 ## Related docs
 

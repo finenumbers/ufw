@@ -12,8 +12,6 @@ NPM terminates HTTPS. The app sets HSTS in production but relies on NPM for cert
 
 ## Proxy Host checklist
 
-Create or update a **Proxy Host** in the NPM UI:
-
 | Field | Value |
 |-------|-------|
 | Domain Names | Host from `APP_URL` (e.g. `ufw.example.com`) |
@@ -27,17 +25,13 @@ Create or update a **Proxy Host** in the NPM UI:
 
 ## Docker network
 
-The app container must join the **same Docker network** as NPM.
-
-Set in `.env`:
+App container must join the **same Docker network** as NPM.
 
 ```bash
 NPM_NETWORK=nginxproxymanager_default
 ```
 
-(`docker-compose.prod.yml` attaches `ufw-app` to external network `npm_proxy` → `$NPM_NETWORK`.)
-
-Find your network name:
+`docker-compose.prod.yml` attaches `ufw-app` to external network from `$NPM_NETWORK`.
 
 ```bash
 docker network ls | grep -i proxy
@@ -45,45 +39,37 @@ docker network ls | grep -i proxy
 
 ## APP_URL must match
 
-`APP_URL` in `.env` must exactly match the public URL (scheme + host):
-
 ```bash
 APP_URL=https://ufw.example.com
 ```
 
-Mismatch causes auth redirect loops or broken cookies.
+Must match NPM Proxy Host domain exactly (scheme + host). Better Auth cookies depend on this.
 
-## APP_URL vs Proxy Host scheme
+## Internal HTTP is intentional
 
-| Layer | Scheme | Example |
-|-------|--------|---------|
-| Browser / `APP_URL` | **HTTPS** | `https://ufw.example.com` |
-| NPM → container | **HTTP** | `http://ufw-app:8088` |
+NPM terminates TLS. Traffic NPM → `ufw-app:8088` is unencrypted HTTP on the Docker network — **by design**, not misconfiguration.
 
-NPM terminates TLS. The app container listens on plain HTTP inside the Docker network — this is **by design**, not a misconfiguration.
-
-Set `APP_URL` to the public HTTPS URL only. Never point `APP_URL` at `http://ufw-app:8088`.
+Do **not** set `APP_URL` to `http://ufw-app:8088`.
 
 ## TRUST_PROXY
 
-When running behind NPM, set in `.env` or Portainer stack environment:
+Set in app environment when behind NPM:
 
-```bash
+```env
 TRUST_PROXY=1
 ```
 
-This makes `/setup` rate limits use the real client IP from `X-Forwarded-For`. See [Environment variables](../administration/environment-variables.md).
+Ensures setup rate limits use real client IP from `X-Forwarded-For`.
 
-## Local build (without GHCR)
+## Local build alternative
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-Same NPM Proxy Host settings apply.
+Same NPM checklist applies.
 
 ## Related docs
 
-- [Deployment overview](./overview.md)
+- [Environment variables](../administration/environment-variables.md)
 - [GHCR + Compose](./ghcr-compose.md)
-- [Troubleshooting](../troubleshooting.md)

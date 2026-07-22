@@ -1,26 +1,20 @@
 # À propos de Finenumbers
 
-**UFW Remote Manager** est développé par **Finenumbers** — opérateur téléphonique professionnel pour les entreprises.
+**UFW Remote Manager** est développé par [Finenumbers](https://finenumbers.com).
 
-| | |
-|---|---|
-| **Site web** | [finenumbers.com](https://finenumbers.com) |
-| **Contact** | [apps@finenumbers.com](mailto:apps@finenumbers.com) |
-| **Code source** | [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw) |
-| **Licence** | MIT — voir [LICENSE](../../LICENSE) |
+Finenumbers conçoit des outils de communication professionnelle. UFW Remote Manager est un utilitaire open source auto-hébergé pour les équipes qui gèrent les pare-feu de serveurs Linux via SSH.
 
-## À propos du produit
+## Contact
 
-Finenumbers conçoit des outils opérationnels pour les équipes infrastructure et communications. UFW Remote Manager répond à un besoin concret : la gestion UFW centralisée et auditable sur plusieurs serveurs Linux, sans se connecter à chaque hôte pour chaque modification de règle.
+- E-mail : [apps@finenumbers.com](mailto:apps@finenumbers.com)
+- Dépôt : [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw)
+- Documentation : [docs/README.md](../../README.md)
 
-L'application est **auto-hébergée** — vos données, identifiants SSH et règles de pare-feu restent sur l'infrastructure que vous contrôlez.
+## Licence
 
-## Retours et support
+MIT — voir [LICENSE](https://github.com/finenumbers/ufw/blob/main/LICENSE) dans le dépôt.
 
-- **Questions produit :** [apps@finenumbers.com](mailto:apps@finenumbers.com)
-- **Problèmes de sécurité :** [SECURITY.md](../../SECURITY.md) (divulgation responsable)
-- **Documentation :** [Hub documentation](../../README.md)
+## Documentation associée
 
-## Langues de la documentation
-
-La documentation complète est disponible en anglais, allemand, français, espagnol, italien, portugais (Brésil) et russe — voir le [hub des langues](../../README.md).
+- [Introduction](./introduction.md)
+- [Hub documentation](../../README.md)

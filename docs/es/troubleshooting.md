@@ -1,62 +1,71 @@
 # Solución de problemas
 
-Síntoma → causa probable → qué hacer.
+Síntoma → causa probable → solución. Para conceptos, consulte los documentos enlazados.
 
-## Autenticación
-
-| Síntoma | Causa | Solución |
-|---------|-------|----------|
-| Bucle de redirección al iniciar sesión | `APP_URL` no coincide con la URL del navegador | Definir `APP_URL` a la URL HTTPS pública exacta; reiniciar la app |
-| Login funciona en local pero no por dominio | NPM o flag cookie secure | Forzar SSL en NPM; comprobar que el esquema `APP_URL` es `https://` |
-| `BETTER_AUTH_SECRET is required` | `.env` no cargado | Usar `--env-file .env` en compose |
-| `APP_URL must use HTTPS in production` | `APP_URL` no HTTPS para un dominio real | Usar `https://your-domain`; `http://localhost` permitido solo para smoke/CI |
-| `BETTER_AUTH_SECRET must be at least 32 characters` | Secreto demasiado corto | Regenerar con `openssl rand -base64 32` |
-
-## Docker / NPM
+## Autenticación y configuración
 
 | Síntoma | Causa | Solución |
 |---------|-------|----------|
-| NPM 502 Bad Gateway | App no en la red NPM | Definir `NPM_NETWORK`; verificar que `ufw-app` se une a la red externa |
-| Página setup fácil de brute-force | Falta `TRUST_PROXY` | Definir `TRUST_PROXY=1` detrás de NPM |
-| `ufw-app` unhealthy | BD caída o secretos faltantes | Comprobar `docker logs ufw-app`, salud de postgres |
-| `ufw-migrate` falló | Error de migración | Leer `docker logs ufw-migrate`; restaurar backup si es necesario |
-| `pull access denied` | Paquete GHCR privado | Visibilidad Public o `docker login ghcr.io` |
+| `/setup` redirige al inicio de sesión | Ya existe un usuario | Use `/login` |
+| Fallo de inicio de sesión tras despliegue | `APP_URL` incorrecta o HTTP en lugar de HTTPS | Coincida con el dominio NPM; configure `APP_URL=https://...` |
+| Límite de tasa de setup demasiado agresivo | Falta `TRUST_PROXY` detrás de NPM | Configure `TRUST_PROXY=1` |
 
-## SSH
+## SSH y creación de servidor
 
 | Síntoma | Causa | Solución |
 |---------|-------|----------|
-| Fallo de conexión SSH al guardar | Credenciales incorrectas, firewall, host caído | Verificar identidad, puerto; el servidor permite IP del host Docker |
-| Error de validación de host | IP privada bloqueada | Definir `SSH_ALLOWED_CIDRS` para redes internas |
-| Clave de host cambiada | Reinstalación del servidor o MITM | Verificar huella en el servidor; actualizar tras confirmación |
-| Clave de host no verificada | Importada desde config | Ejecutar prueba SSH desde la página de edición del servidor |
+| IP privada rechazada | Validación de host | Use IP/hostname público o `SSH_ALLOWED_CIDRS` |
+| Conexión rechazada | Firewall, puerto incorrecto, host caído | Verifique desde el host Docker: `ssh -p PORT user@host` |
+| Autenticación fallida | Credenciales de identidad incorrectas | Edite identidad; vuelva a introducir el secreto |
+| Advertencia de clave host | Primera conexión o servidor reconstruido | **Actualizar estado** para capturar nueva huella |
 
-## Reglas / aplicación
-
-| Síntoma | Causa | Solución |
-|---------|-------|----------|
-| Página de reglas vacía / desactivada | UFW no activo | Instalar y activar UFW desde el panel |
-| Vista previa muestra eliminaciones inesperadas | Deriva del borrador | Resincronización forzada desde el servidor |
-| Aplicación rechazada — remoto cambió | UFW cambió entre vista previa y confirmación | Ejecutar **Vista previa de aplicación** de nuevo (no resync) |
-| Aviso de aplicación parcial | Aplicación anterior interrumpida o sync falló | Resincronizar; revisar `ufw status` remoto manualmente |
-| Banner de operación atascado | RUNNING/PENDING obsoleto tras desconexión | Actualizar la página |
-| Bloqueado fuera de SSH | Regla deny aplicada | Acceso consola/fuera de banda; corregir UFW directamente en el servidor |
-
-## Datos
+## UFW y reglas
 
 | Síntoma | Causa | Solución |
 |---------|-------|----------|
-| Credenciales inválidas tras restauración | `APP_ENCRYPTION_KEY` incorrecto | Restaurar `.env` coincidente desde backup |
-| No se pueden descifrar identidades | Rotación de clave sin reintroducción | Reintroducir secretos o restaurar export JSON |
+| Aplicación desactivada | Clave host sin verificar | **Actualizar estado** |
+| Aplicación rechazada tras vista previa | UFW remoto cambió | **Vista previa de aplicación** de nuevo |
+| Aplicación parcial | Comandos interrumpidos o fallo de sincronización | **Resincronización forzada desde el servidor**; consulte historial de operaciones |
+| Vista previa muestra eliminaciones inesperadas | Deriva del borrador | **Resincronización forzada desde el servidor** |
+| Reglas reaparecen tras eliminar en servidor | Sincronización obsoleta (pre-v0.9.2) | Actualice a v0.9.2+; resincronización forzada |
+| Bloqueo de SSH | Regla deny aplicada | Acceso por consola; corrija UFW fuera de banda |
 
-## API Health
+## Banner de operaciones
 
-```bash
-docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r.json()).then(console.log)"
-```
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| Banner EN CURSO para siempre | Navegador desconectado a mitad de operación | Actualice página; espere al barrido |
+| Tabla obsoleta tras sincronizar | Fin de operación no detectado (raro post-v0.9.2) | Actualice el navegador |
+| Tráfico API inactivo | Versión antigua sondeaba indefinidamente | Actualice a v0.9.2 — el sondeo inactivo se detiene |
 
-Esperado: `{"status":"ok","db":"ok","version":"…"}` (`revision` solo fuera de producción)
+## Escaneo de puertos
 
-## ¿Sigue atascado?
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| Panel ausente | Función desactivada | `PORT_SCAN_ENABLED=true` |
+| Escaneo fallido por tiempo de espera | Rango grande / red lenta | Aumente `PORT_SCAN_*_TIMEOUT_MS`; compruebe salida |
+| Error escaneo en curso | Protección de solapamiento | Espere al escaneo actual |
+| Sin hallazgos | Todos los puertos filtrados/cerrados | Esperado; compruebe estado SUCCESS del escaneo |
+| Progreso perdido al actualizar (antiguo) | SSR solo cargaba escaneos SUCCESS | Actualice a v0.9.2 |
 
-Envíe un correo a **[apps@finenumbers.com](mailto:apps@finenumbers.com)** con el tag de versión, logs sanitizados (sin secretos) y pasos para reproducir.
+## Docker y migrate
+
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| `EACCES` prisma en app | Contenedor incorrecto | `docker compose run --rm migrate` |
+| Migrate falla al actualizar | Permisos DB o versión antigua | Consulte `docker compose logs migrate` |
+| App no saludable | Secretos incorrectos o DB caída | Logs: `docker compose logs app` |
+
+## Importación/exportación de configuración
+
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| Importación bloqueada | Operaciones activas en servidor | Espere a que la cola esté inactiva |
+| Exportación limitada por tasa | Demasiados intentos | Espere 60 segundos |
+| Secretos descifrados corruptos tras restaurar | `APP_ENCRYPTION_KEY` incorrecta | Restaure `.env` coincidente |
+
+## Documentos relacionados
+
+- [Preguntas frecuentes](./faq.md)
+- [Operaciones y concurrencia](./concepts/operations-and-concurrency.md)
+- [Variables de entorno](./administration/environment-variables.md)

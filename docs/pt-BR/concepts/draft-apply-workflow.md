@@ -1,36 +1,44 @@
 # Fluxo de rascunho e aplicação
 
-O UFW Remote Manager nunca envia alterações de firewall silenciosamente. Toda mutação segue **editar → visualizar → confirmar → aplicar**.
+O UFW Remote Manager nunca envia alterações de firewall silenciosamente. Toda mutação segue **editar → pré-visualizar → confirmar → aplicar**.
 
-![Fluxo de aplicação](../../assets/ufw-apply-workflow.svg)
+![Fluxo de apply](../../assets/ufw-apply-workflow.svg)
 
 ## Etapas
 
 ### 1. Editar rascunho
 
-Altere regras na tabela: adicionar, editar, excluir, reordenar, importar. As alterações ficam no **rascunho local** até serem aplicadas.
+Altere regras na tabela: adicionar, editar, excluir, reordenar, importar. Alterações ficam no **rascunho local** até serem aplicadas.
 
-### 2. Visualizar aplicação
+### 2. Pré-visualizar apply
 
-Clique em **Visualizar aplicação**. A aplicação:
+Clique em **Apply preview** (fluxo Salvar regras). O app:
 
-1. Carrega o estado UFW atual do servidor (snapshot SSH)
-2. Calcula um **plano** — comandos que alinhariam o UFW ao seu rascunho
-3. Mostra regras adicionadas, removidas e reordenadas
+1. Carrega estado UFW atual do servidor (SSH)
+2. Calcula um **plano** — comandos UFW para alinhar remoto ao seu rascunho
+3. Mostra regras adicionadas, removidas, atualizadas e reordenadas
 
-Revise a visualização com cuidado. Preste atenção a regras que podem bloquear seu acesso (ex.: bloquear SSH).
+Revise com cuidado. Preste atenção a regras que podem bloqueá-lo (ex.: bloquear SSH).
 
 ### 3. Confirmar
 
-Confirme no diálogo. Somente então os comandos UFW são executados via SSH.
+Confirme no diálogo. Só então os comandos UFW são executados via SSH.
 
-### 4. Execução da aplicação
+Se o UFW remoto mudou desde a pré-visualização, apply é **rejeitado** — execute a pré-visualização novamente.
 
-Os comandos rodam sequencialmente no servidor (fila por servidor, concorrência 1). O progresso aparece no **banner de operação** com status passo a passo.
+### 4. Execução do apply
 
-### 5. Sincronização pós-aplicação
+Comandos executam sequencialmente no servidor dentro da **fila por servidor**. Progresso aparece no **banner de operações** com status passo a passo.
 
-Após o sucesso, a aplicação atualiza o snapshot e sincroniza os estados de origem do rascunho para que as cores das linhas reflitam a nova realidade.
+### 5. Sync pós-apply
+
+Após execução UFW bem-sucedida, ainda dentro da fila:
+
+1. Persistir novo snapshot da detecção ao vivo
+2. Sincronizar linhas `ruleRecord` da detecção (não cache obsoleto)
+3. Atualizar estados de origem do rascunho para cores corresponderem à realidade
+
+Desde v0.9.2, rule records pós-apply são construídos a partir de **dados de detecção ao vivo**, evitando que regras remotas excluídas reapareçam no banco.
 
 ## Diagrama de sequência
 
@@ -42,37 +50,39 @@ sequenceDiagram
   participant Remote as Linux_UFW
 
   User->>App: Edit draft rules
-  User->>App: Preview apply
+  User->>App: Apply preview
   App->>Remote: SSH read snapshot
   App->>App: Build plan diff
   User->>App: Confirm apply
   App->>Remote: SSH read snapshot
   alt Remote changed since preview
-    App-->>User: Reject — re-preview required
+    App-->>User: Reject needsRePreview
   else Plan matches
     App->>Remote: SSH ufw commands
-    App->>DB: Update snapshot and audit
+    App->>DB: Snapshot rule records draft sync
   end
 ```
 
-## Aplicação parcial e deriva
-
-O UFW remoto pode mudar entre visualização e confirmação, ou a aplicação pode falhar no meio do caminho. A aplicação trata três casos distintos:
+## Apply parcial e deriva
 
 | Cenário | Status da sessão | O que fazer |
-|----------|----------------|------------|
-| UFW remoto mudou **entre visualização e confirmação** | Aplicação rejeitada (`needsRePreview`) | Execute **Visualizar aplicação** novamente — não force ressincronização |
-| Comandos UFW **interrompidos** no servidor | `PARTIAL` (`needsResync`) | **Ressincronização forçada do servidor**, depois revise antes de editar |
-| Comandos UFW bem-sucedidos, mas **sync pós-aplicação falhou** | `PARTIAL` (`needsResync`) | **Ressincronização forçada do servidor** — UFW remoto já alterado |
+|---------|------------------|-------------|
+| UFW remoto mudou **entre pré-visualização e confirmar** | Rejeitado (`needsRePreview`) | Execute **Apply preview** novamente — não force resync |
+| Comandos UFW **interrompidos** no servidor | `PARTIAL` (`needsResync`) | **Ressincronização forçada do servidor**, depois revise |
+| UFW ok mas **sync pós-apply falhou** | `PARTIAL` (`needsResync`) | **Ressincronização forçada do servidor** — UFW remoto já mudou |
 
-**Nunca ignore avisos de aplicação parcial** — continuar às cegas pode causar regras duplicadas ou erros de ordem.
+**Nunca ignore avisos de apply parcial** — continuar cegamente pode causar regras duplicadas ou erros de ordem.
 
-## Salvaguarda de acesso SSH
+## Apply apenas no BD
 
-O planejador de aplicação inclui salvaguardas em torno de regras de acesso SSH quando configuradas — veja testes em `src/lib/ufw/commands.allow-ssh.test.ts`. Ainda assim, verifique a visualização manualmente em servidores de produção.
+Se a pré-visualização mostra alterações apenas de metadados (sem diff de comandos UFW), confirmar atualiza registros locais sem comandos UFW remotos.
 
-## Documentação relacionada
+## Salvaguarda Allow SSH
+
+O planejador de apply inclui salvaguardas em torno de regras de acesso SSH onde configurado. Ainda verifique a pré-visualização manualmente em servidores de produção.
+
+## Documentos relacionados
 
 - [Regras UFW e estados](./ufw-rules-and-states.md)
 - [Editar e aplicar regras](../user-guide/edit-and-apply-rules.md)
-- [Histórico de operações](../user-guide/operations-history.md)
+- [Operações e concorrência](./operations-and-concurrency.md)

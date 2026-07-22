@@ -1,6 +1,6 @@
 # UFW Remote Manager — Documentation
 
-Choose your language:
+Choose your language. Each locale contains **29 topics** aligned with **v0.9.2**.
 
 | Language | Index |
 |----------|-------|
@@ -14,22 +14,12 @@ Choose your language:
 
 ---
 
-**English:** Self-hosted web application for managing UFW firewalls on remote Linux servers over SSH.
+Self-hosted web application for managing UFW firewalls on remote Linux servers over SSH.
 
-**Deutsch:** Self-hosted Webanwendung zur Verwaltung von UFW-Firewalls auf entfernten Linux-Servern über SSH.
-
-**Français:** Application web auto-hébergée pour gérer UFW sur des serveurs Linux distants via SSH.
-
-**Español:** Aplicación web autohospedada para gestionar UFW en servidores Linux remotos por SSH.
-
-**Italiano:** Applicazione web self-hosted per gestire UFW su server Linux remoti via SSH.
-
-**Português (Brasil):** Aplicação web self-hosted para gerenciar UFW em servidores Linux remotos via SSH.
-
-**Русский:** Self-hosted веб-приложение для удалённого управления UFW на Linux-серверах по SSH.
+**Topics include:** SSH identities, server management, draft/apply workflow, operations history, optional external port scan, deployment behind Nginx Proxy Manager, backup, and upgrade.
 
 ---
 
-Developed by **[Finenumbers](https://finenumbers.com)** — business phone operator for business · [apps@finenumbers.com](mailto:apps@finenumbers.com)
+Developed by **[Finenumbers](https://finenumbers.com)** · [apps@finenumbers.com](mailto:apps@finenumbers.com)
 
 Repository: [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw)

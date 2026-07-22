@@ -1,26 +1,20 @@
 # Acerca de Finenumbers
 
-**UFW Remote Manager** está desarrollado por **Finenumbers** — operador de telefonía empresarial para empresas.
+**UFW Remote Manager** está desarrollado por [Finenumbers](https://finenumbers.com).
 
-| | |
-|---|---|
-| **Sitio web** | [finenumbers.com](https://finenumbers.com) |
-| **Contacto** | [apps@finenumbers.com](mailto:apps@finenumbers.com) |
-| **Código fuente** | [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw) |
-| **Licencia** | MIT — consulte [LICENSE](../../LICENSE) |
+Finenumbers crea herramientas de comunicación empresarial. UFW Remote Manager es una utilidad open source autoalojada para equipos que gestionan firewalls de servidores Linux por SSH.
 
-## Sobre el producto
+## Contacto
 
-Finenumbers desarrolla herramientas operativas para equipos de infraestructura y comunicaciones. UFW Remote Manager responde a una necesidad práctica: gestión centralizada y auditable de UFW en servidores Linux sin iniciar sesión en cada host por cada cambio de regla.
+- Correo: [apps@finenumbers.com](mailto:apps@finenumbers.com)
+- Repositorio: [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw)
+- Documentación: [docs/README.md](../../README.md)
 
-La aplicación es **autoalojada**: sus datos, credenciales SSH y reglas de firewall permanecen en infraestructura bajo su control.
+## Licencia
 
-## Comentarios y soporte
+MIT — consulte [LICENSE](https://github.com/finenumbers/ufw/blob/main/LICENSE) en el repositorio.
 
-- **Consultas sobre el producto:** [apps@finenumbers.com](mailto:apps@finenumbers.com)
-- **Problemas de seguridad:** [SECURITY.md](../../SECURITY.md) (divulgación responsable)
-- **Documentación:** [Centro de documentación](../../README.md)
+## Documentos relacionados
 
-## Idiomas de la documentación
-
-La documentación completa está disponible en inglés, alemán, francés, español, italiano, portugués (Brasil) y ruso — consulte el [centro de idiomas](../../README.md).
+- [Introducción](./introduction.md)
+- [Centro de documentación](../../README.md)

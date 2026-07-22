@@ -1,54 +1,68 @@
 # История операций
 
-Длительные задачи (apply, refresh, установка UFW, port scan) записываются в **operation logs** и отображаются в интерфейсе.
+Длительные задачи — apply, sync, refresh, install UFW, port scan — записываются в **operation logs** и отображаются в UI.
 
-## Баннер операции
+## Баннер операций
 
-Пока операция выполняется, вверху приложения показывается баннер:
+Пока работа выполняется, баннер вверху:
 
-- Тип и статус (RUNNING, SUCCESS, FAILED)
-- Разворачиваемый список шагов
-- Автоскрытие при успехе через короткую задержку
+| Element | Description |
+|---------|-------------|
+| Status | ВЫПОЛНЯЕТСЯ, ОЖИДАНИЕ, УСПЕХ, ОШИБКА, ЧАСТИЧНО |
+| Steps | Expandable per-step status |
+| Message | Translated progress or error text |
 
-Баннер опрашивает статус, пока работа идёт.
+**УСПЕХ** auto-dismiss через ~10 секунд. **ОШИБКА** и **ЧАСТИЧНО** до dismiss.
 
-Если баннер «застрял» на **RUNNING** или **PENDING** после разрыва соединения, обновите страницу. Устаревшие операции очищаются фоновым sweep (обычно за 30–60 минут).
+### Polling behaviour (v0.9.2)
 
-## Страница операций
+- Poll ~**1 second** while operation RUNNING or PENDING
+- **Stops polling when idle** — no background 5-second loop
+- Restarts when new operation begins
+- On completion dispatches event so server pages refresh SSR data
 
-Боковое меню → **История операций** (`/operations`)
+See [Операции и конкурентность](../concepts/operations-and-concurrency.md).
 
-Две вкладки:
+### Stuck banner
 
-| Вкладка | Содержимое |
-|---------|------------|
-| **Operations** | Технический log — apply, sync, refresh, port scan и т. д. |
-| **Audit** | События безопасности — login, logout, config export |
+If banner shows ВЫПОЛНЯЕТСЯ after disconnect, refresh page. Background sweeper marks ancient RUNNING failed within ~30–60 minutes.
 
-Обе поддерживают бесконечную прокрутку для старых записей.
+## Operations page
 
-## Типы операций
+Боковая панель → **История операций** (`/operations`)
 
-В БД типы с точками (например `ufw.refresh`). В UI переводятся ключами с подчёркиванием (например `ufw_refresh`).
+| Tab | Content |
+|-----|---------|
+| **Журнал операций** | Technical log — apply, sync, refresh, port scan, server create failures |
+| **События аудита** | Security events — login, logout, config export, UFW actions |
 
-Активные примеры:
+Both tabs support infinite scroll for older entries.
 
-- `apply_rules` / `apply.rules` — apply UFW
-- `ufw_refresh` / `ufw.refresh` — **Обновить статус** (live SSH + sync правил)
-- `ufw_sync` / `ufw.sync` — фоновая initial sync при отсутствии snapshot
-- `ufw_install` / `ufw.install` — установка UFW (enable внутри install)
-- `port_scan` / `port.scan` — внешний port scan
-- `server_create` / `server.create` — новый сервер
+## Operation types
 
-Legacy (только исторические записи):
+Database stores dotted names; UI translates them.
 
-- `ssh_test` — из релизов до v0.7.4; больше не создаётся
+| Type | Description |
+|------|-------------|
+| `apply.rules` | UFW apply session |
+| `ufw.refresh` | Обновить статус — live SSH + rules sync |
+| `ufw.sync` | Background initial sync when no snapshot |
+| `ufw.install` | Remote UFW install and enable |
+| `port.scan` | External port scan |
+| `server.create` | Server create with SSH failure |
 
-## Очистка истории
+Legacy (historical entries only):
 
-Администратор может очистить старую историю операций в UI (audit-события могут сохраняться по политике retention). Очистка не влияет на состояние серверов и правила.
+- `ssh_test` — pre v0.7.4; no longer created
+
+## Clearing history
+
+**Очистить историю** removes old operation log entries per retention action. Does not affect servers, rules, or remote UFW.
+
+Audit tab may retain events per policy — see [Журнал аудита и экспорт](../administration/audit-log-and-export.md).
 
 ## Связанные документы
 
-- [Audit log and export](../administration/audit-log-and-export.md)
-- [Draft and apply workflow](../concepts/draft-apply-workflow.md)
+- [Операции и конкурентность](../concepts/operations-and-concurrency.md)
+- [Черновик и применение](../concepts/draft-apply-workflow.md)
+- [Сканирование портов](./port-scan.md)

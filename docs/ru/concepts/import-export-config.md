@@ -1,53 +1,49 @@
 # Импорт и экспорт конфигурации
 
-Полную конфигурацию серверов (все серверы, идентификации, метаданные правил) можно экспортировать и импортировать как JSON **v2**.
+Экспорт и импорт файла **JSON v2** со всеми серверами, SSH-идентификациями (включая расшифрованные секреты) и связанными метаданными. Для backup, migration или disaster recovery — не для ежедневного редактирования правил.
 
-## Экспорт
+Import/export на уровне правил (CSV, XLSX) отдельно — см. [Редактирование и применение правил](../user-guide/edit-and-apply-rules.md).
 
-1. На странице **Серверы** — **Сохранить конфигурацию**
-2. Повторно введите **пароль учётной записи** (step-up authentication)
-3. Скачайте JSON-файл
+## Export flow
 
-### Важное предупреждение безопасности
+1. Список **Серверы** → **Сохранить конфигурацию**
+2. Введите **пароль** учётной записи (step-up authentication)
+3. Скачайте JSON (`servers-config-YYYY-MM-DD.json`)
 
-Файл экспорта содержит **SSH-пароли и приватные ключи в открытом виде**:
+Export включает расшифрованные SSH secrets. Храните файл encrypted at rest; удалите когда не нужен.
 
-- Храните зашифрованно
-- Не коммитьте в git
-- При успешном экспорте пишется audit-событие `CONFIG_EXPORT`
+Short-lived token защищает download API после password confirmation.
 
-## Импорт
+Rate limit: 5 exports в минуту на пользователя.
 
-1. **Загрузить конфигурацию** на странице Серверы
-2. Выберите JSON v2
-3. Просмотрите summary: создать, обновить, удалить
-4. Повторно введите **пароль учётной записи** в диалоге подтверждения
-5. Подтвердите — import в транзакции (upsert, затем delete)
+## Import flow
 
-Те же rate limits, что у экспорта (10 попыток в минуту на пользователя).
+1. **Загрузить конфигурацию** → выберите JSON
+2. **Preview** показывает diff: servers и identities to create, update или delete
+3. Confirm с паролем → import применяет изменения
 
-### Деструктивное поведение
+Import ждёт idle per-server queues и блокирует destructive operations при конфликте с active work.
 
-Серверы, **отсутствующие** в файле import, могут быть **удалены** вместе с правилами и snapshots. Внимательно читайте диалог.
+## JSON v2 format
 
-Импортированные SSH host keys помечаются **unverified** — выполните **Обновить статус** на dashboard каждого сервера перед apply правил.
+| Section | Contents |
+|---------|----------|
+| **version** | `2` |
+| **identities** | Name, username, auth method, secrets |
+| **servers** | Name, host, port, identity reference, host key fields |
 
-### Лимиты import
+Legacy array-only или v1 files rejected.
 
-- Import правил (CSV, XLSX, JSON) — до **10 000** строк на файл
-- **Preview** config import — **10 попыток в минуту** на пользователя
+Duplicate keys (same host + port + identity) rejected at parse time.
 
-## Export vs Postgres backup
+## Delete semantics on import
 
-| Метод | Содержимое | Когда использовать |
-|-------|------------|-------------------|
-| **Config export (JSON)** | Конфиг + секреты в открытом виде | Миграция, DR-копия |
-| **Postgres dump** | Полная БД с зашифрованными секретами | Restore с тем же `APP_ENCRYPTION_KEY` |
-| **`.env` backup** | Runtime-секреты | Нужен для расшифровки после restore |
+Servers в БД, но отсутствующие в imported file, попадают в preview **delete** set. Confirm только если намерены удалить server records и все associated rules, drafts, snapshots locally.
 
-Для полного DR сохраняйте **и** Postgres, **и** `.env` — см. [Backup and restore](../operations/backup-restore.md).
+Remote UFW на deleted server records **не** изменяется.
 
 ## Связанные документы
 
-- [Audit log and export](../administration/audit-log-and-export.md)
-- [SSH identities](./ssh-identities.md)
+- [SSH-идентификации](./ssh-identities.md)
+- [Резервное копирование и восстановление](../operations/backup-restore.md)
+- [Журнал аудита и экспорт](../administration/audit-log-and-export.md)

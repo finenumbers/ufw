@@ -8,20 +8,13 @@ Run after deploy, upgrade, or disaster recovery.
 ./scripts/smoke-production.sh --env-file .env --ghcr --app-url https://ufw.example.com
 ```
 
-Flags:
-
 | Flag | Purpose |
 |------|---------|
-| `--env-file .env` | Load production variables (requires `NPM_NETWORK` for prod compose) |
-| `--ghcr` | Include `docker-compose.ghcr.yml` overlay |
-| `--app-url URL` | Also check public HTTPS `/api/health` via curl |
+| `--env-file .env` | Load production variables |
+| `--ghcr` | Include `docker-compose.ghcr.yml` |
+| `--app-url URL` | Check public HTTPS `/api/health` |
 
-The script verifies:
-
-- Postgres healthy
-- `ufw-migrate` exited 0
-- `ufw-app` healthy
-- Internal `/api/health` returns `{"status":"ok","db":"ok","version":"…"}` (`revision` only outside production)
+Verifies: Postgres healthy, migrate exited 0, app healthy, health JSON includes version.
 
 ## Manual health check
 
@@ -33,16 +26,20 @@ docker exec ufw-app node -e "fetch('http://127.0.0.1:8088/api/health').then(r=>r
 ## Browser checklist
 
 1. `APP_URL/login` — authenticate
-2. **SSH Identities** — identity exists or create one
-3. **Servers** — create/update SSH verification succeeds
-4. **Rules** — apply preview runs (confirm optional)
-5. **Operations history** — recent entries visible
+2. **SSH Identities** — create or verify identity
+3. **Servers** — create/update; SSH verification succeeds
+4. **Refresh Status** — UFW snapshot created
+5. **Rules** — apply preview runs; optional confirm on test server
+6. **Operations history** — recent entries visible
+7. **Initial sync** — new server without snapshot gets background sync
+8. **Port scan** (if enabled) — start scan; refresh page mid-scan — panel resumes (v0.9.2)
+9. **Apply** — after confirm, rule count matches remote
 
 ## First install
 
-Use `APP_URL/setup` instead of `/login` to create the admin account once.
+Use `APP_URL/setup` once to create admin account.
 
 ## Related docs
 
 - [Initial setup](../user-guide/initial-setup.md)
-- [GHCR + Compose](../deployment/ghcr-compose.md)
+- [Manage servers](../user-guide/manage-servers.md)

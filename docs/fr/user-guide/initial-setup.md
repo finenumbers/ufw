@@ -1,42 +1,45 @@
 # Configuration initiale
 
-Au premier lancement, UFW Remote Manager n'a **aucun utilisateur**. Vous devez créer le compte administrateur une fois.
+Le premier lancement crée le seul compte administrateur. Ensuite, l'inscription est définitivement désactivée.
 
 ## Page de configuration (`/setup`)
 
-1. Ouvrir l'URL de l'application (ex. `http://localhost:8088` ou votre `APP_URL`)
-2. Vous êtes redirigé automatiquement vers `/setup`
-3. Saisir le nom, l'e-mail, le mot de passe et la confirmation du mot de passe
-4. Cliquer sur **Terminer la configuration**
+Disponible lorsqu'**aucun utilisateur** n'existe en base de données :
 
-Après succès, vous êtes connecté et redirigé vers la liste des serveurs.
+1. Ouvrir `http://localhost:8088/setup` (ou votre `APP_URL/setup`)
+2. Saisir e-mail et mot de passe
+3. Soumettre — vous êtes connecté et redirigé vers l'application
 
-## Politique d'administrateur unique
+Si un utilisateur existe déjà, `/setup` redirige vers `/login`.
 
-L'inscription est **désactivée** après la création du premier compte. Il n'y a pas d'inscription en libre-service pour des utilisateurs supplémentaires dans la version actuelle.
+## Connexion (`/login`)
 
-Pour ajouter une autre personne, elle partagerait les identifiants admin (non recommandé) ou vous opérez avec un compte admin par instance.
+Utilisez l'e-mail et le mot de passe de la configuration. Les sessions sont gérées par Better Auth (cookies HTTP-only).
 
-## Session et connexion
+Déconnexion : barre latérale → **Déconnexion**.
 
-- Les sessions durent **7 jours** avec renouvellement glissant
-- Déconnexion via **Déconnexion** dans la barre latérale
-- Page de connexion : `/login`
+## Modèle administrateur unique
 
-## Premier lancement en production
+Il n'y a pas d'interface de gestion des utilisateurs. Un compte par installation. Pour un accès partagé, utilisez un gestionnaire de mots de passe d'équipe et des procédures opérationnelles — pas des utilisateurs d'application séparés.
 
-Après déploiement derrière HTTPS :
+## Limitation de débit setup
 
-1. Configurer NPM Proxy Host → `ufw-app:8088`
-2. Définir `APP_URL=https://your-domain.example` dans `.env`
-3. Ouvrir `https://your-domain.example/setup`
-4. Terminer la configuration avant d'exposer l'URL largement
+Les tentatives de configuration sont limitées à **5 par minute par IP client** pour ralentir la force brute sur les installations fraîches.
 
-Lancer le test de fumée après la configuration :
+Lorsque l'application s'exécute derrière Nginx Proxy Manager en production, définissez :
 
-```bash
-./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```env
+TRUST_PROXY=1
 ```
+
+Sans cela, les limites de débit utilisent un bucket partagé unique et peuvent être moins précises derrière un proxy.
+
+## Première visite en production
+
+1. Déployer la stack — voir [Vue d'ensemble du déploiement](../deployment/overview.md)
+2. Ouvrir `https://your-domain/setup` (doit correspondre à `APP_URL`)
+3. Terminer la configuration avant d'exposer l'URL largement
+4. Exécuter les [tests de fumée](../operations/smoke-tests.md)
 
 ## Documentation associée
 

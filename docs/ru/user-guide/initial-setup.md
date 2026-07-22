@@ -1,42 +1,45 @@
 # Первоначальная настройка
 
-При первом запуске UFW Remote Manager **нет пользователей**. Необходимо один раз создать учётную запись администратора.
+Первый запуск создаёт единственную учётную запись администратора. После этого регистрация навсегда отключена.
 
-## Страница настройки (`/setup`)
+## Страница setup (`/setup`)
 
-1. Откройте URL приложения (например, `http://localhost:8088` или ваш `APP_URL`)
-2. Вы будете автоматически перенаправлены на `/setup`
-3. Введите имя, email, пароль и подтверждение пароля
-4. Нажмите **Завершить настройку**
+Доступна, когда **нет пользователя** в базе:
 
-После успеха вы войдёте в систему и будете перенаправлены к списку серверов.
+1. Откройте `http://localhost:8088/setup` (или ваш `APP_URL/setup`)
+2. Введите email и пароль
+3. Submit — вход и redirect в app
 
-## Политика одного администратора
+Если пользователь уже есть, `/setup` → `/login`.
 
-Регистрация **отключена** после создания первой учётной записи. В текущей версии нет самостоятельной регистрации дополнительных пользователей.
+## Login (`/login`)
 
-Чтобы добавить ещё одного человека, придётся делиться учётными данными администратора (не рекомендуется) или работать с одной учётной записью администратора на экземпляр.
+Email и пароль из setup. Sessions — Better Auth (HTTP-only cookies).
 
-## Сессия и вход
+Logout: боковая панель → **Выйти**.
 
-- Сессии длятся **7 дней** с продлением при активности
-- Выход через **Выйти** в боковой панели
-- Страница входа: `/login`
+## Single admin model
 
-## Первый запуск в продакшене
+UI управления пользователями нет. Одна учётная запись на installation. Для shared access — team password manager и процедуры, не отдельные app users.
 
-После развёртывания за HTTPS:
+## Setup rate limiting
 
-1. Настройте NPM Proxy Host → `ufw-app:8088`
-2. Задайте `APP_URL=https://your-domain.example` в `.env`
-3. Откройте `https://your-domain.example/setup`
-4. Завершите настройку до широкого открытия URL
+Setup attempts limited **5 per minute per client IP** против brute force на fresh installs.
 
-После настройки выполните дымовой тест:
+За Nginx Proxy Manager в production:
 
-```bash
-./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```env
+TRUST_PROXY=1
 ```
+
+Без этого rate limits используют shared bucket и менее точны за proxy.
+
+## Production first visit
+
+1. Deploy stack — см. [Обзор развёртывания](../deployment/overview.md)
+2. Откройте `https://your-domain/setup` (must match `APP_URL`)
+3. Complete setup до широкого exposure URL
+4. Run [smoke tests](../operations/smoke-tests.md)
 
 ## Связанные документы
 

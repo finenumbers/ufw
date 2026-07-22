@@ -1,54 +1,68 @@
 # Operations history
 
-Long-running tasks (apply, refresh, install UFW, port scan) are tracked in **operation logs** and shown in the UI.
+Long-running tasks — apply, sync, refresh, install UFW, port scan — are tracked in **operation logs** and surfaced in the UI.
 
 ## Operation banner
 
-While an operation runs, a banner appears at the top of the app:
+While work runs, a banner appears at the top:
 
-- Operation type and status (RUNNING, SUCCESS, FAILED)
-- Expandable step list with per-step status
-- Auto-dismiss on success after a short delay
+| Element | Description |
+|---------|-------------|
+| Status | RUNNING, PENDING, SUCCESS, FAILED, PARTIAL |
+| Steps | Expandable per-step status |
+| Message | Translated progress or error text |
 
-The banner polls for updates while work is in progress.
+**SUCCESS** auto-dismisses after ~10 seconds. **FAILED** and **PARTIAL** remain until dismissed.
 
-If a banner appears stuck on **RUNNING** or **PENDING** after a browser disconnect, refresh the page. Stale operations are cleared automatically by a background sweep (typically within 30–60 minutes).
+### Polling behaviour (v0.9.2)
+
+- Polls ~**1 second** while operation is RUNNING or PENDING
+- **Stops polling when idle** — no background 5-second loop
+- Restarts when a new operation begins
+- On completion, dispatches event so server pages refresh SSR data
+
+See [Operations and concurrency](../concepts/operations-and-concurrency.md).
+
+### Stuck banner
+
+If banner shows RUNNING after disconnect, refresh the page. Background sweeper marks ancient RUNNING operations failed within ~30–60 minutes.
 
 ## Operations page
 
 Sidebar → **Operations history** (`/operations`)
 
-Two tabs:
-
 | Tab | Content |
 |-----|---------|
-| **Operations** | Technical operation log — apply, sync, refresh, port scan, etc. |
-| **Audit** | Security-relevant events — login, logout, config export |
+| **Operations** | Technical log — apply, sync, refresh, port scan, server create failures |
+| **Audit** | Security events — login, logout, config export, UFW actions |
 
-Both support infinite scroll for older entries.
+Both tabs support infinite scroll for older entries.
 
 ## Operation types
 
-The database stores dotted type names (for example `ufw.refresh`). The UI translates them with underscore keys (for example `ufw_refresh`).
+Database stores dotted names; UI translates them.
 
-Active examples:
+| Type | Description |
+|------|-------------|
+| `apply.rules` | UFW apply session |
+| `ufw.refresh` | Refresh Status — live SSH + rules sync |
+| `ufw.sync` | Background initial sync when no snapshot |
+| `ufw.install` | Remote UFW install and enable |
+| `port.scan` | External port scan |
+| `server.create` | Server create with SSH failure |
 
-- `apply_rules` / `apply.rules` — UFW apply
-- `ufw_refresh` / `ufw.refresh` — Refresh Status (live SSH read + rules sync)
-- `ufw_sync` / `ufw.sync` — background initial sync when no snapshot exists
-- `ufw_install` / `ufw.install` — UFW install (enable runs inside install)
-- `port_scan` / `port.scan` — external port scan
-- `server_create` / `server.create` — new server added
+Legacy (historical entries only):
 
-Legacy (historical log entries only):
-
-- `ssh_test` — from releases before v0.7.4; no longer created
+- `ssh_test` — pre v0.7.4; no longer created
 
 ## Clearing history
 
-Administrators can clear old operation history from the UI (audit events may be retained per retention policy). Clearing does not affect server state or rules.
+**Clear history** removes old operation log entries from the UI/database per retention action. Does not affect servers, rules, or remote UFW.
+
+Audit tab may retain events per policy — see [Audit log and export](../administration/audit-log-and-export.md).
 
 ## Related docs
 
-- [Audit log and export](../administration/audit-log-and-export.md)
+- [Operations and concurrency](../concepts/operations-and-concurrency.md)
 - [Draft and apply workflow](../concepts/draft-apply-workflow.md)
+- [Port scan](./port-scan.md)

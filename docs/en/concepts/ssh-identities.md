@@ -1,52 +1,43 @@
 # SSH identities
 
-An **SSH identity** is a reusable set of credentials (username + password or private key) stored **encrypted** in the application database. Servers reference identities instead of embedding secrets inline.
+An **SSH identity** stores reusable connection credentials: username, authentication method, and encrypted secrets. Each **server** references one identity.
 
-## Why identities exist
+## Authentication methods
 
-| Without identities | With identities |
-|--------------------|-----------------|
-| Duplicate credentials on every server | One identity shared by many servers |
-| Rotating a key means editing every server | Update identity once; all linked servers use new credentials |
-| Harder to audit | Clear mapping: identity → servers |
+| Method | Stored secret | Typical use |
+|--------|---------------|-------------|
+| **Password** | SSH password | Simple lab or legacy hosts |
+| **Private key** | PEM private key | Production keys without passphrase |
+| **Private key + passphrase** | Key and passphrase | Encrypted private keys |
 
-## Auth methods
+Secrets are encrypted at rest with **AES-256-GCM** using `APP_ENCRYPTION_KEY`. They are decrypted only in memory when opening an SSH connection.
 
-- **Password** — username and password encrypted at rest
-- **Private key** — username and PEM private key encrypted at rest
+## Creating and editing
 
-Secrets are encrypted with **AES-256-GCM** using `APP_ENCRYPTION_KEY` from `.env`. If you lose this key, encrypted credentials cannot be recovered.
+1. Sidebar → **SSH Identities**
+2. **Add Identity** or open an existing row → **Edit**
+3. Required fields: display name, SSH username, auth method, secret(s)
 
-## Creating an identity
+On **edit**, leaving password/key fields empty keeps the existing secret unchanged.
 
-1. Open **SSH Identities** in the sidebar (`/identities`)
-2. Click **Add Identity**
-3. Enter name, username, auth method, and secret
-4. Save — credentials are encrypted before storage
+Validation rejects empty names and invalid auth combinations before save.
 
-## Editing and deleting
+## Linking to servers
 
-- **Edit** — you may leave password/key fields empty to keep existing secrets unchanged
-- **Delete** — blocked if any server still uses the identity; reassign or delete those servers first
+When creating or editing a server, select an identity from the dropdown. Changing a server's identity triggers SSH verification on save if connection parameters changed.
 
-## Relationship to servers
+## Deleting an identity
 
-```mermaid
-flowchart LR
-  Identity[SSH_Identity] --> ServerA[Server_A]
-  Identity --> ServerB[Server_B]
-  Identity --> ServerC[Server_C]
-```
-
-Each server record stores a reference to one identity. Changing the identity on a server runs **SSH verification automatically on submit** before save.
+Deletion is blocked while any server still references the identity. The UI lists linked servers. Reassign or delete those servers first.
 
 ## Security notes
 
-- Identity secrets never appear in the UI after save (only placeholders on edit)
-- Config **export** includes plaintext secrets — see [Import and export config](./import-export-config.md)
-- Back up `.env` with `APP_ENCRYPTION_KEY` — see [Backup and restore](../operations/backup-restore.md)
+- Identity secrets appear in **configuration export** (JSON v2) after password confirmation — treat exports as highly sensitive
+- Rotating `APP_ENCRYPTION_KEY` without re-entering secrets makes existing ciphertext unreadable — plan key rotation carefully
+- One identity can be shared by many servers (same admin user, same key)
 
 ## Related docs
 
 - [Servers and SSH](./servers-and-ssh.md)
-- [Manage servers](../user-guide/manage-servers.md)
+- [Import and export config](./import-export-config.md)
+- [Security model](../administration/security-model.md)

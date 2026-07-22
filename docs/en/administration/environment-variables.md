@@ -1,82 +1,93 @@
 # Environment variables
 
-Runtime configuration is supplied via `.env` (Compose) or Portainer environment UI. **Never commit real values to git.**
+Runtime configuration via `.env` (Compose) or Portainer environment UI. **Never commit real values to git.**
 
 ## Required (production)
 
 | Variable | Description | Generate |
 |----------|-------------|----------|
-| `APP_URL` | Public URL of the admin UI (HTTPS for real domains) | Your NPM domain, e.g. `https://ufw.example.com` |
+| `APP_URL` | Public HTTPS URL of admin UI | Your NPM domain, e.g. `https://ufw.example.com` |
 | `POSTGRES_PASSWORD` | Database password | `openssl rand -base64 24` |
-| `BETTER_AUTH_SECRET` | Session signing secret (**min. 32 characters** in production) | `openssl rand -base64 32` |
+| `BETTER_AUTH_SECRET` | Session signing (**min. 32 characters** in production) | `openssl rand -base64 32` |
 | `APP_ENCRYPTION_KEY` | AES key for SSH credentials (32 decoded bytes) | `openssl rand -base64 32` |
-| `NPM_NETWORK` | Docker network name shared with NPM | `docker network ls` |
+| `NPM_NETWORK` | Docker network shared with NPM | `docker network ls` |
+| `TRUST_PROXY` | Set to `1` behind NPM for accurate setup rate limits | `1` |
 
-## GHCR deployment (optional)
+## GHCR deployment
 
-Compose and Portainer stack default to `ghcr.io/finenumbers/ufw-remote-manager:latest`. Each GitHub release updates the `latest` tag.
+Default image: `ghcr.io/finenumbers/ufw-remote-manager:latest` (updated each release).
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `GHCR_OWNER` | GitHub owner (lowercase) | `finenumbers` |
-| `GHCR_IMAGE_TAG` | Image tag (`latest` or pin e.g. `v0.6.1`) | `latest` |
+| `GHCR_IMAGE_TAG` | Tag (`latest` or pin e.g. `v0.9.2`) | `latest` |
 
-Legacy `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` are no longer required — image URLs are built from owner + tag in compose files.
+Pin `GHCR_IMAGE_TAG=v0.9.2` for reproducible deploys; use `latest` for automatic updates on `pull`.
 
-## Optional
+Legacy `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` are no longer used.
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SSH_ALLOWED_CIDRS` | Comma-separated CIDRs allowed as SSH targets | Empty (private IPs blocked) |
-| `TRUST_PROXY` | Set to `1` when the app runs behind Nginx Proxy Manager so setup rate limits use `X-Forwarded-For` | Unset (forwarded headers ignored) |
-| `APP_BIND` | Local compose bind address | `127.0.0.1` |
-| `APP_PORT` | Host port for local compose | `8088` |
-| `POSTGRES_PORT` | Host port for Postgres in dev | `5434` |
-| `LOG_LEVEL` | Pino log level | `info` |
+## Port scan (optional)
 
-## Rate limits (fixed)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT_SCAN_ENABLED` | unset (disabled) | Set `true` to enable UI and pipeline |
+| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Max ports sent to Nmap enrichment |
+| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Full discovery timeout (30 min) |
+| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Enrichment timeout (10 min) |
+| `PORT_SCAN_HISTORY_LIMIT` | `10` | Stored scan runs per server |
 
-Repeat server actions use a **30 second** cooldown per server (not configurable via environment variables):
+Legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` is **ignored**. Repeat scans use fixed **30 second** cooldown in app code.
 
-- UFW status refresh and rules sync
-- Port scan start
+## SSH and proxy
 
-Since **v0.5.1**, legacy variables such as `PORT_SCAN_RATE_LIMIT_WINDOW_MS` are **ignored** if still present in `.env`.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SSH_ALLOWED_CIDRS` | empty | Comma-separated CIDRs allowed as SSH targets |
+| `TRUST_PROXY` | unset | `1` = trust `X-Forwarded-For` for setup rate limit |
 
-In-memory rate-limit buckets are evicted when empty (single-replica deployment only — see [Architecture](../architecture.md)).
+## Local development
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APP_BIND` | `127.0.0.1` | Compose bind address |
+| `APP_PORT` | `8088` | Host port |
+| `POSTGRES_PORT` | `5434` | Host Postgres port |
+| `LOG_LEVEL` | `info` | Pino log level |
+
+## Removed / ignored (historical)
+
+| Variable | Status |
+|----------|--------|
+| Legacy container-inventory env flags (pre-v0.9.0) | Ignored — feature removed in v0.9.0 |
+| `PORT_SCAN_RATE_LIMIT_WINDOW_MS` | Ignored since v0.5.1 |
+
+## Rate limits (fixed in code)
+
+30 second cooldown per server: UFW refresh/sync, port scan start. Not env-configurable.
+
+In-memory buckets — single replica only. See [Architecture](../architecture.md).
 
 ## APP_URL vs internal HTTP
 
-Two different URLs serve different roles:
-
 | Setting | Example | Purpose |
 |---------|---------|---------|
-| **`APP_URL`** | `https://ufw.example.com` | Public URL for Better Auth, cookies, and browser redirects |
-| **NPM Proxy Host scheme** | `http` → `ufw-app:8088` | Internal Docker traffic; NPM terminates TLS |
+| **`APP_URL`** | `https://ufw.example.com` | Browser URL, Better Auth cookies |
+| **NPM → app** | `http://ufw-app:8088` | Internal Docker traffic |
 
-Do **not** set `APP_URL` to the internal container URL. Better Auth requires the public HTTPS domain users type in the browser.
+Do **not** set `APP_URL` to the internal container URL.
 
-In production, `APP_URL` must use **HTTPS** for real hostnames. The only exceptions are `http://localhost` and `http://127.0.0.1` (local smoke tests and CI).
-
-## Production behind NPM
-
-When `ufw-app` sits behind Nginx Proxy Manager on a shared Docker network:
-
-1. Set `TRUST_PROXY=1` in the app environment so `/setup` rate limits use the client IP from `X-Forwarded-For` (NPM sets this header).
-2. Without `TRUST_PROXY`, setup limits use a single shared bucket (`direct`) — acceptable for local dev, not ideal for production.
+Production requires **HTTPS** on `APP_URL` except `localhost` / `127.0.0.1`.
 
 ## How variables reach containers
-
-In `docker-compose.yml`:
 
 ```yaml
 APP_URL: ${APP_URL:-http://localhost:8088}
 BETTER_AUTH_URL: ${APP_URL:-http://localhost:8088}
 ```
 
-The app reads `APP_URL` or `BETTER_AUTH_URL` at runtime (`getPublicAppUrl()`).
+App reads `APP_URL` or `BETTER_AUTH_URL` via `getPublicAppUrl()`.
 
-## Templates and generators
+## Templates
 
 - [`.env.example`](../../../.env.example) — local development
 - [`.env.production.example`](../../../.env.production.example) — production template
@@ -85,4 +96,5 @@ The app reads `APP_URL` or `BETTER_AUTH_URL` at runtime (`getPublicAppUrl()`).
 ## Related docs
 
 - [Security model](./security-model.md)
+- [External port scanning](../deployment/port-scan.md)
 - [GHCR + Compose](../deployment/ghcr-compose.md)

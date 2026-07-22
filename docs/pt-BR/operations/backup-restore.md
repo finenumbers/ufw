@@ -1,58 +1,44 @@
 # Backup e restauração
 
-Todo o estado da aplicação fica no **PostgreSQL** (`ufw-postgres`, volume `ufw_postgres_data`). Segredos em tempo de execução ficam no **`.env`** no host.
+Proteja **dados PostgreSQL** e **segredos do `.env`**. Regras UFW remotas em servidores gerenciados não são armazenadas em backups salvo se capturadas em snapshots dentro do banco.
 
 ## O que fazer backup
 
-| Item | Necessário para recuperação completa |
-|------|---------------------------|
-| Dump do Postgres | Sim |
-| Arquivo `.env` | Sim — `APP_ENCRYPTION_KEY` descriptografa credenciais SSH |
-| JSON de exportação de configuração | Cópia de desastre opcional em texto plano |
+| Item | Contém |
+|------|--------|
+| **Volume Postgres** | Usuários, identidades (criptografadas), servidores, regras, snapshots, scans, auditoria |
+| **Arquivo `.env`** | `APP_ENCRYPTION_KEY`, `BETTER_AUTH_SECRET`, `POSTGRES_PASSWORD`, `APP_URL` |
 
-Nunca faça commit de backups no git.
+Sem `.env`, segredos de identidade criptografados não podem ser descriptografados após restore.
 
-## Encontrar o volume
+Opcional: [exportação JSON v2](../concepts/import-export-config.md) periódica como cópia legível de desastre (inclui segredos descriptografados — criptografe em repouso).
+
+## Backup Postgres
+
+Encontre o volume:
 
 ```bash
 docker volume ls | grep ufw
 docker inspect ufw-postgres --format '{{range .Mounts}}{{.Name}}{{end}}'
 ```
 
-## Backup
-
-### Script automatizado
-
-```bash
-BACKUP_DIR=/var/backups/ufw ENV_FILE=.env ./scripts/backup-postgres.sh
-```
-
-### Dump SQL manual
+Dump lógico (recomendado):
 
 ```bash
 docker exec ufw-postgres pg_dump -U ufw ufw | gzip > ufw-$(date +%F).sql.gz
-install -m 600 .env env-$(date +%F).env
 ```
+
+Armazene dump e `.env` em locais seguros separados.
 
 ## Restaurar
 
-1. Pare a app: `docker compose ... stop app`
-2. Restaure o banco de dados a partir do dump (veja passos detalhados no runbook legado — drop/recreate do BD se precisar de restauração limpa)
-3. Restaure o `.env` correspondente (mesmo `APP_ENCRYPTION_KEY`, `BETTER_AUTH_SECRET`)
+1. Pare o app: `docker compose ... stop app`
+2. Restaure o banco (em volume Postgres vazio ou novo)
+3. Restaure `.env` com **mesmo** `APP_ENCRYPTION_KEY` de quando os dados foram criptografados
 4. `docker compose ... up -d`
-5. `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
+5. Execute [testes de fumaça](./smoke-tests.md)
 
-Sem o `APP_ENCRYPTION_KEY` original, reinsira os segredos de identidade SSH manualmente ou restaure a partir da exportação de configuração em texto plano.
+## Documentos relacionados
 
-## Checklist de recuperação de desastre
-
-1. Restaure `.env` a partir de backup seguro
-2. Restaure dump do Postgres
-3. Confirme que `ufw-migrate` exited 0
-4. Login em `APP_URL/login`
-5. Testar SSH em cada servidor
-
-## Documentação relacionada
-
-- [Atualização e rollback](./upgrade-rollback.md)
 - [Importar e exportar configuração](../concepts/import-export-config.md)
+- [Atualização e rollback](./upgrade-rollback.md)

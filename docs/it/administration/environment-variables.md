@@ -1,88 +1,100 @@
 # Variabili d'ambiente
 
-La configurazione di runtime è fornita tramite `.env` (Compose) o interfaccia variabili d'ambiente Portainer. **Non committare mai valori reali in git.**
+Configurazione di runtime via `.env` (Compose) o UI ambiente Portainer. **Non committate mai valori reali in git.**
 
 ## Obbligatorie (produzione)
 
 | Variabile | Descrizione | Generazione |
 |----------|-------------|----------|
-| `APP_URL` | URL pubblico dell'interfaccia admin (HTTPS per domini reali) | Il tuo dominio NPM, es. `https://ufw.example.com` |
+| `APP_URL` | URL HTTPS pubblico dell'UI admin | Il vostro dominio NPM, es. `https://ufw.example.com` |
 | `POSTGRES_PASSWORD` | Password database | `openssl rand -base64 24` |
-| `BETTER_AUTH_SECRET` | Segreto firma sessione (**min. 32 caratteri** in produzione) | `openssl rand -base64 32` |
+| `BETTER_AUTH_SECRET` | Firma sessione (**min. 32 caratteri** in produzione) | `openssl rand -base64 32` |
 | `APP_ENCRYPTION_KEY` | Chiave AES per credenziali SSH (32 byte decodificati) | `openssl rand -base64 32` |
-| `NPM_NETWORK` | Nome rete Docker condivisa con NPM | `docker network ls` |
+| `NPM_NETWORK` | Rete Docker condivisa con NPM | `docker network ls` |
+| `TRUST_PROXY` | Impostare su `1` dietro NPM per limiti setup accurati | `1` |
 
-## Deployment GHCR (opzionale)
+## Deployment GHCR
 
-Compose e stack Portainer usano per default `ghcr.io/finenumbers/ufw-remote-manager:latest`. Ogni release GitHub aggiorna il tag `latest`.
-
-| Variabile | Descrizione | Predefinito |
-|-----------|-------------|-------------|
-| `GHCR_OWNER` | Proprietario GitHub (minuscolo) | `finenumbers` |
-| `GHCR_IMAGE_TAG` | Tag immagine (`latest` o pin es. `v0.2.1`) | `latest` |
-
-Le variabili legacy `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` non sono più obbligatorie — gli URL delle immagini sono costruiti da owner + tag nei file compose.
-
-## Opzionali
+Immagine predefinita: `ghcr.io/finenumbers/ufw-remote-manager:latest` (aggiornata a ogni release).
 
 | Variabile | Descrizione | Predefinito |
 |----------|-------------|---------|
-| `SSH_ALLOWED_CIDRS` | CIDR separati da virgola consentiti come target SSH | Vuoto (IP privati bloccati) |
-| `TRUST_PROXY` | Imposta a `1` quando l'app è dietro Nginx Proxy Manager così i limiti di frequenza di setup usano `X-Forwarded-For` | Non impostato (header inoltrati ignorati) |
-| `APP_BIND` | Indirizzo bind compose locale | `127.0.0.1` |
-| `APP_PORT` | Porta host per compose locale | `8088` |
-| `POSTGRES_PORT` | Porta host Postgres in dev | `5434` |
-| `LOG_LEVEL` | Livello log Pino | `info` |
+| `GHCR_OWNER` | Proprietario GitHub (minuscolo) | `finenumbers` |
+| `GHCR_IMAGE_TAG` | Tag (`latest` o pin es. `v0.9.2`) | `latest` |
 
-## Limiti di frequenza (fissi)
+Fissate `GHCR_IMAGE_TAG=v0.9.2` per deploy riproducibili; usate `latest` per aggiornamenti automatici al `pull`.
 
-Le server actions ripetute usano un cooldown di **30 secondi** per server (non configurabile tramite variabili d'ambiente):
+Legacy `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` non sono più usati.
 
-- Refresh stato UFW e sync regole
-- Avvio port scan
+## Scansione porte (opzionale)
 
-Da **v0.5.1**, variabili legacy come `PORT_SCAN_RATE_LIMIT_WINDOW_MS` sono **ignorate** se ancora presenti in `.env`.
+| Variabile | Predefinito | Descrizione |
+|----------|---------|-------------|
+| `PORT_SCAN_ENABLED` | non impostato (disabilitato) | Impostare `true` per abilitare UI e pipeline |
+| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Max porte inviate a enrichment Nmap |
+| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Timeout discovery completa (30 min) |
+| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Timeout enrichment (10 min) |
+| `PORT_SCAN_HISTORY_LIMIT` | `10` | Esecuzioni scan memorizzate per server |
 
-I bucket dei limiti di frequenza in memoria vengono eliminati quando vuoti (solo deployment a replica singola — vedi [Architettura](../architecture.md)).
+Legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` è **ignorato**. Le scansioni ripetute usano cooldown fisso di **30 secondi** nel codice app.
+
+## SSH e proxy
+
+| Variabile | Predefinito | Descrizione |
+|----------|---------|-------------|
+| `SSH_ALLOWED_CIDRS` | vuoto | CIDR separati da virgola consentiti come target SSH |
+| `TRUST_PROXY` | non impostato | `1` = fidati di `X-Forwarded-For` per limite setup |
+
+## Sviluppo locale
+
+| Variabile | Predefinito | Descrizione |
+|----------|---------|-------------|
+| `APP_BIND` | `127.0.0.1` | Indirizzo bind Compose |
+| `APP_PORT` | `8088` | Porta host |
+| `POSTGRES_PORT` | `5434` | Porta Postgres host |
+| `LOG_LEVEL` | `info` | Livello log Pino |
+
+## Rimossi / ignorati (storico)
+
+| Variabile | Stato |
+|----------|--------|
+| Variabili legacy inventario container (pre-v0.9.0) | Ignorate — funzione rimossa in v0.9.0 |
+| `PORT_SCAN_RATE_LIMIT_WINDOW_MS` | Ignorato da v0.5.1 |
+
+## Limiti di frequenza (fissi nel codice)
+
+Cooldown 30 secondi per server: refresh/sync UFW, avvio scansione porte. Non configurabili via env.
+
+Bucket in memoria — solo replica singola. Vedi [Architettura](../architecture.md).
 
 ## APP_URL vs HTTP interno
 
-Due URL diversi hanno ruoli diversi:
-
 | Impostazione | Esempio | Scopo |
 |---------|---------|---------|
-| **`APP_URL`** | `https://ufw.example.com` | URL pubblico per Better Auth, cookie e redirect del browser |
-| **Schema Proxy Host NPM** | `http` → `ufw-app:8088` | Traffico Docker interno; NPM termina TLS |
+| **`APP_URL`** | `https://ufw.example.com` | URL browser, cookie Better Auth |
+| **NPM → app** | `http://ufw-app:8088` | Traffico Docker interno |
 
-**Non** impostare `APP_URL` all'URL interno del container. Better Auth richiede il dominio HTTPS pubblico che gli utenti digitano nel browser.
+**Non** impostate `APP_URL` all'URL interno del container.
 
-In produzione, `APP_URL` deve usare **HTTPS** per hostname reali. Le uniche eccezioni sono `http://localhost` e `http://127.0.0.1` (smoke test locali e CI).
-
-## Produzione dietro NPM
-
-Quando `ufw-app` è dietro Nginx Proxy Manager su una rete Docker condivisa:
-
-1. Imposta `TRUST_PROXY=1` nell'ambiente dell'app così i limiti di frequenza di `/setup` usano l'IP client da `X-Forwarded-For` (NPM imposta questo header).
-2. Senza `TRUST_PROXY`, i limiti di setup usano un bucket condiviso singolo (`direct`) — accettabile per dev locale, non ideale per produzione.
+La produzione richiede **HTTPS** su `APP_URL` eccetto `localhost` / `127.0.0.1`.
 
 ## Come le variabili raggiungono i container
-
-In `docker-compose.yml`:
 
 ```yaml
 APP_URL: ${APP_URL:-http://localhost:8088}
 BETTER_AUTH_URL: ${APP_URL:-http://localhost:8088}
 ```
 
-L'app legge `APP_URL` o `BETTER_AUTH_URL` a runtime (`getPublicAppUrl()`).
+L'app legge `APP_URL` o `BETTER_AUTH_URL` via `getPublicAppUrl()`.
 
-## Template e generatori
+## Template
 
 - [`.env.example`](../../../.env.example) — sviluppo locale
 - [`.env.production.example`](../../../.env.production.example) — template produzione
 - [`scripts/generate-production-env.sh`](../../../scripts/generate-production-env.sh) — generatore interattivo
 
-## Documentazione correlata
+## Documenti correlati
 
 - [Modello di sicurezza](./security-model.md)
+- [Scansione porte esterna](../deployment/port-scan.md)
 - [GHCR + Compose](../deployment/ghcr-compose.md)

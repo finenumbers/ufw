@@ -1,54 +1,68 @@
 # Historial de operaciones
 
-Las tareas de larga duración (aplicar, actualizar, instalar UFW, escaneo de puertos) se registran en **registros de operaciones** y se muestran en la interfaz.
+Las tareas de larga duración — aplicar, sincronizar, actualizar, instalar UFW, escaneo de puertos — se rastrean en **registros de operaciones** y se muestran en la interfaz.
 
-## Banner de operación
+## Banner de operaciones
 
-Mientras se ejecuta una operación, aparece un banner en la parte superior de la app:
+Mientras el trabajo está en curso, aparece un banner en la parte superior:
 
-- Tipo y estado de la operación (RUNNING, SUCCESS, FAILED)
-- Lista de pasos expandible con estado por paso
-- Cierre automático tras éxito tras un breve retraso
+| Elemento | Descripción |
+|---------|-------------|
+| Estado | EN CURSO, PENDIENTE, ÉXITO, ERROR, PARCIAL |
+| Pasos | Estado expandible por paso |
+| Mensaje | Texto de progreso o error traducido |
 
-El banner consulta actualizaciones mientras el trabajo está en curso.
+**ÉXITO** se cierra automáticamente tras ~10 segundos. **ERROR** y **PARCIAL** permanecen hasta cerrar.
 
-Si un banner queda atascado en **RUNNING** o **PENDING** tras una desconexión del navegador, actualice la página. Las operaciones obsoletas se limpian automáticamente mediante un barrido en segundo plano (normalmente en 30–60 minutos).
+### Comportamiento de sondeo (v0.9.2)
+
+- Sondea ~**1 segundo** mientras la operación está EN CURSO o PENDIENTE
+- **Deja de sondear cuando está inactivo** — sin bucle de fondo de 5 segundos
+- Se reinicia cuando comienza una nueva operación
+- Al completar, despacha evento para que las páginas de servidor refresquen datos SSR
+
+Consulte [Operaciones y concurrencia](../concepts/operations-and-concurrency.md).
+
+### Banner atascado
+
+Si el banner muestra EN CURSO tras desconexión, actualice la página. El barrido en segundo plano marca operaciones EN CURSO antiguas como fallidas en ~30–60 minutos.
 
 ## Página de operaciones
 
 Barra lateral → **Historial de operaciones** (`/operations`)
 
-Dos pestañas:
-
 | Pestaña | Contenido |
 |---------|-----------|
-| **Operaciones** | Registro técnico — aplicar, sync, actualizar, escaneo de puertos, etc. |
-| **Audit** | Eventos relevantes para seguridad — inicio/cierre de sesión, exportación de configuración |
+| **Registros de operaciones** | Registro técnico — aplicar, sincronizar, actualizar, escaneo de puertos, fallos de creación de servidor |
+| **Eventos de auditoría** | Eventos de seguridad — inicio/cierre de sesión, exportación de configuración, acciones UFW |
 
-Ambas admiten desplazamiento infinito para entradas antiguas.
+Ambas pestañas admiten desplazamiento infinito para entradas antiguas.
 
 ## Tipos de operación
 
-La base de datos almacena nombres de tipo con punto (por ejemplo `ufw.refresh`). La interfaz los traduce con claves con guion bajo (por ejemplo `ufw_refresh`).
+La base de datos almacena nombres con puntos; la interfaz los traduce.
 
-Ejemplos activos:
-
-- `apply_rules` / `apply.rules` — aplicar UFW
-- `ufw_refresh` / `ufw.refresh` — Actualizar estado (lectura SSH en vivo + sync de reglas)
-- `ufw_sync` / `ufw.sync` — sync inicial en segundo plano cuando no hay snapshot
-- `ufw_install` / `ufw.install` — instalar UFW (la activación se ejecuta dentro de la instalación)
-- `port_scan` / `port.scan` — escaneo de puertos externo
-- `server_create` / `server.create` — nuevo servidor añadido
+| Tipo | Descripción |
+|------|-------------|
+| `apply.rules` | Sesión de aplicación UFW |
+| `ufw.refresh` | Actualizar estado — SSH en vivo + sync de reglas |
+| `ufw.sync` | Sincronización inicial en segundo plano sin snapshot |
+| `ufw.install` | Instalación y activación UFW remota |
+| `port.scan` | Escaneo externo de puertos |
+| `server.create` | Creación de servidor con fallo SSH |
 
 Legacy (solo entradas históricas):
 
-- `ssh_test` — de versiones anteriores a v0.7.4; ya no se crea
+- `ssh_test` — pre v0.7.4; ya no se crea
 
 ## Borrar historial
 
-Los administradores pueden borrar el historial antiguo de operaciones desde la interfaz (los eventos de audit pueden conservarse según la política de retención). Borrar no afecta al estado del servidor ni a las reglas.
+**Borrar historial** elimina entradas antiguas del registro de operaciones de la interfaz/base de datos según la acción de retención. No afecta servidores, reglas o UFW remoto.
 
-## Documentación relacionada
+La pestaña de auditoría puede retener eventos según política — consulte [Registro de auditoría y exportación](../administration/audit-log-and-export.md).
 
-- [Registro de audit y exportación](../administration/audit-log-and-export.md)
+## Documentos relacionados
+
+- [Operaciones y concurrencia](../concepts/operations-and-concurrency.md)
 - [Flujo de borrador y aplicación](../concepts/draft-apply-workflow.md)
+- [Escaneo de puertos](./port-scan.md)

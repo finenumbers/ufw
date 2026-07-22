@@ -2,55 +2,93 @@
 
 ## Allgemein
 
-**Was ist UFW Remote Manager?**  
-Eine selbst gehostete Web-Oberfläche zur Verwaltung von UFW-Firewalls auf Remote-Linux-Servern über SSH, mit Entwurf/Anwenden-Workflow und Audit-Protokollierung.
+### Was ist UFW Remote Manager?
 
-**Ist es kostenlos?**  
-Open Source unter MIT-Lizenz. Sie stellen die Infrastruktur bereit (Docker-Host, Domain, SSL).
+Eine selbst gehostete Web-App zur Verwaltung von UFW-Firewalls auf entfernten Linux-Servern über SSH, mit Entwurf/Anwenden-Workflow und Audit-Trail.
 
-**Wer hat es entwickelt?**  
-[Finenumbers](https://finenumbers.com) — siehe [Über Finenumbers](./about.md).
+### Ersetzt sie Nginx Proxy Manager?
 
-## Konten
+Nein. NPM (oder ähnlich) terminiert HTTPS für die Admin-UI. UFW Remote Manager verwaltet **Remote-Server-Firewalls**, nicht Ihren Reverse-Proxy.
 
-**Kann ich mehrere Admin-Benutzer anlegen?**  
-Nicht über Selbstregistrierung. Nur ein Konto wird unter `/setup` erstellt; weitere Anmeldungen sind deaktiviert.
+### Kann ich Docker-Container verwalten?
 
-**Ich habe mein Passwort vergessen.**  
-Zurücksetzen erfordert Datenbankzugriff oder Wiederherstellung aus Backup. Es gibt keinen E-Mail-Reset in der Standardkonfiguration.
+Nein. Docker-Container-Monitoring wurde **in v0.9.0 entfernt**. Die App verwaltet nur UFW-Regeln und optionale externe Portscans.
+
+### Wie viele Admin-Benutzer?
+
+Ein Konto nach der initialen `/setup`. Keine Multi-User-UI.
+
+### Kann ich mehrere App-Repliken betreiben?
+
+Nicht empfohlen. Ratenlimits und Warteschlangen sind In-Memory (Single-Replica-Design).
+
+## SSH und Server
+
+### Warum wird eine private IP abgelehnt?
+
+Standard-Sicherheit — blockiert RFC1918- und Metadaten-Adressen. Setzen Sie `SSH_ALLOWED_CIDRS` für Lab/VPN-Ziele.
+
+### Warum ist Anwenden deaktiviert?
+
+SSH-Host-Key ist möglicherweise **nicht verifiziert**. Führen Sie zuerst **Status aktualisieren** erfolgreich aus.
+
+### Ändert Server löschen Remote-UFW?
+
+Nein. Löschen entfernt nur lokale Verwaltungsdaten.
+
+## Regeln und Anwenden
+
+### Vorschau vs. Bestätigen?
+
+Die Vorschau zeigt geplante Änderungen ohne Ausführung. Bestätigen führt UFW-Befehle über SSH aus.
+
+### Remote hat sich seit der Vorschau geändert?
+
+Apply abgelehnt — **Regeln speichern** (Vorschau) erneut ausführen. In diesem Fall nicht erzwungene Synchronisation verwenden.
+
+### Teilweises Anwenden?
+
+Siehe [Entwurf-und-Anwenden-Workflow](./concepts/draft-apply-workflow.md). **Erzwungene Synchronisation vom Server** verwenden, wenn angezeigt.
+
+### Warum unterscheiden sich Regelzahlen?
+
+**Gespeicherte Regeln** (Listenkarte) vs. **in Tabelle** (Dashboard) zählen Unterschiedliches — siehe [UFW-Regeln und Zustände](./concepts/ufw-rules-and-states.md).
+
+## Vorgangs-UI
+
+### Banner bleibt auf LÄUFT?
+
+Seite aktualisieren. Sweeper bereinigt veraltete Vorgänge innerhalb von ~30–60 Minuten.
+
+### Regeln aktualisieren sich nach Sync nicht?
+
+Seit v0.9.2 sollte das Ende eines Vorgangs eine Seitenaktualisierung auslösen. Einmal manuell im Browser aktualisieren.
+
+## Portscan
+
+### Scan-Button fehlt?
+
+`PORT_SCAN_ENABLED` ist in der App-Umgebung nicht auf `true` gesetzt.
+
+### Scan läuft bereits?
+
+Nur ein aktiver Scan pro Server. Warten oder Vorgangsverlauf prüfen.
+
+### Blockiert der Scan UFW-Refresh?
+
+Nein (seit v0.9.2). Scan läuft außerhalb der SSH-Warteschlange.
 
 ## Bereitstellung
 
-**Brauche ich ein eigenes Docker-Image pro Domain?**  
-Nein. Setzen Sie `APP_URL` in `.env` zur Laufzeit. Ein GHCR-Image funktioniert für jede HTTPS-Domain.
+### Wo Migrationen ausführen?
 
-**Ist Nginx Proxy Manager enthalten?**  
-Nein. NPM (oder ein anderer Reverse Proxy) muss separat installiert werden.
+Im **migrate**- / **ufw-migrate**-Container — nicht in **ufw-app**. Siehe [Bereitstellungsübersicht](./deployment/overview.md).
 
-**Kann ich ohne HTTPS betreiben?**  
-Lokale Entwicklung nutzt `http://localhost:8088`. Die Produktion erwartet HTTPS für sichere Cookies und HSTS.
+### EACCES beim Ausführen von Prisma im App-Container?
 
-## Firewall-Vorgänge
+Erwartet — `docker compose run --rm migrate` verwenden.
 
-**Entfernt das Löschen eines Servers die Remote-UFW-Regeln?**  
-Nein. Es werden nur lokale Datenbankeinträge gelöscht.
+## Verwandte Dokumentation
 
-**Was passiert, wenn Anwenden halb scheitert?**  
-Remote-UFW kann teilweise aktualisiert sein. Verwenden Sie **Erzwungene Synchronisation vom Server** und prüfen Sie den Vorgangsverlauf. Siehe [Entwurf-und-Anwenden-Workflow](./concepts/draft-apply-workflow.md).
-
-**Kann ich Server in privaten IPs verwalten?**  
-Ja, setzen Sie `SSH_ALLOWED_CIDRS` in `.env`, um Ihre internen Bereiche zu erlauben.
-
-## Daten und Sicherheit
-
-**Wo werden SSH-Schlüssel gespeichert?**  
-Verschlüsselt in Postgres mit `APP_ENCRYPTION_KEY`. Der `.env`-Schlüssel ist für die Entschlüsselung zwingend erforderlich.
-
-**Ist Konfigurationsexport sicher?**  
-Der Export enthält **Geheimnisse im Klartext**. Passwort-Neueingabe ist erforderlich; bewahren Sie Exporte sicher auf.
-
-## Support
-
-Kontaktieren Sie **[apps@finenumbers.com](mailto:apps@finenumbers.com)** bei Produktfragen.
-
-Sicherheitslücken: siehe [SECURITY.md](../../SECURITY.md) — keine öffentlichen GitHub-Issues eröffnen.
+- [Fehlerbehebung](./troubleshooting.md)
+- [Einführung](./introduction.md)

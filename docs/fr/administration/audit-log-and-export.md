@@ -1,37 +1,48 @@
 # Journal d'audit et export
 
-Deux couches de journalisation existent : **journaux d'opérations** (techniques) et **événements d'audit** (sécurité/conformité).
+Deux pistes complémentaires : **journaux d'opérations** (progression des tâches) et **événements d'audit** (sécurité et conformité).
 
 ## Événements d'audit
 
-Écrits dans la table `audit_event`. Exemples :
+Écrits dans Postgres sur actions sensibles. Exemples :
 
 | Action | Quand |
 |--------|-------|
-| `LOGIN` | Session utilisateur créée |
-| `LOGOUT` | Session supprimée |
-| `CONFIG_EXPORT` | Configuration serveur exportée (après resaisie du mot de passe) |
+| `LOGIN` / `LOGOUT` | Début/fin de session |
+| `APPLY_PREVIEWED` / `APPLY_CONFIRMED` / `APPLY_COMPLETED` / `APPLY_FAILED` | Workflow d'application |
+| `SNAPSHOT_LOADED` | Snapshot UFW capturé |
+| `UFW_ENABLE` | Activation distante après installation |
+| `PORT_SCAN_STARTED` / `PORT_SCAN_COMPLETED` | Cycle de vie scan de ports |
+| `CONFIG_EXPORT` / `CONFIG_IMPORT` | Transfert configuration JSON v2 |
+| CRUD serveur | Création/mise à jour/suppression d'enregistrements serveur |
 
-Consultez sur **Historique des opérations** → onglet **Audit**.
+Consulter sur **Historique des opérations** → onglet **Événements d'audit** avec défilement infini.
+
+La rétention d'audit suit le stockage base de données — pas de purge automatique sauf si l'opérateur efface l'historique.
 
 ## Journaux d'opérations
 
-Écrits pour les tâches longues : application, actualisation, installation, scan de ports, etc. Inclut les métadonnées d'étapes et messages de succès/échec.
+Enregistrements techniques avec étapes, statut, horodatages et messages d'erreur. Voir [Historique des opérations](../user-guide/operations-history.md).
 
-Consultez sur **Historique des opérations** → onglet **Opérations** ou la **bannière d'opération** en direct.
+## Audit export de configuration
 
-## Piste d'audit d'export de configuration
+Chaque **Enregistrer la configuration** réussi crée une entrée d'audit. Le fichier export contient des **secrets SSH déchiffrés** — protéger comme un dump de coffre-fort de mots de passe.
 
-Chaque export réussi crée un enregistrement d'audit `CONFIG_EXPORT` avec l'ID utilisateur et l'horodatage. Utilisez ceci pour tracer qui a téléchargé des fichiers d'identifiants en clair.
+Flux d'export :
 
-## Rétention
+1. Confirmation mot de passe (réauthentification)
+2. Jeton de téléchargement à courte durée de vie
+3. Téléchargement JSON via route API
 
-La rétention des snapshots conserve les **10** derniers snapshots par serveur (purge automatique des plus anciens). La rétention des journaux d'opérations peut être effacée manuellement depuis l'interface.
+Limite de débit : 5 exports par minute par utilisateur.
 
-Planifiez une politique de sauvegarde pour les données d'audit si la conformité exige une rétention longue — voir [Sauvegarde et restauration](../operations/backup-restore.md).
+## Effacer l'historique
+
+**Effacer l'historique** sur la page opérations retire les entrées de journal d'opérations selon l'action UI. Ne restaure pas les modifications serveur ni ne supprime tous les événements d'audit dans tous les cas — confirmer le texte de la boîte de dialogue pour le comportement actuel.
+
+Ne modifie pas UFW distant ni les brouillons de règles locaux.
 
 ## Documentation associée
 
 - [Import et export de configuration](../concepts/import-export-config.md)
-- [Historique des opérations](../user-guide/operations-history.md)
-- [SECURITY.md](../../../SECURITY.md)
+- [Modèle de sécurité](./security-model.md)

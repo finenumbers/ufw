@@ -1,88 +1,100 @@
 # Переменные окружения
 
-Конфигурация runtime задаётся через `.env` (Compose) или UI переменных окружения Portainer. **Никогда не коммитьте реальные значения в git.**
+Runtime configuration via `.env` (Compose) or Portainer environment UI. **Never commit real values to git.**
 
-## Обязательные (продакшен)
+## Required (production)
 
-| Переменная | Описание | Генерация |
-|------------|----------|-----------|
-| `APP_URL` | Публичный URL админ-интерфейса (HTTPS для реальных доменов) | Домен NPM, напр. `https://ufw.example.com` |
-| `POSTGRES_PASSWORD` | Пароль базы данных | `openssl rand -base64 24` |
-| `BETTER_AUTH_SECRET` | Секрет подписи сессий (**мин. 32 символа** в продакшене) | `openssl rand -base64 32` |
-| `APP_ENCRYPTION_KEY` | AES-ключ для SSH-учётных данных (32 декодированных байта) | `openssl rand -base64 32` |
-| `NPM_NETWORK` | Имя Docker-сети, общей с NPM | `docker network ls` |
+| Variable | Description | Generate |
+|----------|-------------|----------|
+| `APP_URL` | Public HTTPS URL of admin UI | Your NPM domain, e.g. `https://ufw.example.com` |
+| `POSTGRES_PASSWORD` | Database password | `openssl rand -base64 24` |
+| `BETTER_AUTH_SECRET` | Session signing (**min. 32 characters** in production) | `openssl rand -base64 32` |
+| `APP_ENCRYPTION_KEY` | AES key for SSH credentials (32 decoded bytes) | `openssl rand -base64 32` |
+| `NPM_NETWORK` | Docker network shared with NPM | `docker network ls` |
+| `TRUST_PROXY` | Set to `1` behind NPM for accurate setup rate limits | `1` |
 
-## Развёртывание GHCR (опционально)
+## GHCR deployment
 
-Compose и Portainer stack по умолчанию используют `ghcr.io/finenumbers/ufw-remote-manager:latest`. Каждый GitHub release обновляет тег `latest`.
+Default image: `ghcr.io/finenumbers/ufw-remote-manager:latest` (updated each release).
 
-| Переменная | Описание | По умолчанию |
-|------------|----------|--------------|
-| `GHCR_OWNER` | Владелец GitHub (lowercase) | `finenumbers` |
-| `GHCR_IMAGE_TAG` | Тег образа (`latest` или фиксация, напр. `v0.2.1`) | `latest` |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `GHCR_OWNER` | GitHub owner (lowercase) | `finenumbers` |
+| `GHCR_IMAGE_TAG` | Tag (`latest` or pin e.g. `v0.9.2`) | `latest` |
 
-Устаревшие `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` больше не требуются — URL образов собираются из owner + tag в compose-файлах.
+Pin `GHCR_IMAGE_TAG=v0.9.2` for reproducible deploys; use `latest` for automatic updates on `pull`.
 
-## Опциональные
+Legacy `GHCR_APP_IMAGE` / `GHCR_MIGRATE_IMAGE` / `IMAGE_TAG` are no longer used.
 
-| Переменная | Описание | По умолчанию |
-|------------|----------|--------------|
-| `SSH_ALLOWED_CIDRS` | Разрешённые CIDR через запятую как SSH-цели | Пусто (частные IP блокируются) |
-| `TRUST_PROXY` | Задайте `1`, если приложение работает за Nginx Proxy Manager — rate limits `/setup` используют `X-Forwarded-For` | Не задано (forwarded headers игнорируются) |
-| `APP_BIND` | Адрес bind для локального compose | `127.0.0.1` |
-| `APP_PORT` | Порт хоста для локального compose | `8088` |
-| `POSTGRES_PORT` | Порт хоста для Postgres в dev | `5434` |
-| `LOG_LEVEL` | Уровень логов Pino | `info` |
+## Port scan (optional)
 
-## Rate limits (фиксированные)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT_SCAN_ENABLED` | unset (disabled) | Set `true` to enable UI and pipeline |
+| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Max ports sent to Nmap enrichment |
+| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Full discovery timeout (30 min) |
+| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Enrichment timeout (10 min) |
+| `PORT_SCAN_HISTORY_LIMIT` | `10` | Stored scan runs per server |
 
-Повторные действия на одном сервере имеют cooldown **30 секунд** (не настраивается через переменные окружения):
+Legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` is **ignored**. Repeat scans use fixed **30 second** cooldown in app code.
 
-- Обновление статуса UFW и sync правил
-- Запуск port scan
+## SSH and proxy
 
-С **v0.5.1** устаревшие переменные `PORT_SCAN_RATE_LIMIT_WINDOW_MS` **игнорируются**, если остались в `.env`.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SSH_ALLOWED_CIDRS` | empty | Comma-separated CIDRs allowed as SSH targets |
+| `TRUST_PROXY` | unset | `1` = trust `X-Forwarded-For` for setup rate limit |
 
-In-memory buckets rate limit очищаются при опустошении (только single-replica — см. [Архитектура](../architecture.md)).
+## Local development
 
-## APP_URL vs внутренний HTTP
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APP_BIND` | `127.0.0.1` | Compose bind address |
+| `APP_PORT` | `8088` | Host port |
+| `POSTGRES_PORT` | `5434` | Host Postgres port |
+| `LOG_LEVEL` | `info` | Pino log level |
 
-Два разных URL для разных ролей:
+## Removed / ignored (historical)
 
-| Настройка | Пример | Назначение |
-|-----------|--------|------------|
-| **`APP_URL`** | `https://ufw.example.com` | Публичный URL для Better Auth, cookies и редиректов браузера |
-| **NPM Proxy Host scheme** | `http` → `ufw-app:8088` | Внутренний Docker-трафик; TLS завершает NPM |
+| Variable | Status |
+|----------|--------|
+| Legacy container-inventory env flags (pre-v0.9.0) | Ignored — feature removed in v0.9.0 |
+| `PORT_SCAN_RATE_LIMIT_WINDOW_MS` | Ignored since v0.5.1 |
 
-**Не** указывайте `APP_URL` как внутренний URL контейнера. Better Auth требует публичный HTTPS-домен, который вводит пользователь.
+## Rate limits (fixed in code)
 
-В продакшене `APP_URL` должен быть **HTTPS** для реальных имён хостов. Исключения: `http://localhost` и `http://127.0.0.1` (локальные smoke-тесты и CI).
+30 second cooldown per server: UFW refresh/sync, port scan start. Not env-configurable.
 
-## Продакшен за NPM
+In-memory buckets — single replica only. See [Архитектура](../architecture.md).
 
-Когда `ufw-app` за Nginx Proxy Manager в общей Docker-сети:
+## APP_URL vs internal HTTP
 
-1. Задайте `TRUST_PROXY=1` в окружении приложения, чтобы rate limits `/setup` использовали IP клиента из `X-Forwarded-For` (NPM выставляет этот заголовок).
-2. Без `TRUST_PROXY` лимиты setup используют один общий bucket (`direct`) — допустимо для local dev, не идеально для продакшена.
+| Setting | Example | Purpose |
+|---------|---------|---------|
+| **`APP_URL`** | `https://ufw.example.com` | Browser URL, Better Auth cookies |
+| **NPM → app** | `http://ufw-app:8088` | Internal Docker traffic |
 
-## Как переменные попадают в контейнеры
+Do **not** set `APP_URL` to the internal container URL.
 
-В `docker-compose.yml`:
+Production requires **HTTPS** on `APP_URL` except `localhost` / `127.0.0.1`.
+
+## How variables reach containers
 
 ```yaml
 APP_URL: ${APP_URL:-http://localhost:8088}
 BETTER_AUTH_URL: ${APP_URL:-http://localhost:8088}
 ```
 
-Приложение читает `APP_URL` или `BETTER_AUTH_URL` во время выполнения (`getPublicAppUrl()`).
+App reads `APP_URL` or `BETTER_AUTH_URL` via `getPublicAppUrl()`.
 
-## Шаблоны и генераторы
+## Templates
 
-- [`.env.example`](../../../.env.example) — локальная разработка
-- [`.env.production.example`](../../../.env.production.example) — шаблон продакшена
-- [`scripts/generate-production-env.sh`](../../../scripts/generate-production-env.sh) — интерактивный генератор
+- [`.env.example`](../../../.env.example) — local development
+- [`.env.production.example`](../../../.env.production.example) — production template
+- [`scripts/generate-production-env.sh`](../../../scripts/generate-production-env.sh) — interactive generator
 
 ## Связанные документы
 
 - [Модель безопасности](./security-model.md)
+- [Внешнее сканирование портов](../deployment/port-scan.md)
 - [GHCR + Compose](../deployment/ghcr-compose.md)

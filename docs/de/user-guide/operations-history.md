@@ -1,54 +1,68 @@
 # Vorgangsverlauf
 
-Langlaufende Aufgaben (Anwenden, Aktualisieren, UFW installieren, Port-Scan) werden in **Vorgangsprotokollen** erfasst und in der UI angezeigt.
+Langlaufende Aufgaben — Apply, Sync, Refresh, UFW installieren, Portscan — werden in **Vorgangsprotokollen** erfasst und in der UI angezeigt.
 
 ## Vorgangsbanner
 
-Während ein Vorgang läuft, erscheint oben in der App ein Banner:
+Während Arbeit läuft, erscheint oben ein Banner:
 
-- Vorgangstyp und Status (RUNNING, SUCCESS, FAILED)
-- Ausklappbare Schrittliste mit Status pro Schritt
-- Automatisches Ausblenden bei Erfolg nach kurzer Verzögerung
+| Element | Beschreibung |
+|---------|--------------|
+| Status | RUNNING, PENDING, SUCCESS, FAILED, PARTIAL |
+| Schritte | Aufklappbarer Schrittstatus |
+| Nachricht | Übersetzter Fortschritts- oder Fehlertext |
 
-Das Banner pollt während der Ausführung auf Updates.
+**SUCCESS** schließt sich nach ~10 Sekunden automatisch. **FAILED** und **PARTIAL** bleiben bis zum Schließen.
 
-Bleibt ein Banner nach einer Browser-Trennung auf **RUNNING** oder **PENDING** hängen, laden Sie die Seite neu. Veraltete Vorgänge werden automatisch durch einen Hintergrund-Sweep bereinigt (typischerweise innerhalb von 30–60 Minuten).
+### Polling-Verhalten (v0.9.2)
+
+- Pollt ~**1 Sekunde**, während Vorgang RUNNING oder PENDING ist
+- **Stoppt Polling im Idle-Zustand** — keine Hintergrund-5-Sekunden-Schleife
+- Startet neu, wenn ein neuer Vorgang beginnt
+- Bei Abschluss dispatcht Event, damit Serverseiten SSR-Daten aktualisieren
+
+Siehe [Vorgänge und Nebenläufigkeit](../concepts/operations-and-concurrency.md).
+
+### Hängendes Banner
+
+Wenn Banner nach Trennung RUNNING zeigt, Seite aktualisieren. Hintergrund-Sweeper markiert sehr alte RUNNING-Vorgänge innerhalb von ~30–60 Minuten als fehlgeschlagen.
 
 ## Vorgangsseite
 
 Seitenleiste → **Vorgangsverlauf** (`/operations`)
 
-Zwei Tabs:
-
 | Tab | Inhalt |
 |-----|--------|
-| **Vorgänge** | Technisches Vorgangsprotokoll — Anwenden, Sync, Aktualisieren, Port-Scan usw. |
-| **Audit** | Sicherheitsrelevante Ereignisse — Anmeldung, Abmeldung, Konfigurationsexport |
+| **Vorgänge** | Technisches Protokoll — Apply, Sync, Refresh, Portscan, Server-Erstellungsfehler |
+| **Audit** | Sicherheitsereignisse — Anmeldung, Abmeldung, Konfigurationsexport, UFW-Aktionen |
 
-Beide unterstützen unendliches Scrollen für ältere Einträge.
+Beide Tabs unterstützen unendliches Scrollen für ältere Einträge.
 
 ## Vorgangstypen
 
-In der Datenbank werden Typnamen mit Punkt gespeichert (z. B. `ufw.refresh`). Die UI übersetzt sie mit Unterstrich-Schlüsseln (z. B. `ufw_refresh`).
+Datenbank speichert dotted names; UI übersetzt sie.
 
-Aktive Beispiele:
+| Typ | Beschreibung |
+|-----|--------------|
+| `apply.rules` | UFW-Apply-Sitzung |
+| `ufw.refresh` | Status aktualisieren — Live-SSH + Regel-Sync |
+| `ufw.sync` | Hintergrund-Initial-Sync ohne Snapshot |
+| `ufw.install` | Remote-UFW installieren und aktivieren |
+| `port.scan` | Externer Portscan |
+| `server.create` | Server erstellen mit SSH-Fehler |
 
-- `apply_rules` / `apply.rules` — UFW anwenden
-- `ufw_refresh` / `ufw.refresh` — Status aktualisieren (Live-SSH-Lesen + Regel-Sync)
-- `ufw_sync` / `ufw.sync` — Hintergrund-Initial-Sync, wenn kein Snapshot existiert
-- `ufw_install` / `ufw.install` — UFW installieren (Aktivierung läuft innerhalb der Installation)
-- `port_scan` / `port.scan` — externer Port-Scan
-- `server_create` / `server.create` — neuer Server hinzugefügt
+Legacy (nur historische Einträge):
 
-Legacy (nur historische Protokolleinträge):
-
-- `ssh_test` — aus Releases vor v0.7.4; wird nicht mehr erzeugt
+- `ssh_test` — vor v0.7.4; wird nicht mehr erstellt
 
 ## Verlauf löschen
 
-Administratoren können alten Vorgangsverlauf in der UI löschen (Audit-Ereignisse können gemäß Aufbewahrungsrichtlinie erhalten bleiben). Das Löschen beeinflusst weder Serverstatus noch Regeln.
+**Verlauf löschen** entfernt alte Vorgangsprotokoll-Einträge aus UI/Datenbank gemäß Retention-Aktion. Betrifft nicht Server, Regeln oder Remote-UFW.
+
+Audit-Tab kann Ereignisse gemäß Richtlinie behalten — siehe [Audit-Log und Export](../administration/audit-log-and-export.md).
 
 ## Verwandte Dokumentation
 
-- [Audit-Protokoll und Export](../administration/audit-log-and-export.md)
-- [Entwurf- und Anwenden-Workflow](../concepts/draft-apply-workflow.md)
+- [Vorgänge und Nebenläufigkeit](../concepts/operations-and-concurrency.md)
+- [Entwurf-und-Anwenden-Workflow](../concepts/draft-apply-workflow.md)
+- [Portscan](./port-scan.md)

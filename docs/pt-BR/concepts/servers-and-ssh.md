@@ -1,73 +1,51 @@
 # Servidores e SSH
 
-Um registro de **servidor** representa um host Linux que você gerencia. O app conecta via SSH para executar comandos UFW e ler o estado do firewall.
+Um registro de **servidor** armazena nome de exibição, host, porta, identidade SSH e impressão digital opcional da chave host. Todo trabalho UFW remoto passa por este registro.
 
-## Campos do servidor
+## Validação de host
 
-| Campo | Propósito |
-|-------|-----------|
-| **Nome** | Rótulo exibido na barra lateral |
-| **Host** | Endereço IP ou nome DNS (validado antes de salvar) |
-| **Porta** | Porta SSH (padrão 22) |
-| **Identidade SSH** | Credenciais usadas para conexão |
+Antes de salvar, o app valida o host de destino:
 
-## Validação de host (proteção SSRF)
+| Verificação | Comportamento padrão |
+|-------------|---------------------|
+| Faixas de IP privado | **Rejeitadas** (RFC1918, loopback, link-local) |
+| IPs metadata de cloud | **Rejeitados** |
+| Hostnames / IPs públicos | Permitidos |
+| Lista de permissão personalizada | Defina `SSH_ALLOWED_CIDRS` para faixas privadas específicas (lab/VPN) |
 
-Antes de um servidor ser salvo, o host é validado:
+A resolução DNS é validada quando aplicável para que erros de digitação falhem cedo.
 
-- Faixas de IP privadas (10.x, 172.16–31, 192.168.x) são **bloqueadas** por padrão
-- Endereços link-local e de metadados de cloud são bloqueados
-- Endereços IPv6 privados mapeados para IPv4 são bloqueados
-- Allowlist opcional: defina `SSH_ALLOWED_CIDRS` em `.env` (ex.: `10.0.0.0/8`) para redes internas
+## Verificação de conexão
 
-Isso impede que a aplicação seja usada como proxy para escanear redes internas.
+**Criar servidor** e **Editar servidor** (quando host, porta ou identidade mudam) executam teste de conexão SSH automaticamente. Não há botão separado *Testar conexão* no formulário de edição.
 
-## Verificação de resolução DNS
+Mensagens de falha apontam para reachability, credenciais, firewall ou validação de host — veja [Solução de problemas](../troubleshooting.md).
 
-A validação ocorre em duas etapas:
+## Chaves host SSH (trust on first use)
 
-1. **Ao salvar** — a string do hostname é verificada (literais privados, hosts de metadados, allowlist CIDR opcional).
-2. **Antes de conectar** — o hostname é resolvido para um IP e o **endereço resolvido** é verificado com as mesmas regras.
+Na primeira conexão bem-sucedida, a impressão digital da chave host é armazenada e marcada como **verificada**.
 
-Isso fecha lacunas de DNS rebinding onde um hostname público depois resolve para um IP privado ou de metadados.
+| Estado | UI | Aplicar regras |
+|--------|-----|----------------|
+| **Verificada** | Impressão digital na página de edição | Permitido após refresh |
+| **Não verificada** | Aviso no painel e na página de edição | **Salvar regras** (apply) bloqueado até **Atualizar status** ter sucesso |
 
-## Verificação SSH ao salvar
+Isso reduz risco MITM na primeira conexão. Para confiar em nova chave após rebuild do servidor, atualize o servidor ou limpe e reverifique via refresh.
 
-Criar ou atualizar um servidor (host, porta ou mudança de identidade) executa um **teste de conexão SSH automaticamente ao enviar**. Não há botão de teste separado — o salvamento fica bloqueado até a verificação passar.
+Servidores importados da configuração podem chegar com impressões digitais armazenadas — verifique com **Atualizar status** antes de aplicar regras.
 
-Na primeira verificação bem-sucedida, a impressão digital da chave host é armazenada e o servidor é marcado como **verificado**.
+## Sudo e UFW
 
-## Fixação de chave host SSH
+Comandos remotos assumem que o usuário SSH pode executar `ufw` — tipicamente via sudo sem senha para `ufw` ou root. O app envolve comandos apt install em `sudo` quando necessário para **Instalar UFW**.
 
-| Estado | Significado |
-|--------|-------------|
-| **Verificada** | Chave registrada após salvamento create/update bem-sucedido ou **Atualizar status** |
-| **Não verificada** | Chave importada da configuração — execute **Atualizar status** no painel do servidor para verificar |
+Garanta que `/etc/sudoers` permita os comandos necessários para seu usuário escolhido.
 
-A página de edição mostra a impressão digital e um aviso não verificado, mas não executa verificação até você salvar configurações de conexão alteradas ou usar **Atualizar status** no painel.
+## Servidores duplicados
 
-Se a chave host remota mudar (reinstalação, MITM), a próxima conexão falha até você investigar.
+A mesma combinação host + porta + identidade não pode ser registrada duas vezes. Use nomes distintos se gerenciar intencionalmente o mesmo host por contas diferentes (identidades diferentes).
 
-## O que a exclusão de um servidor faz
-
-Excluir um servidor remove **apenas** dados locais:
-
-- Rascunhos de regras, snapshots, sessões de apply, histórico de operações desse servidor
-
-**Não** altera regras UFW no host Linux remoto. O estado do firewall remoto permanece como está.
-
-## Ciclo de vida UFW em um servidor
-
-No painel do servidor você pode:
-
-1. **Atualizar status** — detectar se UFW está instalado e ativo (usa snapshot em cache até a atualização)
-2. **Instalar UFW** se ausente — instalação e ativação ocorrem juntas em uma operação
-3. Editar e aplicar regras quando UFW está instalado **e** ativo
-
-A edição de regras está disponível apenas quando UFW está instalado **e** ativo.
-
-## Documentação relacionada
+## Documentos relacionados
 
 - [Identidades SSH](./ssh-identities.md)
 - [Gerenciar servidores](../user-guide/manage-servers.md)
-- [Solução de problemas](../troubleshooting.md)
+- [Variáveis de ambiente](../administration/environment-variables.md) — `SSH_ALLOWED_CIDRS`

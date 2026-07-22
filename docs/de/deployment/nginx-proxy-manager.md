@@ -1,18 +1,16 @@
 # Nginx Proxy Manager
 
-Nginx Proxy Manager (NPM) muss auf Ihrem Docker-Host **bereits installiert** sein. Dieses Projekt stellt NPM nicht bereit.
+Nginx Proxy Manager (NPM) muss auf Ihrem Docker-Host **bereits installiert** sein. Dieses Projekt deployt NPM nicht.
 
-## Datenfluss
+## Traffic-Flow
 
 ```
 Internet → NPM:443 (TLS) → ufw-app:8088 (HTTP, Docker-Netzwerk)
 ```
 
-NPM beendet HTTPS. Die App setzt HSTS in der Produktion, verlässt sich aber auf NPM für Zertifikate.
+NPM terminiert HTTPS. Die App setzt HSTS in Produktion, verlässt sich aber auf NPM für Zertifikate.
 
 ## Proxy-Host-Checkliste
-
-Erstellen oder aktualisieren Sie einen **Proxy Host** in der NPM-UI:
 
 | Feld | Wert |
 |------|------|
@@ -27,17 +25,13 @@ Erstellen oder aktualisieren Sie einen **Proxy Host** in der NPM-UI:
 
 ## Docker-Netzwerk
 
-Der App-Container muss dem **selben Docker-Netzwerk** wie NPM beitreten.
-
-In `.env` setzen:
+App-Container muss im **selben Docker-Netzwerk** wie NPM sein.
 
 ```bash
 NPM_NETWORK=nginxproxymanager_default
 ```
 
-(`docker-compose.prod.yml` verbindet `ufw-app` mit dem externen Netzwerk `npm_proxy` → `$NPM_NETWORK`.)
-
-Netzwerkname ermitteln:
+`docker-compose.prod.yml` hängt `ufw-app` an externes Netzwerk von `$NPM_NETWORK`.
 
 ```bash
 docker network ls | grep -i proxy
@@ -45,45 +39,37 @@ docker network ls | grep -i proxy
 
 ## APP_URL muss übereinstimmen
 
-`APP_URL` in `.env` muss exakt der öffentlichen URL entsprechen (Schema + Host):
-
 ```bash
 APP_URL=https://ufw.example.com
 ```
 
-Abweichungen verursachen Auth-Redirect-Schleifen oder defekte Cookies.
+Muss NPM-Proxy-Host-Domain exakt entsprechen (Scheme + Host). Better-Auth-Cookies hängen davon ab.
 
-## APP_URL vs. Proxy-Host-Schema
+## Internes HTTP ist beabsichtigt
 
-| Schicht | Schema | Beispiel |
-|---------|--------|----------|
-| Browser / `APP_URL` | **HTTPS** | `https://ufw.example.com` |
-| NPM → Container | **HTTP** | `http://ufw-app:8088` |
+NPM terminiert TLS. Traffic NPM → `ufw-app:8088` ist unverschlüsseltes HTTP im Docker-Netzwerk — **beabsichtigt**, keine Fehlkonfiguration.
 
-NPM beendet TLS. Der App-Container lauscht im Docker-Netzwerk auf unverschlüsseltem HTTP — das ist **Absicht**, keine Fehlkonfiguration.
-
-Setzen Sie `APP_URL` nur auf die öffentliche HTTPS-URL. Zeigen Sie `APP_URL` niemals auf `http://ufw-app:8088`.
+`APP_URL` **nicht** auf `http://ufw-app:8088` setzen.
 
 ## TRUST_PROXY
 
-Bei Betrieb hinter NPM in `.env` oder Portainer-Stack-Umgebung setzen:
+In App-Umgebung setzen, wenn hinter NPM:
 
-```bash
+```env
 TRUST_PROXY=1
 ```
 
-Damit verwenden Rate Limits auf `/setup` die echte Client-IP aus `X-Forwarded-For`. Siehe [Umgebungsvariablen](../administration/environment-variables.md).
+Stellt sicher, dass Setup-Ratenlimits echte Client-IP aus `X-Forwarded-For` nutzen.
 
-## Lokaler Build (ohne GHCR)
+## Lokale Build-Alternative
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-Dieselben NPM-Proxy-Host-Einstellungen gelten.
+Gleiche NPM-Checkliste gilt.
 
 ## Verwandte Dokumentation
 
-- [Bereitstellungsübersicht](./overview.md)
+- [Umgebungsvariablen](../administration/environment-variables.md)
 - [GHCR + Compose](./ghcr-compose.md)
-- [Fehlerbehebung](../troubleshooting.md)

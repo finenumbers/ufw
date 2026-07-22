@@ -1,42 +1,45 @@
 # Initial setup
 
-On first launch, UFW Remote Manager has **no users**. You must create the administrator account once.
+First launch creates the only administrator account. After that, registration is permanently disabled.
 
 ## Setup page (`/setup`)
 
-1. Open the application URL (e.g. `http://localhost:8088` or your `APP_URL`)
-2. You are redirected to `/setup` automatically
-3. Enter name, email, password, and password confirmation
-4. Click **Complete Setup**
+Available when **no user exists** in the database:
 
-After success, you are logged in and redirected to the servers list.
+1. Open `http://localhost:8088/setup` (or your `APP_URL/setup`)
+2. Enter email and password
+3. Submit — you are signed in and redirected to the app
 
-## Single administrator policy
+If a user already exists, `/setup` redirects to `/login`.
 
-Registration is **disabled** after the first account exists. There is no self-service sign-up for additional users in the current version.
+## Login (`/login`)
 
-To add another person, they would share the admin credentials (not recommended) or you operate with one admin account per instance.
+Use the email and password from setup. Sessions are managed by Better Auth (HTTP-only cookies).
 
-## Session and login
+Logout: sidebar → **Logout**.
 
-- Sessions last **7 days** with sliding refresh
-- Log out via sidebar **Logout**
-- Login page: `/login`
+## Single admin model
 
-## Production first run
+There is no user management UI. One account per installation. For shared access, use a team password manager and operational procedures — not separate app users.
 
-After deploying behind HTTPS:
+## Setup rate limiting
 
-1. Configure NPM Proxy Host → `ufw-app:8088`
-2. Set `APP_URL=https://your-domain.example` in `.env`
-3. Open `https://your-domain.example/setup`
-4. Complete setup before exposing the URL broadly
+Setup attempts are limited to **5 per minute per client IP** to slow brute force on fresh installs.
 
-Run smoke test after setup:
+When the app runs behind Nginx Proxy Manager in production, set:
 
-```bash
-./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```env
+TRUST_PROXY=1
 ```
+
+Without it, rate limits use a single shared bucket and may be less accurate behind a proxy.
+
+## Production first visit
+
+1. Deploy stack — see [Deployment overview](../deployment/overview.md)
+2. Open `https://your-domain/setup` (must match `APP_URL`)
+3. Complete setup before exposing the URL broadly
+4. Run [smoke tests](../operations/smoke-tests.md)
 
 ## Related docs
 

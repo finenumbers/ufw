@@ -1,99 +1,73 @@
 # Модель безопасности
 
-На этой странице объясняется, как UFW Remote Manager защищает учётные данные, сессии и сетевые границы.
+UFW Remote Manager — **privileged admin tool**: хранит SSH secrets, выполняет remote firewall commands и exposes web UI. Design assumptions и controls documented here.
 
-Для сообщения об уязвимостях см. [SECURITY.md](../../../SECURITY.md) (английский, каноническая версия).
+## Threat model (summary)
 
-## Аутентификация
+| Asset | Risk | Mitigation |
+|-------|------|------------|
+| SSH credentials | Disclosure | AES-256-GCM at rest; decrypted only for connections |
+| Session cookie | Hijack | HTTPS, HTTP-only cookies, `BETTER_AUTH_SECRET` |
+| Host impersonation | MITM on SSH | Host key fingerprint on first connect; unverified blocks apply |
+| Unauthorized admin | Brute force | Single user; setup rate limit; strong passwords |
+| CSRF / XSS | Account abuse | Framework defaults, CSP in production |
+| Config export file | Secret leak | Password step-up; operator responsibility |
 
-- **Better Auth** с email/паролем
-- Одна учётная запись администратора после первоначальной настройки — без публичной регистрации
-- Cookie сессий; `BETTER_AUTH_SECRET` обязателен в продакшене
-- Rate limiting на эндпоинтах аутентификации (в памяти, одна реплика)
+App **does not** implement per-server ACLs — any logged-in admin can manage all servers.
 
-## Шифрование учётных данных
+## Authentication
 
-SSH-пароли и приватные ключи шифруются **AES-256-GCM** перед сохранением.
+- Better Auth email/password sessions
+- Registration disabled after first user (`/setup` once)
+- Logout clears session; login/logout audited
 
-| Секрет | Назначение |
-|--------|------------|
-| `APP_ENCRYPTION_KEY` | Шифрует/расшифровывает секреты идентификаций (32 байта, base64) |
-| `BETTER_AUTH_SECRET` | Подписывает токены сессий |
+Run only over **HTTPS** in production (`APP_URL` must use https except localhost).
 
-**Если `APP_ENCRYPTION_KEY` потерян, зашифрованные SSH-учётные данные восстановить нельзя** — только повторный ручной ввод или восстановление из резервной копии экспорта конфигурации.
+## Encryption at rest
 
-## Безопасность SSH
+| Secret | Key |
+|--------|-----|
+| Identity passwords and keys | `APP_ENCRYPTION_KEY` (32 bytes) |
+| Session signing | `BETTER_AUTH_SECRET` (min 32 chars in prod) |
 
-- Проверка хоста блокирует SSRF к частным/metadata адресам при сохранении
-- **Проверка DNS-резолва:** перед каждым SSH-подключением и port scan резолвленный IP проверяется снова — блокирует DNS rebinding к частным/metadata адресам, даже если hostname выглядел безопасным при сохранении
-- Опционально `SSH_ALLOWED_CIDRS` для внутренних сетей
-- Закрепление host key при первом успешном **Обновить статус** (SSH-подключение) или при успешном сохранении при создании/обновлении сервера
-- Импорт конфигурации **не** закрепляет host key автоматически — импортированные серверы остаются `sshHostKeyVerified: false`, пока оператор не выполнит Обновить статус
-- Apply и установка UFW заблокированы, пока host key не проверен
-- **Остаточный риск TOFU:** первое Обновить статус доверяет ключу в этот момент (стандартный SSH TOFU). Злоумышленник, контролирующий сеть при первом подключении, может закрепить вредоносный ключ; для критичных хостов проверяйте fingerprint вне полосы
-- Command injection предотвращается через allowlisted enums и санитизированную сборку команд UFW
+Rotating `APP_ENCRYPTION_KEY` without re-importing identities renders stored ciphertext unusable.
 
-## Внешнее сканирование портов (опционально)
+## Network exposure
 
-При `PORT_SCAN_ENABLED=true`:
+Production compose (`docker-compose.prod.yml`):
 
-- Скан только по записям `Server.host`, уже находящимся в базе данных
-- Hostname резолвится в IPv4 и проверяется теми же правилами, что и SSH (**без скана без проверенного IP**)
-- Naabu + Nmap внутри `ufw-app` (connect-scan, без произвольных целей)
-- Rate limit на сервер; события аудита
-- Нужен **исходящий доступ** контейнера приложения к managed-хостам на сканируемых портах — см. [Сканирование портов](../deployment/port-scan.md)
+- Postgres **not** published to host
+- App listens inside Docker network for NPM
+- Target SSH from app container to managed servers
 
+TLS terminates at **Nginx Proxy Manager**. Internal HTTP between NPM and `ufw-app` is by design — see [Nginx Proxy Manager](../deployment/nginx-proxy-manager.md).
 
-## Защита при применении и экспорте
+## SSH security
 
-- Изменения UFW требуют **предпросмотра + явного подтверждения**
-- Отпечатки правил **пересчитываются на сервере** при preview apply — подменённый client fingerprint не может переназначить plan items
-- Экспорт конфигурации требует **повторного ввода пароля** и записывает событие аудита `CONFIG_EXPORT`
-- Импорт конфигурации требует **повторного ввода пароля** (те же rate limits, что у экспорта)
-- Файлы экспорта содержат **секреты в открытом виде** — ответственность оператора
+- Default block on private/metadata target IPs
+- Optional `SSH_ALLOWED_CIDRS` for lab/VPN
+- Host key TOFU — see [Серверы и SSH](../concepts/servers-and-ssh.md)
+- Apply blocked until host key verified
 
-## HTTP security headers (продакшен)
+## Application hardening
 
-При `NODE_ENV=production`:
+Production HTTP headers (CSP, HSTS, etc.) via `next.config.ts`.
 
-- Content-Security-Policy
-- Strict-Transport-Security (HSTS)
-- X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+Health endpoint `/api/health` exposes version — no secrets.
 
-TLS завершается на Nginx Proxy Manager; приложение получает HTTP в Docker-сети.
+## Audit
 
-### Примечание по Content-Security-Policy
+Sensitive actions write `auditEvent` rows: login, logout, apply, snapshot, port scan, config export, server changes. See [Журнал аудита и экспорт](./audit-log-and-export.md).
 
-Текущая CSP включает `'unsafe-inline'` и `'unsafe-eval'` для скриптов Next.js App Router и гидратации. CSP на основе nonce отложена, пока Next.js не поддержит её без поломки client bundles. Не удаляйте эти директивы без полного регрессионного прогона.
+## Single replica
 
-## Публичные эндпоинты
+Rate limits and queues are **in-memory**. Multiple app replicas without shared state weaken rate limiting and queue guarantees.
 
-| Путь | Auth | Примечания |
-|------|------|------------|
-| `/api/health` | Нет | Возвращает `status`, `db`, `version`; `revision` (git/build id) только вне production |
-| `/setup` | Нет (один раз) | Rate-limited; используйте `TRUST_PROXY=1` за NPM |
+## Reporting vulnerabilities
 
-## Rate limiting для setup
-
-Первоначальная регистрация администратора (`/setup`) ограничена **5 попытками в минуту** на IP клиента при `TRUST_PROXY=1`, иначе — на bucket прямого подключения.
-
-## Чеклист сетевой экспозиции
-
-- [ ] Админ-интерфейс только через HTTPS reverse proxy
-- [ ] Postgres не опубликован на хост/интернет в продакшене
-- [ ] Ограничение URL админки (VPN, IP allowlist в NPM)
-- [ ] Надёжные уникальные секреты `.env`
-- [ ] Регулярные резервные копии Postgres + `.env` вне хоста
-- [ ] Ротация секретов, если экспорт или `.env` могли утечь
-
-## Санитизация ошибок
-
-Клиентские ошибки из путей SSH/применения санитизируются, чтобы не раскрывать stack traces или внутренние пути.
-
-Истёкшие сессии возвращают единообразное сообщение из server actions: `Session expired. Please sign in again.` (сырой `Unauthorized` не передаётся в UI).
+See [SECURITY.md](../../../SECURITY.md) in repository root (English).
 
 ## Связанные документы
 
 - [Переменные окружения](./environment-variables.md)
-- [Журнал аудита и экспорт](./audit-log-and-export.md)
 - [Архитектура](../architecture.md)

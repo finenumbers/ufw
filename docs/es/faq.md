@@ -2,55 +2,93 @@
 
 ## General
 
-**¿Qué es UFW Remote Manager?**  
-Una interfaz web autoalojada para gestionar firewalls UFW en servidores Linux remotos por SSH, con flujo de borrador/aplicación y registro de auditoría.
+### ¿Qué es UFW Remote Manager?
 
-**¿Es gratuito?**  
-Código abierto con licencia MIT. Usted proporciona la infraestructura (host Docker, dominio, SSL).
+Una aplicación web autoalojada para gestionar firewalls UFW en servidores Linux remotos por SSH, con flujo de borrador/aplicación y registro de auditoría.
 
-**¿Quién lo ha desarrollado?**  
-[Finenumbers](https://finenumbers.com) — consulte [Acerca de Finenumbers](./about.md).
+### ¿Reemplaza Nginx Proxy Manager?
 
-## Cuentas
+No. NPM (o similar) termina HTTPS para la interfaz de administración. UFW Remote Manager gestiona **firewalls de servidores remotos**, no su proxy inverso.
 
-**¿Puedo crear varios usuarios administradores?**  
-No mediante autorregistro. Solo se crea una cuenta en `/setup`; los registros adicionales están deshabilitados.
+### ¿Puedo gestionar contenedores Docker?
 
-**He olvidado mi contraseña.**  
-La recuperación requiere acceso a la base de datos o restauración desde copia de seguridad. No hay restablecimiento por correo en la configuración predeterminada.
+No. El monitor de contenedores Docker se **eliminó en v0.9.0**. La app gestiona reglas UFW y escaneos externos de puertos opcionales únicamente.
+
+### ¿Cuántos usuarios administradores?
+
+Una cuenta tras la configuración inicial en `/setup`. No hay interfaz multiusuario.
+
+### ¿Puedo ejecutar varias réplicas de la app?
+
+No se recomienda. Los límites de tasa y las colas están en memoria (diseño de réplica única).
+
+## SSH y servidores
+
+### ¿Por qué se rechaza una IP privada?
+
+Seguridad predeterminada — bloquea RFC1918 y direcciones de metadatos. Configure `SSH_ALLOWED_CIDRS` para destinos de laboratorio/VPN.
+
+### ¿Por qué está desactivada la aplicación?
+
+La clave host SSH puede estar **sin verificar**. Ejecute **Actualizar estado** con éxito primero.
+
+### ¿Eliminar servidor modifica UFW remoto?
+
+No. Eliminar solo quita datos de gestión locales.
+
+## Reglas y aplicación
+
+### ¿Vista previa vs confirmación?
+
+La vista previa muestra los cambios planificados sin ejecutarlos. Confirmar ejecuta comandos UFW por SSH.
+
+### ¿El remoto cambió desde la vista previa?
+
+Aplicación rechazada — ejecute **Vista previa de aplicación** de nuevo. No use resincronización forzada en este caso.
+
+### ¿Aplicación parcial?
+
+Consulte [Flujo de borrador y aplicación](./concepts/draft-apply-workflow.md). Use **Resincronización forzada desde el servidor** cuando se indique.
+
+### ¿Por qué difieren los recuentos de reglas?
+
+**Reglas guardadas** (tarjeta de lista) vs **en la tabla** (panel) cuentan cosas distintas — consulte [Reglas UFW y estados](./concepts/ufw-rules-and-states.md).
+
+## Interfaz de operaciones
+
+### ¿Banner atascado en EN CURSO?
+
+Actualice la página. El barrido marca operaciones obsoletas en ~30–60 minutos.
+
+### ¿Reglas no se actualizan tras sincronizar?
+
+Desde v0.9.2, el fin de la operación debería refrescar la página. Pruebe una actualización manual del navegador una vez.
+
+## Escaneo de puertos
+
+### ¿Falta el botón de escaneo?
+
+`PORT_SCAN_ENABLED` no está en `true` en el entorno de la app.
+
+### ¿Escaneo ya en curso?
+
+Solo un escaneo activo por servidor. Espere o consulte el historial de operaciones.
+
+### ¿El escaneo bloquea la actualización UFW?
+
+No (desde v0.9.2). El escaneo corre fuera de la cola SSH.
 
 ## Despliegue
 
-**¿Necesito una imagen Docker propia por dominio?**  
-No. Configure `APP_URL` en `.env` en tiempo de ejecución. Una imagen GHCR sirve para cualquier dominio HTTPS.
+### ¿Dónde ejecutar migraciones?
 
-**¿Esto incluye Nginx Proxy Manager?**  
-No. NPM (u otro proxy inverso) debe instalarse por separado.
+En el contenedor **migrate** / **ufw-migrate** — no dentro de **ufw-app**. Consulte [Resumen de despliegue](./deployment/overview.md).
 
-**¿Puedo ejecutarlo sin HTTPS?**  
-El desarrollo local usa `http://localhost:8088`. Producción espera HTTPS para cookies seguras y HSTS.
+### ¿EACCES al ejecutar prisma en el contenedor app?
 
-## Operaciones de firewall
+Esperado — use `docker compose run --rm migrate`.
 
-**¿Eliminar un servidor quita las reglas UFW remotas?**  
-No. Solo se eliminan los registros locales de la base de datos.
+## Documentos relacionados
 
-**¿Qué pasa si la aplicación falla a mitad de camino?**  
-UFW remoto puede quedar parcialmente actualizado. Use **Resincronización forzada desde el servidor** y revise el Historial de operaciones. Consulte [Flujo de borrador y aplicación](./concepts/draft-apply-workflow.md).
-
-**¿Puedo gestionar servidores en IPs privadas?**  
-Sí, configure `SSH_ALLOWED_CIDRS` en `.env` para permitir sus rangos internos.
-
-## Datos y seguridad
-
-**¿Dónde se almacenan las claves SSH?**  
-Cifradas en Postgres con `APP_ENCRYPTION_KEY`. La clave de `.env` es obligatoria para descifrarlas.
-
-**¿Es segura la exportación de configuración?**  
-La exportación contiene **secretos en texto plano**. Se requiere volver a introducir la contraseña; guarde las exportaciones de forma segura.
-
-## Soporte
-
-Contacte con **[apps@finenumbers.com](mailto:apps@finenumbers.com)** para consultas sobre el producto.
-
-Vulnerabilidades de seguridad: consulte [SECURITY.md](../../SECURITY.md) — no abra issues públicos en GitHub.
+- [Solución de problemas](./troubleshooting.md)
+- [Introducción](./introduction.md)

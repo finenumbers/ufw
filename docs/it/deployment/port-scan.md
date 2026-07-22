@@ -1,62 +1,62 @@
-# Scansione porte esterna
+# Scansione porte esterna (deployment)
 
-UFW Remote Manager può eseguire una **scansione porte esterna** dal container `ufw-app` verso l'indirizzo `host` di ogni server registrato. La pipeline utilizza:
+Gli amministratori abilitano la scansione porte esterna via variabili d'ambiente. Uso lato utente: [Scansione porte (guida utente)](../user-guide/port-scan.md).
 
-1. **Naabu** — discovery TCP sulle porte 1–65535 (`host/port/protocol/open`)
-2. **Nmap** — rilevamento servizi solo sulle porte scoperte (`-sV`, output XML)
+## Cosa fa
 
-I risultati compaiono in una tabella **sotto le regole UFW** nella pagina del server.
+Dal container **ufw-app**, l'app scansiona l'indirizzo `host` di ogni server registrato:
 
-## Abilitare
+1. **Naabu** — discovery TCP porte 1–65535
+2. **Nmap** — rilevamento servizi sulle porte scoperte
 
-Impostare nell'ambiente dell'app (Compose / Portainer):
+I risultati sono memorizzati in Postgres e mostrati sulla pagina server. **Nessuna SSH** è usata per la scansione.
+
+## Abilitazione
 
 ```env
 PORT_SCAN_ENABLED=true
 ```
 
-Regolazioni opzionali:
+Riavviate il container app dopo la modifica. L'immagine deve includere Naabu e Nmap (il Dockerfile ufficiale lo fa).
+
+## Regolazione opzionale
 
 | Variabile | Predefinito | Scopo |
-|-----------|-------------|-------|
-| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Max porte inviate all'arricchimento Nmap |
-| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Timeout discovery porte complete (30 min) |
-| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Timeout arricchimento |
-| `PORT_SCAN_HISTORY_LIMIT` | `10` | Esecuzioni scan memorizzate per server |
-
-Le scansioni ripetute sullo stesso server sono limitate a **una ogni 30 secondi** (fisso nel codice da v0.5.1). Il legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` in `.env` viene **ignorato**.
+|----------|---------|---------|
+| `PORT_SCAN_MAX_NMAP_PORTS` | `500` | Limite porte inviate a Nmap |
+| `PORT_SCAN_NAABU_TIMEOUT_MS` | `1800000` | Timeout discovery (30 min) |
+| `PORT_SCAN_NMAP_TIMEOUT_MS` | `600000` | Timeout enrichment (10 min) |
+| `PORT_SCAN_HISTORY_LIMIT` | `10` | Scansioni conservate per server |
 
 ## Requisiti di rete
 
-Il container dell'app deve raggiungere **gli host dei server gestiti sulle porte TCP scansionate**, non solo SSH `:22`. Assicurarsi che routing/regole firewall consentano l'egress dall'host Docker (o rete `ufw-app`) verso i server di destinazione.
+Il container app deve raggiungere **gli host server gestiti sulle porte TCP scansionate**, non solo SSH `:22`. Consentite egress dall'host Docker (o rete app) ai server target.
 
-Questa funzione scansiona **solo host già registrati in UFW Remote Manager** — destinazioni arbitrarie vengono rifiutate.
+Solo gli **host server registrati** vengono scansionati — target arbitrari rifiutati.
 
-## Colonna copertura UFW
+## Concorrenza (v0.9.2)
 
-Ogni porta aperta viene confrontata con l'ultimo snapshot UFW usando la **semantica external-scan**:
+| Argomento | Comportamento |
+|-------|-----------|
+| Coda SSH | La scansione porte **non** usa la coda SSH per server — refresh/apply UFW non bloccati per 30+ min |
+| Sovrapposizione | Solo una scansione PENDING/RUNNING per server; secondo avvio rifiutato |
+| Limite frequenza | 30 secondi tra avvii scan per server (fisso nel codice) |
+| SSR | La pagina server carica l'ultima scansione di **qualsiasi stato** — scansioni in corso riprendono dopo refresh |
 
-| Valore | Significato |
-|--------|-------------|
-| **Allowed** | ALLOW/LIMIT in ingresso da **qualsiasi** origine (`From = any`) copre questa porta |
-| **Not in UFW** | Porta aperta esternamente ma non coperta da ALLOW in ingresso pubblico — rivedere |
-| **Denied** | DENY/REJECT in ingresso da **qualsiasi** origine riguarda questa porta |
-| **Unknown** | UFW inattivo o nessuno snapshot |
+I risultati persistono via replace atomico (`deleteMany` + `createMany` in una transazione).
 
-Le regole whitelist (`From = specific IP/CIDR`, `To Port = any`) **non** contano come consentite per external scan. Solo le regole che consentono esplicitamente traffico da ovunque sono trattate come esposizione pubblica.
+## Copertura UFW
 
-## Note di sicurezza
+Vedi [Guida utente scansione porte](../user-guide/port-scan.md#valori-copertura-ufw) per la semantica colonne.
 
-- Rate-limited (30 secondi tra scan ripetuti per server; non configurabile via env)
-- Eventi audit: `PORT_SCAN_STARTED`, `PORT_SCAN_COMPLETED`
-- Le scansioni vengono eseguite nella coda per server insieme alle operazioni SSH (serializzate)
-- Usa scan connect (`naabu -scan-type c`, `nmap -sT`) — non servono capacità raw socket
+## Sicurezza
 
-## Polling progresso
+- Audit: `PORT_SCAN_STARTED`, `PORT_SCAN_COMPLETED`
+- Scansioni connect-only (`-sT`) — nessuna capability raw socket richiesta
+- Disabilitato per impostazione predefinita
 
-Durante una scansione, l'interfaccia effettua polling su un endpoint di stato leggero (non riletture SSH complete). Polling **immediato**, poi ogni **1s** finché l'operazione è attiva (backoff dopo ~30 min). Al completamento nel banner, i pannelli si aggiornano subito. Il banner interroga l'API ogni **1s** in RUNNING.
+## Documenti correlati
 
-## Documentazione correlata
-
-- [Panoramica distribuzione](./overview.md)
-- [Modello di sicurezza](../administration/security-model.md)
+- [Variabili d'ambiente](../administration/environment-variables.md)
+- [Architettura](../architecture.md)
+- [Operazioni e concorrenza](../concepts/operations-and-concurrency.md)

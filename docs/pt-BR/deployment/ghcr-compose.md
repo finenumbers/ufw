@@ -1,62 +1,23 @@
 # GHCR + Docker Compose
 
-As imagens de produção são publicadas no **GitHub Container Registry (GHCR)**:
+Baixe imagens pré-compiladas do GitHub Container Registry — recomendado para produção.
 
-| Imagem | Propósito |
-|--------|-----------|
-| `ghcr.io/finenumbers/ufw-remote-manager:TAG` | App Next.js |
-| `ghcr.io/finenumbers/ufw-remote-manager-migrate:TAG` | Migrações Prisma (execução única) |
+## Pré-requisitos
 
-Cada release publica **`latest`** mais tags de versão (ex.: `v0.8.0`, `0.6.1`). Deploys de produção usam **`latest`** por padrão — nenhuma versão necessária em `.env`.
+- Docker Compose v2
+- `.env` de [`generate-production-env.sh`](../../../scripts/generate-production-env.sh)
+- Nginx Proxy Manager na rede Docker compartilhada (`NPM_NETWORK`)
 
-Substitua `finenumbers` pelo proprietário do seu fork se usar um fork (`GHCR_OWNER` em `.env`).
+## Nomes das imagens
 
-## Imagens universais — APP_URL em runtime
-
-As imagens são **agnósticas ao domínio**. Defina `APP_URL` em `.env` para sua URL HTTPS pública. Nenhum build por domínio necessário.
-
-## Obter imagens
-
-### Opção A — Release por tag Git (recomendado)
-
-```bash
-git tag v0.8.0
-git push origin v0.8.0
+```
+ghcr.io/finenumbers/ufw-remote-manager:${GHCR_IMAGE_TAG:-latest}
+ghcr.io/finenumbers/ufw-remote-manager-migrate:${GHCR_IMAGE_TAG:-latest}
 ```
 
-GitHub Actions publica imagens tagueadas e atualiza `latest`. Os pacotes devem ser **Public** no primeiro uso (GitHub → Packages → configurações).
+Cada release GitHub atualiza a tag `latest`. Fixe `GHCR_IMAGE_TAG=v0.9.2` para versões fixas.
 
-### Opção B — Release (dispatch)
-
-Actions → **Release (dispatch)** → informar `image_tag` (tag personalizada; não atualiza `latest` a menos que você tagueie `latest` manualmente).
-
-## Preparar `.env` no servidor
-
-```bash
-cp .env.production.example .env
-# or
-./scripts/generate-production-env.sh .env
-```
-
-Exemplo (segredos obrigatórios; vars de imagem opcionais):
-
-```bash
-APP_URL=https://ufw.example.com
-NPM_NETWORK=nginxproxymanager_default
-POSTGRES_PASSWORD=...
-BETTER_AUTH_SECRET=...
-APP_ENCRYPTION_KEY=...
-# Optional: GHCR_OWNER=finenumbers  GHCR_IMAGE_TAG=latest
-```
-
-Gerar segredos:
-
-```bash
-openssl rand -base64 32   # BETTER_AUTH_SECRET, APP_ENCRYPTION_KEY
-openssl rand -base64 24   # POSTGRES_PASSWORD
-```
-
-## Implantar
+## Deploy
 
 ```bash
 docker compose \
@@ -74,30 +35,38 @@ docker compose \
   up -d
 ```
 
-Validar:
+Valide config renderizada:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env config
 ```
 
-Configurar NPM — veja [Nginx Proxy Manager](./nginx-proxy-manager.md).
+## Upgrade
 
-## Atualização
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env pull
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env up -d
+```
 
-Reimplantar com `docker compose ... pull && up -d` — sem alterações em `.env` ao usar `latest`.
+Migrate executa automaticamente. v0.9.0+ removeu tabelas de inventário legacy — garanta que migrate complete uma vez ao atualizar de versões antigas.
 
-Veja [Atualização e rollback](../operations/upgrade-rollback.md) para fixar uma versão.
+Sem alterações `.env` necessárias ao permanecer em `latest`.
+
+## Smoke test
+
+```bash
+./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```
 
 ## Solução de problemas
 
-| Sintoma | Verificar |
-|---------|-----------|
-| Loops de redirecionamento auth | `APP_URL` corresponde exatamente à URL pública NPM |
-| `pull access denied` | Visibilidade do pacote Public, ou `docker login ghcr.io` |
-| `APP_URL is required` | `.env` carregado com `--env-file .env` |
-| NPM 502 | App na rede `npm_proxy`; nome do container `ufw-app` |
+| Erro | Correção |
+|------|----------|
+| `pull access denied` | Visibilidade Public do pacote, ou `docker login ghcr.io` |
+| Migrate falha | Verifique logs: `docker compose logs migrate` |
+| Health check falha | `docker compose logs app`; verifique segredos e `APP_URL` |
 
-## Documentação relacionada
+## Documentos relacionados
 
 - [Visão geral de implantação](./overview.md)
-- [Testes smoke](../operations/smoke-tests.md)
+- [Atualização e rollback](../operations/upgrade-rollback.md)

@@ -1,60 +1,21 @@
 # GHCR + Docker Compose
 
-Production images are published to **GitHub Container Registry (GHCR)**:
+Pull pre-built images from GitHub Container Registry — recommended for production.
 
-| Image | Purpose |
-|-------|---------|
-| `ghcr.io/finenumbers/ufw-remote-manager:TAG` | Next.js app |
-| `ghcr.io/finenumbers/ufw-remote-manager-migrate:TAG` | Prisma migrations (one-shot) |
+## Prerequisites
 
-Each release publishes **`latest`** plus version tags (e.g. `v0.8.0`, `0.8.0`). Production deploys use **`latest`** by default — no version in `.env` required.
+- Docker Compose v2
+- `.env` from [`generate-production-env.sh`](../../../scripts/generate-production-env.sh)
+- Nginx Proxy Manager on shared Docker network (`NPM_NETWORK`)
 
-Replace `finenumbers` with your fork owner if you use a fork (`GHCR_OWNER` in `.env`).
+## Image names
 
-## Universal images — APP_URL at runtime
-
-Images are **domain-agnostic**. Set `APP_URL` in `.env` to your public HTTPS URL. No per-domain build required.
-
-## Get images
-
-### Option A — Git tag release (recommended)
-
-```bash
-git tag v0.8.0
-git push origin v0.8.0
+```
+ghcr.io/finenumbers/ufw-remote-manager:${GHCR_IMAGE_TAG:-latest}
+ghcr.io/finenumbers/ufw-remote-manager-migrate:${GHCR_IMAGE_TAG:-latest}
 ```
 
-GitHub Actions publishes tagged images and updates `latest`. Packages must be **Public** on first use (GitHub → Packages → settings).
-
-### Option B — Release (dispatch)
-
-Actions → **Release (dispatch)** → enter `image_tag` (custom tag; does not update `latest` unless you tag `latest` manually).
-
-## Prepare `.env` on the server
-
-```bash
-cp .env.production.example .env
-# or
-./scripts/generate-production-env.sh .env
-```
-
-Example (secrets required; image vars optional):
-
-```bash
-APP_URL=https://ufw.example.com
-NPM_NETWORK=nginxproxymanager_default
-POSTGRES_PASSWORD=...
-BETTER_AUTH_SECRET=...
-APP_ENCRYPTION_KEY=...
-# Optional: GHCR_OWNER=finenumbers  GHCR_IMAGE_TAG=latest
-```
-
-Generate secrets:
-
-```bash
-openssl rand -base64 32   # BETTER_AUTH_SECRET, APP_ENCRYPTION_KEY
-openssl rand -base64 24   # POSTGRES_PASSWORD
-```
+Each GitHub release updates the `latest` tag. Pin `GHCR_IMAGE_TAG=v0.9.2` for fixed versions.
 
 ## Deploy
 
@@ -74,30 +35,38 @@ docker compose \
   up -d
 ```
 
-Validate:
+Validate rendered config:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env config
 ```
 
-Configure NPM — see [Nginx Proxy Manager](./nginx-proxy-manager.md).
-
 ## Upgrade
 
-Redeploy with `docker compose ... pull && up -d` — no `.env` changes when using `latest`.
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env pull
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env up -d
+```
 
-See [Upgrade and rollback](../operations/upgrade-rollback.md) to pin a version.
+Migrate runs automatically. v0.9.0+ removed legacy inventory tables — ensure migrate completes once when upgrading from older versions.
+
+No `.env` changes required when staying on `latest`.
+
+## Smoke test
+
+```bash
+./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```
 
 ## Troubleshooting
 
-| Symptom | Check |
-|---------|-------|
-| Auth redirect loops | `APP_URL` exactly matches NPM public URL |
+| Error | Fix |
+|-------|-----|
 | `pull access denied` | Package visibility Public, or `docker login ghcr.io` |
-| `APP_URL is required` | `.env` loaded with `--env-file .env` |
-| NPM 502 | App on `npm_proxy` network; container name `ufw-app` |
+| Migrate fails | Check logs: `docker compose logs migrate` |
+| Health check fails | `docker compose logs app`; verify secrets and `APP_URL` |
 
 ## Related docs
 
 - [Deployment overview](./overview.md)
-- [Smoke tests](../operations/smoke-tests.md)
+- [Upgrade and rollback](../operations/upgrade-rollback.md)

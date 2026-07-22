@@ -1,37 +1,48 @@
-# Audit-Protokoll und Export
+# Audit-Log und Export
 
-Es existieren zwei Protokollierungsebenen: **Vorgangsprotokolle** (technisch) und **Audit-Ereignisse** (Sicherheit/Compliance).
+Zwei ergänzende Spuren: **Vorgangsprotokolle** (Aufgabenfortschritt) und **Audit-Ereignisse** (Sicherheit und Compliance).
 
 ## Audit-Ereignisse
 
-Geschrieben in die Tabelle `audit_event`. Beispiele:
+In Postgres bei sensiblen Aktionen geschrieben. Beispiele:
 
 | Aktion | Wann |
 |--------|------|
-| `LOGIN` | Benutzersitzung erstellt |
-| `LOGOUT` | Sitzung gelöscht |
-| `CONFIG_EXPORT` | Serverkonfiguration exportiert (nach Passwort-Neueingabe) |
+| `LOGIN` / `LOGOUT` | Session-Start/Ende |
+| `APPLY_PREVIEWED` / `APPLY_CONFIRMED` / `APPLY_COMPLETED` / `APPLY_FAILED` | Apply-Workflow |
+| `SNAPSHOT_LOADED` | UFW-Snapshot erfasst |
+| `UFW_ENABLE` | Remote-Aktivierung nach Installation |
+| `PORT_SCAN_STARTED` / `PORT_SCAN_COMPLETED` | Portscan-Lebenszyklus |
+| `CONFIG_EXPORT` / `CONFIG_IMPORT` | JSON-v2-Konfigurationstransfer |
+| Server CRUD | Serverdatensätze erstellen/aktualisieren/löschen |
 
-Anzeige unter **Vorgangsverlauf** → Tab **Audit**.
+Anzeige unter **Vorgangsverlauf** → **Audit**-Tab mit unendlichem Scrollen.
+
+Audit-Retention folgt Datenbankspeicher — keine automatische Bereinigung, es sei denn der Betreiber löscht den Verlauf.
 
 ## Vorgangsprotokolle
 
-Geschrieben für lang laufende Arbeit: Anwenden, Refresh, Installieren, Port-Scan usw. Enthält Schritt-Metadaten und Erfolgs-/Fehlermeldungen.
+Technische Datensätze mit Schritten, Status, Zeitstempeln und Fehlermeldungen. Siehe [Vorgangsverlauf](../user-guide/operations-history.md).
 
-Anzeige unter **Vorgangsverlauf** → Tab **Vorgänge** oder im live **Vorgangsbanner**.
+## Konfigurationsexport-Audit
 
-## Audit-Trail für Konfigurationsexport
+Jeder erfolgreiche **Konfiguration speichern** erstellt einen Audit-Eintrag. Exportdatei enthält **entschlüsselte SSH-Secrets** — wie Password-Vault-Dump schützen.
 
-Jeder erfolgreiche Export erzeugt einen `CONFIG_EXPORT`-Audit-Datensatz mit Benutzer-ID und Zeitstempel. Damit lässt sich nachverfolgen, wer Dateien mit Zugangsdaten im Klartext heruntergeladen hat.
+Export-Ablauf:
 
-## Aufbewahrung
+1. Passwortbestätigung (Step-up)
+2. Kurzlebiges Download-Token
+3. JSON-Download über API-Route
 
-Snapshot-Aufbewahrung behält die letzten **10** Snapshots pro Server (ältere werden automatisch gelöscht). Vorgangsprotokoll-Aufbewahrung kann manuell in der Oberfläche gelöscht werden.
+Ratenlimit: 5 Exporte pro Minute pro Benutzer.
 
-Planen Sie eine Backup-Richtlinie für Audit-Daten, wenn Compliance lange Aufbewahrung erfordert — siehe [Backup und Wiederherstellung](../operations/backup-restore.md).
+## Verlauf löschen
+
+**Verlauf löschen** auf der Vorgangsseite entfernt Vorgangsprotokoll-Einträge gemäß UI-Aktion. Rollt Serveränderungen nicht zurück und löscht Audit-Ereignisse nicht in allen Fällen — Bestätigungsdialogtext für aktuelles Verhalten prüfen.
+
+Ändert weder Remote-UFW noch lokale Regelentwürfe.
 
 ## Verwandte Dokumentation
 
 - [Konfiguration importieren und exportieren](../concepts/import-export-config.md)
-- [Vorgangsverlauf](../user-guide/operations-history.md)
-- [SECURITY.md](../../../SECURITY.md)
+- [Sicherheitsmodell](./security-model.md)

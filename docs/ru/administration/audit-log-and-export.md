@@ -1,37 +1,48 @@
 # Журнал аудита и экспорт
 
-Существуют два уровня журналирования: **журнал операций** (технический) и **события аудита** (безопасность и соответствие требованиям).
+Две complementary trails: **operation logs** (task progress) и **audit events** (security and compliance).
 
-## События аудита
+## Audit events
 
-Записываются в таблицу `audit_event`. Примеры:
+Written to Postgres on sensitive actions. Examples:
 
-| Действие | Когда |
-|----------|-------|
-| `LOGIN` | Создана пользовательская сессия |
-| `LOGOUT` | Сессия удалена |
-| `CONFIG_EXPORT` | Экспортирована конфигурация серверов (после повторного ввода пароля) |
+| Action | When |
+|--------|------|
+| `LOGIN` / `LOGOUT` | Session start/end |
+| `APPLY_PREVIEWED` / `APPLY_CONFIRMED` / `APPLY_COMPLETED` / `APPLY_FAILED` | Apply workflow |
+| `SNAPSHOT_LOADED` | UFW snapshot captured |
+| `UFW_ENABLE` | Remote enable after install |
+| `PORT_SCAN_STARTED` / `PORT_SCAN_COMPLETED` | Port scan lifecycle |
+| `CONFIG_EXPORT` / `CONFIG_IMPORT` | JSON v2 config transfer |
+| Server CRUD | Create/update/delete server records |
 
-Просмотр: **История операций** → вкладка **События аудита**.
+View on **История операций** → **События аудита** tab with infinite scroll.
 
-## Журнал операций
+Audit retention follows database storage — no automatic purge unless operator clears history.
 
-Записывается для длительной работы: применение, обновление, установка, проверка SSH и т.д. Включает метаданные шагов и сообщения об успехе/ошибке.
+## Operation logs
 
-Просмотр: **История операций** → вкладка **Журнал операций** или живой **баннер операций**.
+Technical records with steps, status, timestamps, and error messages. See [История операций](../user-guide/operations-history.md).
 
-## Аудит экспорта конфигурации
+## Configuration export audit
 
-Каждый успешный экспорт создаёт запись аудита `CONFIG_EXPORT` с ID пользователя и временной меткой. Используйте это для отслеживания, кто скачал файлы с учётными данными в открытом виде.
+Each successful **Сохранить конфигурацию** creates audit entry. Export file contains **decrypted SSH secrets** — protect like password vault dump.
 
-## Хранение
+Export flow:
 
-Хранение снимков сохраняет последние **10** снимков на сервер (автоматическая очистка более старых). Журнал операций может быть очищен вручную из интерфейса.
+1. Password confirmation (step-up)
+2. Short-lived download token
+3. JSON download via API route
 
-Спланируйте политику резервного копирования для данных аудита, если требования соответствия предполагают длительное хранение — см. [Резервное копирование и восстановление](../operations/backup-restore.md).
+Rate limit: 5 exports per minute per user.
+
+## Clearing history
+
+**Очистить историю** on operations page removes operation log entries per UI action. Does not roll back server changes or delete audit events in all cases — confirm dialog text for current behaviour.
+
+Does not modify remote UFW or local rule drafts.
 
 ## Связанные документы
 
 - [Импорт и экспорт конфигурации](../concepts/import-export-config.md)
-- [История операций](../user-guide/operations-history.md)
-- [SECURITY.md](../../../SECURITY.md)
+- [Модель безопасности](./security-model.md)

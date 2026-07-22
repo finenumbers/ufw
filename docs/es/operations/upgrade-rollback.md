@@ -1,52 +1,45 @@
-# Upgrade and rollback
+# Actualización y reversión
 
-Stack: `ufw-postgres`, `ufw-migrate` (one-shot), `ufw-app`. Images are universal — set `APP_URL` in `.env` at runtime.
-
-Default image tag is **`latest`** (updated on every GitHub release). You do not need to edit compose/stack files to upgrade.
-
-## Before every upgrade
-
-1. [Backup](./backup-restore.md) Postgres and `.env`
-2. Read [release notes](https://github.com/finenumbers/ufw/releases)
-
-## Upgrade (Portainer) — recommended
-
-1. Portainer → **Stacks** → `ufw-remote-manager` → **Update the stack**
-2. Enable **Pull latest image**
-3. Deploy (no env changes if `GHCR_IMAGE_TAG` is unset or `latest`)
-4. Verify: `ufw-migrate` exited 0, `ufw-app` healthy, smoke test
-
-## Upgrade (GHCR + Compose)
+## Actualización (recomendada)
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env pull
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ghcr.yml --env-file .env up -d
 ```
 
-Migrations run automatically via `ufw-migrate`.
+El servicio **migrate** ejecuta `prisma migrate deploy` automáticamente.
 
-## Pin or rollback to a specific version
-
-Set in `.env` or Portainer stack environment:
+Verifique:
 
 ```bash
-GHCR_IMAGE_TAG=v0.2.1
+./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
 ```
 
-Then pull and redeploy. Omit `GHCR_IMAGE_TAG` (or set `latest`) to track the newest release again.
+## Notas de versión
 
-Prisma migrations are forward-only. If a new version applied irreversible schema changes, **restore Postgres from pre-upgrade backup** — do not only revert the image tag.
+| Versión | Migración | Cambios notables |
+|---------|-----------|------------------|
+| **v0.9.0** | Sí — elimina tablas de inventario legacy | Interfaz de inventario legacy eliminada |
+| **v0.9.1** | No | Limpieza legacy, guardrails de documentación |
+| **v0.9.2** | No | Corrección sync aplicación, ciclo de vida banner operaciones, escaneo puertos fuera cola SSH, protección solapamiento |
 
-## Change APP_URL (domain move)
+Al actualizar desde pre-v0.9.0, asegure que migrate complete — datos de inventario legacy purgados.
 
-1. Update NPM Proxy Host
-2. Change `APP_URL` in `.env`
-3. Redeploy or `docker compose ... up -d app`
+Fije imagen: `GHCR_IMAGE_TAG=v0.9.2` en `.env`.
 
-No image rebuild required. Users may need to log in again.
+## Reversión
 
-## Related docs
+1. Configure `GHCR_IMAGE_TAG` a etiqueta anterior conocida como buena
+2. `docker compose ... pull && up -d`
+3. Si la migración ya avanzó solo hacia adelante, puede requerirse restaurar copia de BD anterior — pruebe reversión en staging
 
-- [Backup and restore](./backup-restore.md)
-- [Portainer deployment](../deployment/portainer.md)
+Las migraciones de base de datos generalmente **no** se revierten automáticamente.
+
+## Cero tiempo de inactividad
+
+App de contenedor único — espere reinicio breve durante `up -d`. Programe ventana de mantenimiento para producción.
+
+## Documentos relacionados
+
 - [GHCR + Compose](../deployment/ghcr-compose.md)
+- [Copia de seguridad y restauración](./backup-restore.md)

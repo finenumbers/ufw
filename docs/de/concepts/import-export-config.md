@@ -1,53 +1,49 @@
 # Konfiguration importieren und exportieren
 
-Sie können eine **vollständige Serverkonfiguration** (alle Server, Identitäten, Regel-Metadaten) als JSON **v2** exportieren und importieren.
+Exportieren und importieren Sie eine **JSON-v2**-Datei mit allen Servern, SSH-Identitäten (einschließlich entschlüsselter Secrets) und zugehörigen Metadaten. Für Backup, Migration oder Disaster Recovery — nicht für tägliche Regelbearbeitung.
 
-## Export
+Regel-Level-Import/Export (CSV, XLSX) ist separat — siehe [Regeln bearbeiten und anwenden](../user-guide/edit-and-apply-rules.md).
 
-1. Von der **Server**-Seite **Konfiguration speichern** verwenden
-2. Ihr **Kontopasswort** erneut eingeben (Step-up-Authentifizierung)
-3. JSON-Datei herunterladen
+## Export-Ablauf
 
-### Wichtiger Sicherheitshinweis
+1. **Server**-Liste → **Konfiguration speichern**
+2. Ihr Konto-**Passwort** eingeben (Step-up-Authentifizierung)
+3. JSON-Datei herunterladen (`servers-config-YYYY-MM-DD.json`)
 
-Die Exportdatei enthält **SSH-Passwörter und private Schlüssel im Klartext**. Behandeln Sie sie wie ein Geheimnis:
+Der Export enthält entschlüsselte SSH-Secrets. Datei verschlüsselt at rest aufbewahren; löschen, wenn nicht mehr benötigt.
 
-- Verschlüsselt speichern (Passwortmanager-Tresor, verschlüsselte Festplatte)
-- Niemals in Git committen oder über unsichere Kanäle senden
-- Bei erfolgreichem Export wird ein `CONFIG_EXPORT`-Audit-Ereignis geschrieben
+Ein kurzlebiges Token schützt die Download-API nach Passwortbestätigung.
 
-## Import
+Ratenlimit: 5 Exporte pro Minute pro Benutzer.
 
-1. **Konfiguration laden** auf der Server-Seite verwenden
-2. JSON-v2-Datei auswählen
-3. Zusammenfassung prüfen: zu erstellende, aktualisierende, löschende Server
-4. Ihr **Kontopasswort** im Bestätigungsdialog erneut eingeben
-5. Bestätigen — Import läuft in einer Transaktion (Upsert zuerst, Löschen zuletzt)
+## Import-Ablauf
 
-Import nutzt dieselben Rate-Limits wie Export (10 Versuche pro Minute pro Benutzer).
+1. **Konfiguration laden** → JSON-Datei auswählen
+2. **Vorschau** zeigt Diff: zu erstellende, aktualisierende oder löschende Server und Identitäten
+3. Mit Passwort bestätigen → Import wendet Änderungen an
 
-### Destruktives Verhalten
+Import wartet, bis Pro-Server-Warteschlangen idle sind, und blockiert, wenn destruktive Operationen mit aktiver Arbeit kollidieren würden.
 
-Server, die in der Importdatei **fehlen**, können **gelöscht** werden, zusammen mit allen Regeln und Snapshots. Lesen Sie den Bestätigungsdialog sorgfältig.
+## JSON-v2-Format
 
-Importierte SSH-Host-Keys werden als **Nicht verifiziert** markiert — führen Sie auf jedem Server-Dashboard **Status aktualisieren** aus, bevor Sie Regeln anwenden.
+| Abschnitt | Inhalt |
+|-----------|--------|
+| **version** | `2` |
+| **identities** | Name, Benutzername, Auth-Methode, Secrets |
+| **servers** | Name, Host, Port, Identitätsreferenz, Host-Key-Felder |
 
-### Import-Limits
+Legacy nur-Array- oder v1-Dateien werden abgelehnt.
 
-- Regel-Imports (CSV, XLSX, JSON) sind auf **10 000 Zeilen** pro Datei begrenzt.
-- Konfigurationsimport-**Vorschau** ist auf **10 Versuche pro Minute** pro Benutzer begrenzt — warten Sie und versuchen Sie es erneut, wenn Sie das Limit erreichen.
+Doppelte Keys (gleicher Host + Port + Identität) werden beim Parsen abgelehnt.
 
-## Export vs. Postgres-Backup
+## Löschsemantik beim Import
 
-| Methode | Enthält | Am besten für |
-|---------|---------|---------------|
-| **Konfigurationsexport (JSON)** | Lesbare Konfiguration + Geheimnisse im Klartext | Migration zwischen Instanzen, Notfallkopie |
-| **Postgres-Dump** | Vollständige Datenbank inkl. verschlüsselter Geheimnisse | Vollständige Wiederherstellung mit gleichem `APP_ENCRYPTION_KEY` |
-| **`.env`-Backup** | Laufzeitgeheimnisse | Erforderlich zum Entschlüsseln der DB-Zugangsdaten nach Wiederherstellung |
+Server in der Datenbank, die in der importierten Datei fehlen, erscheinen in der Vorschau im **Löschen**-Set. Nur bestätigen, wenn Sie diese Serverdatensätze und alle zugehörigen Regeln, Entwürfe und Snapshots lokal entfernen wollen.
 
-Für vollständige Disaster Recovery sichern Sie **sowohl** Postgres **als auch** `.env` — siehe [Backup und Wiederherstellung](../operations/backup-restore.md).
+Remote-UFW auf gelöschten Serverdatensätzen wird **nicht** geändert.
 
 ## Verwandte Dokumentation
 
-- [Audit-Protokoll und Export](../administration/audit-log-and-export.md)
 - [SSH-Identitäten](./ssh-identities.md)
+- [Backup und Wiederherstellung](../operations/backup-restore.md)
+- [Audit-Log und Export](../administration/audit-log-and-export.md)

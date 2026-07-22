@@ -1,55 +1,68 @@
 # Modificare e applicare regole
 
-Quando UFW è **installato e attivo** su un server, la **tabella regole** nella dashboard del server consente di gestire le regole firewall.
+Con UFW **installato e attivo**, la **tabella regole** sulla dashboard server è la superficie di modifica principale.
 
-## Tabella regole
+## Funzionalità tabella regole
 
-Funzionalità:
+| Funzionalità | Descrizione |
+|---------|-------------|
+| **Ricerca** | Filtra righe visibili |
+| **Filtri colonna** | Filtra per gruppo o nome |
+| **Sezioni gruppo** | Espandi/comprimi righe raggruppate |
+| **Drag-and-drop** | Riordina regole (l'ordine influisce su UFW) |
+| **Colori riga** | Indicatori [stato origine](../concepts/ufw-rules-and-states.md) |
+| **Modifica inline** | Doppio clic o azione modifica sulla riga |
+| **Aggiungi / elimina** | Toolbar e azioni riga |
+| **Carica altro** | Scroll infinito per set regole grandi |
 
-- Ricerca e filtri per colonna
-- Sezioni di gruppi con espandi/comprimi
-- Riordino drag-and-drop (l'ordine conta per UFW)
-- Colori riga per [stato di sincronizzazione](../concepts/ufw-rules-and-states.md)
-- Aggiungi riga, modifica inline, elimina riga
+## Aggiornare dal server
 
-## Aggiornamento dal server
+**Aggiorna stato** sulla dashboard (o sync dalla toolbar):
 
-Usare **Aggiorna stato** nella dashboard (o l'aggiornamento dalla barra strumenti regole) per:
+1. Rileva stato UFW via SSH
+2. Memorizza nuovo snapshot
+3. Re-seed tabella da remoto + metadati locali
 
-1. Rilevare lo stato UFW via SSH
-2. Caricare un nuovo snapshot dal server
-3. Reinizializzare la tabella regole da remoto + metadati locali
+Usate dopo modifiche CLI manuali sul server o dopo apply parziale.
 
-Se sono presenti **modifiche non salvate**, l'app mostra una finestra di conferma prima di ricaricare dal server.
+Le modifiche bozza non salvate attivano una finestra di conferma prima del reload.
 
-Usare dopo modifiche manuali sulla CLI del server o dopo un'applicazione parziale.
+## Risincronizzazione forzata dal server
 
-## Risincronizzazione forzata
+Quando l'UI avvisa di deriva o apply parziale, usate **Risincronizzazione forzata dal server** per allineare la bozza allo snapshot remoto effettivo prima di ulteriori modifiche.
 
-Se l'interfaccia segnala drift o applicazione parziale, usare **Risincronizzazione forzata dal server** per sostituire l'allineamento locale della bozza con lo snapshot remoto effettivo prima di continuare a modificare.
+Disponibile dalla finestra anteprima apply e avvisi correlati — non sostituisce la re-anteprima quando il remoto è cambiato tra anteprima e conferma.
 
 ## Importare regole
 
-Barra strumenti → importa CSV, XLSX o JSON. Validare le righe importate nella tabella prima dell'anteprima di applicazione.
+Toolbar → import **CSV**, **XLSX** o **JSON**:
 
-## Flusso di applicazione
+- Le righe si uniscono alla bozza; duplicati per fingerprint saltati o uniti secondo regole import
+- Validate le righe nella tabella prima dell'anteprima apply
+- L'import influisce solo la bozza fino all'apply
 
-1. Effettuare modifiche alla bozza
-2. **Anteprima applicazione** — rivedere comandi pianificati e riepilogo diff
-3. **Conferma** — esecuzione via SSH (rifiutata se l'UFW remoto è cambiato dall'anteprima — eseguire di nuovo l'anteprima)
-4. Seguire il banner operazione per il progresso
+## Esportare regole
 
-**Salva regole** (anteprima applicazione) resta disabilitato finché la chiave host SSH non è **verificata** — eseguire **Aggiorna stato** prima se il server è stato importato dalla configurazione.
+Esportate la tabella corrente in **XLSX** per revisione offline o backup. Il layout XLSX corrisponde all'ordine colonne import per workflow round-trip.
 
-Vedere [Flusso bozza e applicazione](../concepts/draft-apply-workflow.md) per i dettagli.
+## Workflow applicazione
+
+1. Modificate la bozza
+2. **Anteprima applicazione** — revisione comandi pianificati e conteggi riepilogo
+3. **Conferma** — esegue via SSH (rifiutato se remoto cambiato dall'anteprima)
+4. Osservate il **banner operazioni** per progresso per comando
+
+**Salva regole** / apply è disabilitato finché la chiave host SSH non è **verificata** — eseguite prima **Aggiorna stato** per server importati.
+
+Vedi [Workflow bozza e applicazione](../concepts/draft-apply-workflow.md).
 
 ## Consigli di sicurezza
 
-- Mantenere almeno una regola che consenta SSH dalla rete di amministrazione prima di applicare regole deny
-- Eseguire l'anteprima in produzione durante una finestra di manutenzione
-- Controllare la **Cronologia operazioni** dopo l'applicazione per lo stato SUCCESS o FAILED
+- Mantenete almeno una regola che consente SSH dalla rete admin prima delle regole deny
+- Eseguite l'anteprima in produzione durante una finestra di manutenzione
+- Controllate **Cronologia operazioni** dopo l'apply per SUCCESSO o ERRORE
 
-## Documentazione correlata
+## Documenti correlati
 
 - [Regole UFW e stati](../concepts/ufw-rules-and-states.md)
 - [Cronologia operazioni](./operations-history.md)

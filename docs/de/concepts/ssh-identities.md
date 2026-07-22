@@ -1,52 +1,43 @@
 # SSH-Identitäten
 
-Eine **SSH-Identität** ist ein wiederverwendbarer Satz Zugangsdaten (Benutzername + Passwort oder privater Schlüssel), **verschlüsselt** in der Anwendungsdatenbank gespeichert. Server referenzieren Identitäten, anstatt Geheimnisse inline einzubetten.
-
-## Warum Identitäten existieren
-
-| Ohne Identitäten | Mit Identitäten |
-|------------------|-----------------|
-| Doppelte Zugangsdaten auf jedem Server | Eine Identität von vielen Servern gemeinsam genutzt |
-| Schlüsselrotation bedeutet Bearbeitung jedes Servers | Identität einmal aktualisieren; alle verknüpften Server nutzen neue Zugangsdaten |
-| Schwerer zu auditieren | Klare Zuordnung: Identität → Server |
+Eine **SSH-Identität** speichert wiederverwendbare Verbindungszugangsdaten: Benutzername, Authentifizierungsmethode und verschlüsselte Secrets. Jeder **Server** verweist auf eine Identität.
 
 ## Authentifizierungsmethoden
 
-- **Passwort** — Benutzername und Passwort ruhend verschlüsselt
-- **Privater Schlüssel** — Benutzername und PEM-Privatschlüssel ruhend verschlüsselt
+| Methode | Gespeichertes Secret | Typische Nutzung |
+|---------|----------------------|------------------|
+| **Passwort** | SSH-Passwort | Einfaches Lab oder Legacy-Hosts |
+| **Privater Schlüssel** | PEM-Privatschlüssel | Produktionsschlüssel ohne Passphrase |
+| **Privater Schlüssel + Passphrase** | Schlüssel und Passphrase | Verschlüsselte private Schlüssel |
 
-Geheimnisse werden mit **AES-256-GCM** unter Verwendung von `APP_ENCRYPTION_KEY` aus `.env` verschlüsselt. Bei Verlust dieses Schlüssels können verschlüsselte Zugangsdaten nicht wiederhergestellt werden.
+Secrets werden at rest mit **AES-256-GCM** unter Verwendung von `APP_ENCRYPTION_KEY` verschlüsselt. Sie werden nur im Speicher entschlüsselt, wenn eine SSH-Verbindung geöffnet wird.
 
-## Identität anlegen
+## Erstellen und Bearbeiten
 
-1. **SSH-Identitäten** in der Seitenleiste öffnen (`/identities`)
-2. **Identität hinzufügen** klicken
-3. Name, Benutzername, Authentifizierungsmethode und Geheimnis eingeben
-4. Speichern — Zugangsdaten werden vor der Speicherung verschlüsselt
+1. Seitenleiste → **SSH-Identitäten**
+2. **Identität hinzufügen** oder vorhandene Zeile öffnen → **Bearbeiten**
+3. Pflichtfelder: Anzeigename, SSH-Benutzername, Auth-Methode, Secret(s)
 
-## Bearbeiten und Löschen
+Beim **Bearbeiten** bleiben vorhandene Secrets unverändert, wenn Passwort-/Schlüsselfelder leer gelassen werden.
 
-- **Bearbeiten** — Passwort-/Schlüsselfelder können leer bleiben, um bestehende Geheimnisse unverändert zu lassen
-- **Löschen** — blockiert, solange ein Server die Identität noch nutzt; zuerst neu zuweisen oder diese Server löschen
+Die Validierung lehnt leere Namen und ungültige Auth-Kombinationen vor dem Speichern ab.
 
-## Beziehung zu Servern
+## Verknüpfung mit Servern
 
-```mermaid
-flowchart LR
-  Identity[SSH_Identity] --> ServerA[Server_A]
-  Identity --> ServerB[Server_B]
-  Identity --> ServerC[Server_C]
-```
+Beim Erstellen oder Bearbeiten eines Servers eine Identität aus der Dropdown-Liste wählen. Eine Änderung der Server-Identität löst beim Speichern eine SSH-Verifizierung aus, wenn sich Verbindungsparameter geändert haben.
 
-Jeder Serverdatensatz speichert eine Referenz auf eine Identität. Das Ändern der Identität auf einem Server führt beim Absenden automatisch eine **SSH-Verifizierung** aus.
+## Identität löschen
+
+Das Löschen ist blockiert, solange noch ein Server auf die Identität verweist. Die UI listet verknüpfte Server. Diese Server zuerst neu zuweisen oder löschen.
 
 ## Sicherheitshinweise
 
-- Identitätsgeheimnisse erscheinen nach dem Speichern nicht mehr in der Oberfläche (nur Platzhalter beim Bearbeiten)
-- Konfigurations-**Export** enthält Geheimnisse im Klartext — siehe [Konfiguration importieren und exportieren](./import-export-config.md)
-- `.env` mit `APP_ENCRYPTION_KEY` sichern — siehe [Backup und Wiederherstellung](../operations/backup-restore.md)
+- Identitäts-Secrets erscheinen im **Konfigurationsexport** (JSON v2) nach Passwortbestätigung — Exporte wie hochsensible Daten behandeln
+- Rotieren von `APP_ENCRYPTION_KEY` ohne erneute Eingabe der Secrets macht vorhandenen Ciphertext unlesbar — Key-Rotation sorgfältig planen
+- Eine Identität kann von vielen Servern geteilt werden (gleicher Admin-Benutzer, gleicher Schlüssel)
 
 ## Verwandte Dokumentation
 
 - [Server und SSH](./servers-and-ssh.md)
-- [Server verwalten](../user-guide/manage-servers.md)
+- [Konfiguration importieren und exportieren](./import-export-config.md)
+- [Sicherheitsmodell](../administration/security-model.md)

@@ -1,37 +1,48 @@
 # Audit log and export
 
-Two logging layers exist: **operation logs** (technical) and **audit events** (security/compliance).
+Two complementary trails: **operation logs** (task progress) and **audit events** (security and compliance).
 
 ## Audit events
 
-Written to `audit_event` table. Examples:
+Written to Postgres on sensitive actions. Examples:
 
 | Action | When |
 |--------|------|
-| `LOGIN` | User session created |
-| `LOGOUT` | Session deleted |
-| `CONFIG_EXPORT` | Server configuration exported (after password re-entry) |
+| `LOGIN` / `LOGOUT` | Session start/end |
+| `APPLY_PREVIEWED` / `APPLY_CONFIRMED` / `APPLY_COMPLETED` / `APPLY_FAILED` | Apply workflow |
+| `SNAPSHOT_LOADED` | UFW snapshot captured |
+| `UFW_ENABLE` | Remote enable after install |
+| `PORT_SCAN_STARTED` / `PORT_SCAN_COMPLETED` | Port scan lifecycle |
+| `CONFIG_EXPORT` / `CONFIG_IMPORT` | JSON v2 config transfer |
+| Server CRUD | Create/update/delete server records |
 
-View on **Operations history** → **Audit** tab.
+View on **Operations history** → **Audit** tab with infinite scroll.
+
+Audit retention follows database storage — no automatic purge unless operator clears history.
 
 ## Operation logs
 
-Written for long-running work: apply, refresh, install, port scan, etc. Includes step metadata and success/failure messages.
+Technical records with steps, status, timestamps, and error messages. See [Operations history](../user-guide/operations-history.md).
 
-View on **Operations history** → **Operations** tab or the live **operation banner**.
+## Configuration export audit
 
-## Config export audit trail
+Each successful **Save configuration** creates an audit entry. Export file contains **decrypted SSH secrets** — protect like a password vault dump.
 
-Every successful export creates a `CONFIG_EXPORT` audit record with user ID and timestamp. Use this to trace who downloaded plaintext credential files.
+Export flow:
 
-## Retention
+1. Password confirmation (step-up)
+2. Short-lived download token
+3. JSON download via API route
 
-Snapshot retention keeps the last **10** snapshots per server (automatic purge of older). Operation log retention may be cleared manually from the UI.
+Rate limit: 5 exports per minute per user.
 
-Plan backup policy for audit data if compliance requires long retention — see [Backup and restore](../operations/backup-restore.md).
+## Clearing history
+
+**Clear history** on operations page removes operation log entries per UI action. Does not roll back server changes or delete audit events in all cases — confirm dialog text for current behaviour.
+
+Does not modify remote UFW or local rule drafts.
 
 ## Related docs
 
 - [Import and export config](../concepts/import-export-config.md)
-- [Operations history](../user-guide/operations-history.md)
-- [SECURITY.md](../../../SECURITY.md)
+- [Security model](./security-model.md)

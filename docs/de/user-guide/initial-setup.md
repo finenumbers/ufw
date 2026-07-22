@@ -1,42 +1,45 @@
 # Ersteinrichtung
 
-Beim ersten Start hat UFW Remote Manager **keine Benutzer**. Sie müssen einmal das Administratorkonto anlegen.
+Beim ersten Start wird das einzige Administratorkonto erstellt. Danach ist die Registrierung dauerhaft deaktiviert.
 
 ## Einrichtungsseite (`/setup`)
 
-1. Anwendungs-URL öffnen (z. B. `http://localhost:8088` oder Ihre `APP_URL`)
-2. Sie werden automatisch zu `/setup` weitergeleitet
-3. Name, E-Mail, Passwort und Passwortbestätigung eingeben
-4. **Einrichtung abschließen** klicken
+Verfügbar, wenn **kein Benutzer** in der Datenbank existiert:
 
-Nach Erfolg sind Sie angemeldet und werden zur Serverliste weitergeleitet.
+1. `http://localhost:8088/setup` öffnen (oder Ihre `APP_URL/setup`)
+2. E-Mail und Passwort eingeben
+3. Absenden — Sie sind angemeldet und werden zur App weitergeleitet
 
-## Einzeladministrator-Richtlinie
+Wenn bereits ein Benutzer existiert, leitet `/setup` zu `/login` weiter.
 
-Die Registrierung ist **deaktiviert**, sobald das erste Konto existiert. Es gibt keine Self-Service-Anmeldung für zusätzliche Benutzer in der aktuellen Version.
+## Anmeldung (`/login`)
 
-Um eine weitere Person hinzuzufügen, würde diese die Admin-Zugangsdaten teilen (nicht empfohlen) oder Sie betreiben ein Admin-Konto pro Instanz.
+Verwenden Sie E-Mail und Passwort aus der Einrichtung. Sessions werden von Better Auth verwaltet (HTTP-only-Cookies).
 
-## Sitzung und Anmeldung
+Abmelden: Seitenleiste → **Abmelden**.
 
-- Sitzungen dauern **7 Tage** mit gleitender Verlängerung
-- Abmelden über **Abmelden** in der Seitenleiste
-- Anmeldeseite: `/login`
+## Single-Admin-Modell
 
-## Erster Start in der Produktion
+Es gibt keine Benutzerverwaltungs-UI. Ein Konto pro Installation. Für geteilten Zugriff Passwort-Manager und Betriebsverfahren verwenden — nicht separate App-Benutzer.
 
-Nach Bereitstellung hinter HTTPS:
+## Setup-Ratenlimit
 
-1. NPM Proxy Host konfigurieren → `ufw-app:8088`
-2. `APP_URL=https://your-domain.example` in `.env` setzen
-3. `https://your-domain.example/setup` öffnen
-4. Einrichtung abschließen, bevor Sie die URL breit verfügbar machen
+Setup-Versuche sind auf **5 pro Minute pro Client-IP** begrenzt, um Brute-Force bei frischen Installationen zu verlangsamen.
 
-Smoke-Test nach der Einrichtung ausführen:
+Wenn die App in Produktion hinter Nginx Proxy Manager läuft, setzen:
 
-```bash
-./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"
+```env
+TRUST_PROXY=1
 ```
+
+Ohne dies nutzen Ratenlimits einen einzelnen geteilten Bucket und können hinter einem Proxy weniger genau sein.
+
+## Erster Produktionsbesuch
+
+1. Stack bereitstellen — siehe [Bereitstellungsübersicht](../deployment/overview.md)
+2. `https://your-domain/setup` öffnen (muss `APP_URL` entsprechen)
+3. Einrichtung abschließen, bevor die URL breit exponiert wird
+4. [Smoke-Tests](../operations/smoke-tests.md) ausführen
 
 ## Verwandte Dokumentation
 

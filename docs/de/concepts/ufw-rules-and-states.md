@@ -1,36 +1,52 @@
 # UFW-Regeln und Zustände
 
-Regeln werden in ein einheitliches Zeilenmodell mit **Kern**-Feldern (was UFW interessiert) und **UI**-Feldern (Name, Gruppe, Farb-Metadaten) normalisiert.
+Die Regeltabelle zeigt eine **vereinheitlichte Ansicht**: Remote-UFW-Regeln, lokale Metadaten und Ihre Entwurfsänderungen. Zeilen**farben** zeigen, wie jede Zeile zum Server und zur Datenbank steht.
 
-## Regel-Kernfelder
+## Regelstruktur
 
-Typische Spalten umfassen Aktion (allow/deny/reject), Richtung, Protokoll, Ports, Quell-/Zieladressen und Protokollierungsmodus. Die exakte Menge entspricht der ausdrucksstarken UFW-Regelsyntax — siehe die Regeltabelle in der Oberfläche.
+Jede Zeile hat:
 
-## Sync-Zustände (Zeilenfarben)
+| Ebene | Felder |
+|-------|--------|
+| **Kern** | Aktion, Richtung, Protokoll, Adressen, Ports, Interface, App-Profil, Log-Modus, Kommentar, IPv6 |
+| **UI-Metadaten** | Gruppe, Name, Notizen (lokal gespeichert, nicht an UFW gesendet, außer im Kommentar) |
+| **Origin** | Sync-Zustand, der die Zeilenfarbe steuert |
 
-Jede Zeile hat einen **Zustand**, der zeigt, wie lokale Entwurfsdaten zum letzten Server-Snapshot stehen:
+Fingerabdrücke identifizieren Regeln über Remote-Reloads und lokale Bearbeitungen hinweg.
 
-| Zustand | Bedeutung |
-|---------|-----------|
-| **MATCHED** | Entwurf stimmt mit dem überein, was UFW auf dem Server gemeldet hat |
-| **REMOTE_ONLY** | Existiert im Server-Snapshot, aber nicht in Ihrem lokalen Entwurf |
-| **LOCAL_ONLY** | In Ihrem Entwurf, aber nicht auf dem Server (wird beim Anwenden hinzugefügt) |
-| **DRAFT_ONLY** | Lokale Bearbeitung noch nicht angewendet; weicht von der MATCHED-Basis ab |
+## Origin-Zustände
 
-Farben helfen, Drift vor dem Anwenden zu erkennen. Nach **Erzwungene Synchronisation vom Server** richtet sich der lokale Entwurf am Remote-Zustand aus.
+| Zustand | Farbbedeutung | Typische Situation |
+|---------|---------------|-------------------|
+| **MATCHED** | Remote und lokale Metadaten stimmen überein | Stabile synchronisierte Regel |
+| **REMOTE_ONLY** | Auf Server, nicht in lokalen Metadaten | Neue Remote-Regel nach Refresh |
+| **LOCAL_ONLY** | In lokaler DB, nicht auf Server | Ausstehendes Hinzufügen oder remote entfernt |
+| **DRAFT_ONLY** | Entwurfsänderung noch nicht angewendet | Neue Zeile oder geänderte Kernfelder |
+| **CONFLICT** | Gleicher Fingerabdruck, unterschiedliche Kernfelder | Drift — vor Anwenden prüfen |
+| **DELETED** | Im Entwurf als gelöscht markiert | Wird bei Anwenden entfernt |
 
-## Fingerabdrücke
+Farben helfen, Drift **vor** dem Anwenden zu erkennen. Nach **Erzwungene Synchronisation vom Server** richtet sich der Entwurf am Remote-Snapshot aus.
 
-Jede Regel hat einen aus Kernfeldern abgeleiteten Fingerabdruck. Wird verwendet, um Zeilen über Snapshots hinweg abzugleichen und Neuordnungs-/Löschvorgänge bei der Anwenden-Planung zu erkennen.
+## Zwei Regelzähler
 
-## Gruppierung und Reihenfolge
+Die UI zeigt an verschiedenen Stellen unterschiedliche Zähler:
 
-- **Gruppen** — Regeln visuell organisieren; Gruppenname ist UI-Metadaten
-- **Reihenfolge** — UFW-Regelreihenfolge ist relevant; Neuordnung kann beim Anwenden Löschen-und-Neuanlegen auf dem Server erfordern
+| Ort | Label | Zählt |
+|-----|-------|-------|
+| **Serverliste**-Karte | gespeicherte Regeln | Zeilen in `ruleRecord` (lokale Metadaten) |
+| **Dashboard**-Badge | in Tabelle | Zeilen in der aktiven Entwurfssitzungstabelle |
 
-## Importformate
+Diese unterscheiden sich während Sie bearbeiten, importieren oder synchronisieren. Das Dashboard-Badge entspricht der sichtbaren Tabellenlänge.
 
-Regeln können über die Regel-Symbolleiste aus **CSV**, **XLSX** oder **JSON** importiert werden. Importierte Zeilen werden Entwurfseinträge — erreichen den Server erst nach dem Anwenden.
+## Reihenfolge ist wichtig
+
+UFW wertet Regeln in Reihenfolge aus. Die Tabelle unterstützt Drag-and-Drop-Neuordnung. Apply kann Reihenfolge-Sync-Operationen ausgeben, wenn Remote-Nummerierung von Ihrer Entwurfsreihenfolge abweicht.
+
+## Remote vs. lokale Metadaten
+
+- **Remote-Kernfelder** stammen aus geparstem `ufw status numbered`-Output
+- **Gruppe, Name, Notizen** existieren nur in UFW Remote Manager, sofern nicht in UFW-Regelkommentare kopiert
+- Apply schreibt Kernfelder auf den Server; UI-Metadaten bleiben in Postgres
 
 ## Verwandte Dokumentation
 

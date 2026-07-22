@@ -2,55 +2,93 @@
 
 ## General
 
-**What is UFW Remote Manager?**  
-A self-hosted web UI to manage UFW firewalls on remote Linux servers over SSH, with draft/apply workflow and audit logging.
+### What is UFW Remote Manager?
 
-**Is it free?**  
-MIT licensed open source. You provide infrastructure (Docker host, domain, SSL).
+A self-hosted web app to manage UFW firewalls on remote Linux servers over SSH, with draft/apply workflow and audit trail.
 
-**Who built it?**  
-[Finenumbers](https://finenumbers.com) — see [About](./about.md).
+### Does it replace Nginx Proxy Manager?
 
-## Accounts
+No. NPM (or similar) terminates HTTPS for the admin UI. UFW Remote Manager manages **remote server firewalls**, not your reverse proxy.
 
-**Can I create multiple admin users?**  
-Not via self-registration. Only one account is created at `/setup`; further sign-ups are disabled.
+### Can I manage remote containers?
 
-**I forgot my password.**  
-Reset requires database access or restore from backup. There is no email reset in the default setup.
+No. Remote container inventory was **removed in v0.9.0**. The app manages UFW rules and optional external port scans only.
+
+### How many admin users?
+
+One account after initial `/setup`. No multi-user UI.
+
+### Can I run multiple app replicas?
+
+Not recommended. Rate limits and queues are in-memory (single replica design).
+
+## SSH and servers
+
+### Why is private IP rejected?
+
+Default security — blocks RFC1918 and metadata addresses. Set `SSH_ALLOWED_CIDRS` for lab/VPN targets.
+
+### Why is apply disabled?
+
+SSH host key may be **unverified**. Run **Refresh Status** successfully first.
+
+### Does delete server change remote UFW?
+
+No. Delete removes local management data only.
+
+## Rules and apply
+
+### Preview vs confirm?
+
+Preview shows planned changes without executing. Confirm runs UFW commands over SSH.
+
+### Remote changed since preview?
+
+Apply rejected — run **Apply preview** again. Do not force resync for this case.
+
+### Partial apply?
+
+See [Draft and apply workflow](./concepts/draft-apply-workflow.md). Use **Force resync from server** when indicated.
+
+### Why do rule counts differ?
+
+**Saved rules** (list card) vs **in table** (dashboard) count different things — see [UFW rules and states](./concepts/ufw-rules-and-states.md).
+
+## Operations UI
+
+### Banner stuck on RUNNING?
+
+Refresh page. Sweeper clears stale operations within ~30–60 minutes.
+
+### Rules not updating after sync?
+
+Since v0.9.2, operation end should trigger page refresh. Try manual browser refresh once.
+
+## Port scan
+
+### Scan button missing?
+
+`PORT_SCAN_ENABLED` not set to `true` in app environment.
+
+### Scan already running?
+
+Only one active scan per server. Wait or check operations history.
+
+### Does scan block UFW refresh?
+
+No (since v0.9.2). Scan runs outside SSH queue.
 
 ## Deployment
 
-**Do I need my own Docker image per domain?**  
-No. Set `APP_URL` in `.env` at runtime. One GHCR image works for any HTTPS domain.
+### Where run migrations?
 
-**Does this include Nginx Proxy Manager?**  
-No. NPM (or another reverse proxy) must be installed separately.
+In **migrate** / **ufw-migrate** container — not inside **ufw-app**. See [Deployment overview](./deployment/overview.md).
 
-**Can I run without HTTPS?**  
-Local development uses `http://localhost:8088`. Production expects HTTPS for secure cookies and HSTS.
+### EACCES running prisma in app container?
 
-## Firewall operations
+Expected — use `docker compose run --rm migrate`.
 
-**Does deleting a server remove remote UFW rules?**  
-No. Only local database records are deleted.
+## Related docs
 
-**What if apply fails halfway?**  
-Remote UFW may be partially updated. Use **Force resync from server** and review Operations history. See [Draft and apply workflow](./concepts/draft-apply-workflow.md).
-
-**Can I manage servers on private IPs?**  
-Yes, set `SSH_ALLOWED_CIDRS` in `.env` to allow your internal ranges.
-
-## Data and security
-
-**Where are SSH keys stored?**  
-Encrypted in Postgres with `APP_ENCRYPTION_KEY`. The `.env` key is mandatory for decryption.
-
-**Is config export safe?**  
-Export contains **plaintext secrets**. Password re-entry is required; store exports securely.
-
-## Support
-
-Contact **[apps@finenumbers.com](mailto:apps@finenumbers.com)** for product questions.
-
-Security vulnerabilities: see [SECURITY.md](../../SECURITY.md) — do not open public GitHub issues.
+- [Troubleshooting](./troubleshooting.md)
+- [Introduction](./introduction.md)

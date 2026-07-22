@@ -1,73 +1,51 @@
 # Serveurs et SSH
 
-Un enregistrement **serveur** représente un hôte Linux que vous gérez. L'application se connecte via SSH pour exécuter des commandes UFW et lire l'état du pare-feu.
+Un enregistrement **serveur** stocke le nom d'affichage, l'hôte, le port, l'identité SSH et l'empreinte de clé hôte optionnelle. Tout le travail UFW distant passe par cet enregistrement.
 
-## Champs du serveur
+## Validation d'hôte
 
-| Champ | Rôle |
-|-------|------|
-| **Nom** | Libellé affiché dans la barre latérale |
-| **Hôte** | Adresse IP ou nom DNS (validé avant enregistrement) |
-| **Port** | Port SSH (22 par défaut) |
-| **Identité SSH** | Identifiants utilisés pour la connexion |
+Avant l'enregistrement, l'application valide l'hôte cible :
 
-## Validation d'hôte (protection SSRF)
+| Vérification | Comportement par défaut |
+|--------------|-------------------------|
+| Plages IP privées | **Rejetées** (RFC1918, loopback, link-local) |
+| IP de métadonnées cloud | **Rejetées** |
+| Noms d'hôte / IP publics | Autorisés |
+| Liste blanche personnalisée | Définir `SSH_ALLOWED_CIDRS` pour autoriser des plages privées spécifiques (lab/VPN) |
 
-Avant l'enregistrement d'un serveur, l'hôte est validé :
+La résolution DNS est validée le cas échéant pour que les fautes de frappe échouent tôt.
 
-- Les plages IP privées (10.x, 172.16–31, 192.168.x) sont **bloquées** par défaut
-- Les adresses link-local et métadonnées cloud sont bloquées
-- Les adresses privées IPv6 mappées IPv4 sont bloquées
-- Liste blanche optionnelle : définir `SSH_ALLOWED_CIDRS` dans `.env` (p. ex. `10.0.0.0/8`) pour les réseaux internes
+## Vérification de connexion
 
-Cela empêche l'application d'être utilisée comme proxy pour scanner des réseaux internes.
+**Créer le serveur** et **Modifier le serveur** (lorsque l'hôte, le port ou l'identité changent) exécutent automatiquement un test de connexion SSH. Il n'y a pas de bouton *Tester la connexion* séparé sur le formulaire de modification.
 
-## Vérification de résolution DNS
+Les messages d'échec pointent vers l'accessibilité, les identifiants, le pare-feu ou la validation d'hôte — voir [Dépannage](../troubleshooting.md).
 
-La validation s'effectue en deux étapes :
+## Clés hôte SSH (confiance à la première utilisation)
 
-1. **À l'enregistrement** — la chaîne du nom d'hôte est vérifiée (littéraux privés, hôtes de métadonnées, liste blanche CIDR optionnelle).
-2. **Avant la connexion** — le nom d'hôte est résolu en IP et **l'adresse résolue** est vérifiée avec les mêmes règles.
+Lors de la première connexion réussie, l'empreinte de la clé hôte du serveur est stockée et marquée **vérifiée**.
 
-Cela comble les failles de DNS rebinding où un nom d'hôte public se résout ensuite en IP privée ou de métadonnées.
+| État | Interface | Application des règles |
+|------|-----------|------------------------|
+| **Vérifiée** | Empreinte affichée sur la page de modification | Autorisée après actualisation |
+| **Non vérifiée** | Avertissement sur le tableau de bord et la page de modification | **Enregistrer les règles** (application) bloquée jusqu'à ce que **Actualiser le statut** réussisse |
 
-## Vérification SSH à l'enregistrement
+Cela réduit le risque MITM à la première connexion. Pour faire confiance à une nouvelle clé après reconstruction du serveur, mettez à jour le serveur ou effacez et revérifiez via actualisation.
 
-La création ou la mise à jour d'un serveur (changement d'hôte, de port ou d'identité) exécute automatiquement un **test de connexion SSH à l'envoi**. Il n'y a pas de bouton de test séparé — l'enregistrement est bloqué tant que la vérification n'a pas réussi.
+Les serveurs importés depuis la configuration peuvent arriver avec des empreintes stockées — vérifiez avec **Actualiser le statut** avant d'appliquer les règles.
 
-Lors de la première vérification réussie, l'empreinte de la clé hôte est enregistrée et le serveur est marqué **Vérifié**.
+## Sudo et UFW
 
-## Épinglage de clé hôte SSH
+Les commandes distantes supposent que l'utilisateur SSH peut exécuter `ufw` — typiquement via sudo sans mot de passe pour `ufw` ou root. L'application encapsule les commandes apt install dans `sudo` si nécessaire pour **Installer UFW**.
 
-| État | Signification |
-|------|---------------|
-| **Vérifié** | Clé enregistrée après enregistrement réussi à la création/mise à jour ou **Actualiser le statut** |
-| **Non vérifié** | Clé importée depuis la configuration — exécuter **Actualiser le statut** sur le tableau de bord du serveur pour vérifier |
+Assurez-vous que `/etc/sudoers` autorise les commandes requises pour l'utilisateur choisi.
 
-La page de modification affiche l'empreinte et un avertissement non vérifié le cas échéant, mais n'exécute pas la vérification tant que vous n'enregistrez pas des paramètres de connexion modifiés ou n'utilisez pas **Actualiser le statut** sur le tableau de bord.
+## Serveurs en double
 
-Si la clé hôte distante change (réinstallation, MITM), la connexion suivante échoue jusqu'à investigation.
-
-## Effet de la suppression d'un serveur
-
-La suppression d'un serveur retire **uniquement les données locales** :
-
-- Règles brouillon, snapshots, sessions d'application, historique des opérations pour ce serveur
-
-Elle **ne modifie pas** les règles UFW sur l'hôte Linux distant. L'état du pare-feu distant reste inchangé.
-
-## Cycle de vie UFW sur un serveur
-
-Depuis le tableau de bord du serveur, vous pouvez :
-
-1. **Actualiser le statut** — détecter si UFW est installé et actif (utilise le snapshot en cache jusqu'à l'actualisation)
-2. **Installer UFW** si absent — l'installation et l'activation s'exécutent ensemble en une seule opération
-3. Modifier et appliquer les règles lorsque UFW est installé **et** actif
-
-L'édition des règles n'est disponible que lorsque UFW est installé **et** actif.
+La même combinaison hôte + port + identité ne peut pas être enregistrée deux fois. Utilisez des noms distincts si vous gérez intentionnellement le même hôte via différents comptes (identités différentes).
 
 ## Documentation associée
 
 - [Identités SSH](./ssh-identities.md)
 - [Gérer les serveurs](../user-guide/manage-servers.md)
-- [Dépannage](../troubleshooting.md)
+- [Variables d'environnement](../administration/environment-variables.md) — `SSH_ALLOWED_CIDRS`
