@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { notifyOperationStarted } from "@/lib/operations/events";
+import { notifyOperationEnded, notifyOperationStarted } from "@/lib/operations/events";
 import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { appendEmptyRule } from "@/lib/rules/add-rule";
 import { cn } from "@/lib/utils";
@@ -92,21 +92,24 @@ export function UfwDashboard({
     clearOperationError();
     notifyOperationStarted(serverId);
 
-    const result = await loadUfwStateAction(serverId);
-    setStatusChecked(true);
+    try {
+      const result = await loadUfwStateAction(serverId);
+      setStatusChecked(true);
 
-    if (!result.success) {
-      setSshReachable(false);
-      showOperationFailure(result, tc);
+      if (!result.success) {
+        setSshReachable(false);
+        showOperationFailure(result, tc);
+        return;
+      }
+
+      setSshReachable(true);
+      setState(result.state);
+      await onRulesRefresh();
+      router.refresh();
+    } finally {
+      notifyOperationEnded(serverId);
       setLoading(false);
-      return;
     }
-
-    setSshReachable(true);
-    setState(result.state);
-    await onRulesRefresh();
-    router.refresh();
-    setLoading(false);
   }
 
   function requestRefresh() {
@@ -146,46 +149,54 @@ export function UfwDashboard({
     setLoading(true);
     clearOperationError();
     notifyOperationStarted(serverId);
-    const result = await installUfwAction(serverId);
-    if (result.success) {
-      const refreshResult = await loadUfwStateAction(serverId);
-      setStatusChecked(true);
-      if (!refreshResult.success) {
-        setSshReachable(false);
-        showOperationFailure(refreshResult, tc);
+    try {
+      const result = await installUfwAction(serverId);
+      if (result.success) {
+        const refreshResult = await loadUfwStateAction(serverId);
+        setStatusChecked(true);
+        if (!refreshResult.success) {
+          setSshReachable(false);
+          showOperationFailure(refreshResult, tc);
+        } else {
+          setSshReachable(true);
+          setState(refreshResult.state);
+          await onRulesRefresh();
+          router.refresh();
+        }
       } else {
-        setSshReachable(true);
-        setState(refreshResult.state);
-        await onRulesRefresh();
-        router.refresh();
+        setOperationError(result.message);
       }
-    } else {
-      setOperationError(result.message);
+    } finally {
+      notifyOperationEnded(serverId);
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function handleEnable() {
     setLoading(true);
     clearOperationError();
     notifyOperationStarted(serverId);
-    const result = await enableUfwAction(serverId);
-    if (result.success) {
-      const refreshResult = await loadUfwStateAction(serverId);
-      setStatusChecked(true);
-      if (!refreshResult.success) {
-        setSshReachable(false);
-        showOperationFailure(refreshResult, tc);
+    try {
+      const result = await enableUfwAction(serverId);
+      if (result.success) {
+        const refreshResult = await loadUfwStateAction(serverId);
+        setStatusChecked(true);
+        if (!refreshResult.success) {
+          setSshReachable(false);
+          showOperationFailure(refreshResult, tc);
+        } else {
+          setSshReachable(true);
+          setState(refreshResult.state);
+          await onRulesRefresh();
+          router.refresh();
+        }
       } else {
-        setSshReachable(true);
-        setState(refreshResult.state);
-        await onRulesRefresh();
-        router.refresh();
+        setOperationError(result.message);
       }
-    } else {
-      setOperationError(result.message);
+    } finally {
+      notifyOperationEnded(serverId);
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const installEnabled = statusChecked && sshReachable === true && !state.installed;

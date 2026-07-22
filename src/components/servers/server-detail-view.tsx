@@ -3,6 +3,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
@@ -78,6 +79,7 @@ export function ServerDetailView({
   rulesUnavailableMessage,
   portScanEnabled,
 }: ServerDetailViewProps) {
+  const router = useRouter();
   const tServers = useTranslations("servers");
   const [portScanStartToken, setPortScanStartToken] = useState(0);
   const [portFindingCount, setPortFindingCount] = useState(initialPortFindingCount);
@@ -103,6 +105,7 @@ export function ServerDetailView({
 
     function handleOperationEnded() {
       operationActiveRef.current = false;
+      router.refresh();
     }
 
     window.addEventListener(OPERATION_STARTED_EVENT, handleOperationStarted);
@@ -111,7 +114,7 @@ export function ServerDetailView({
       window.removeEventListener(OPERATION_STARTED_EVENT, handleOperationStarted);
       window.removeEventListener(OPERATION_ENDED_EVENT, handleOperationEnded);
     };
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (operationActiveRef.current) {

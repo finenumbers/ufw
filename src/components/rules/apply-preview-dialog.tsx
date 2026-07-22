@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { notifyOperationStarted } from "@/lib/operations/events";
+import { notifyOperationEnded, notifyOperationStarted } from "@/lib/operations/events";
 import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { confirmApplyAction } from "@/server/actions/apply";
 import { syncRemoteRulesAction } from "@/server/actions/servers";
@@ -51,21 +51,24 @@ export function ApplyPreviewDialog({
     onOpenChange(false);
     notifyOperationStarted(serverId);
 
-    const result = await confirmApplyAction(sessionId);
-    setLoading(false);
-
-    if (!result.success) {
-      if (result.needsRePreview) {
-        setError(t("remoteChanged"));
-      } else {
-        setError(result.error ?? t("failed"));
+    try {
+      const result = await confirmApplyAction(sessionId);
+      if (!result.success) {
+        if (result.needsRePreview) {
+          setError(t("remoteChanged"));
+        } else {
+          setError(result.error ?? t("failed"));
+        }
+        setNeedsResync(Boolean(result.needsResync));
+        onOpenChange(true);
+        return;
       }
-      setNeedsResync(Boolean(result.needsResync));
-      onOpenChange(true);
-      return;
-    }
 
-    await onCompleted();
+      await onCompleted();
+    } finally {
+      notifyOperationEnded(serverId);
+      setLoading(false);
+    }
   }
 
   async function handleForceResync() {
@@ -74,17 +77,20 @@ export function ApplyPreviewDialog({
     clearMessage();
     notifyOperationStarted(serverId);
 
-    const result = await syncRemoteRulesAction(serverId);
-    setResyncLoading(false);
+    try {
+      const result = await syncRemoteRulesAction(serverId);
+      if (!result.success) {
+        showFailure(result, tc);
+        return;
+      }
 
-    if (!result.success) {
-      showFailure(result, tc);
-      return;
+      setNeedsResync(false);
+      onOpenChange(false);
+      await onCompleted();
+    } finally {
+      notifyOperationEnded(serverId);
+      setResyncLoading(false);
     }
-
-    setNeedsResync(false);
-    onOpenChange(false);
-    await onCompleted();
   }
 
   return (

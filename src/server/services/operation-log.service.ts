@@ -1,6 +1,7 @@
 import type { OperationStatus, Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { TERMINAL_BANNER_TTL_MS } from "@/lib/operations/operation-banner-poll";
 
 export async function createOperationLog(params: {
   serverId?: string | null;
@@ -72,5 +73,23 @@ export async function getActiveOperationLog(serverId: string, userId?: string) {
       ...(userId ? { userId } : {}),
     },
     orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getBannerOperationLog(serverId: string, userId?: string) {
+  const active = await getActiveOperationLog(serverId, userId);
+  if (active) {
+    return active;
+  }
+
+  const cutoff = new Date(Date.now() - TERMINAL_BANNER_TTL_MS);
+  return db.operationLog.findFirst({
+    where: {
+      serverId,
+      status: { in: ["SUCCESS", "FAILED", "PARTIAL"] },
+      ...(userId ? { userId } : {}),
+      updatedAt: { gte: cutoff },
+    },
+    orderBy: { updatedAt: "desc" },
   });
 }

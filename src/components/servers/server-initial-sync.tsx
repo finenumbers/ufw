@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { notifyOperationStarted } from "@/lib/operations/events";
+import { notifyOperationEnded, notifyOperationStarted } from "@/lib/operations/events";
 import { syncRemoteRulesAction } from "@/server/actions/servers";
 
 type ServerInitialSyncProps = {
@@ -22,13 +22,17 @@ export function ServerInitialSync({ serverId, needsSync }: ServerInitialSyncProp
 
     notifyOperationStarted(serverId);
 
-    void syncRemoteRulesAction(serverId).then((result) => {
-      if (!result.success) {
-        setSyncError("error" in result ? result.error : "Sync failed");
-        return;
-      }
-      router.refresh();
-    });
+    void syncRemoteRulesAction(serverId)
+      .then((result) => {
+        if (!result.success) {
+          setSyncError("error" in result ? result.error : "Sync failed");
+          return;
+        }
+        router.refresh();
+      })
+      .finally(() => {
+        notifyOperationEnded(serverId);
+      });
   }, [needsSync, serverId, router]);
 
   if (!syncError) {

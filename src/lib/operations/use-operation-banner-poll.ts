@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef } from "react";
 
 import { isOperationDismissed, notifyOperationEnded, OPERATION_STARTED_EVENT } from "@/lib/operations/events";
 import {
+  isTerminalBannerStatus,
+  OPERATION_START_GRACE_POLL_MS,
   shouldContinueBannerPoll,
+  shouldContinueGracePoll,
+  shouldNotifyGracePeriodExpired,
   shouldNotifyOperationEnded,
 } from "@/lib/operations/operation-banner-poll";
 import { activeOperationPollDelayMs } from "@/lib/operations/poll-interval";
@@ -73,11 +77,19 @@ export function useOperationBannerPoll({ serverId, onOperation }: UseOperationBa
 
     let active = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let pollAttempt = 0;
+    let graceStartedAt: number | null = null;
+    let sawActiveDuringGrace = false;
 
-    const schedule = (delayMs: number) => {
+    const clearTimer = () => {
       if (timer) {
         clearTimeout(timer);
+        timer = null;
       }
+    };
+
+    const scheduleActivePoll = (delayMs: number) => {
+      clearTimer();
       timer = setTimeout(async () => {
         if (!active) {
           return;
@@ -87,11 +99,58 @@ export function useOperationBannerPoll({ serverId, onOperation }: UseOperationBa
           return;
         }
         if (!shouldContinueBannerPoll(current)) {
-          timer = null;
+          clearTimer();
           return;
         }
-        schedule(activeOperationPollDelayMs(0));
+        pollAttempt += 1;
+        scheduleActivePoll(activeOperationPollDelayMs(pollAttempt));
       }, delayMs);
+    };
+
+    const runGracePoll = async () => {
+      if (!active || graceStartedAt === null) {
+        return;
+      }
+
+      const current = await load();
+      if (!active) {
+        return;
+      }
+
+      if (shouldContinueBannerPoll(current)) {
+        sawActiveDuringGrace = true;
+        graceStartedAt = null;
+        pollAttempt = 0;
+        scheduleActivePoll(activeOperationPollDelayMs(0));
+        return;
+      }
+
+      if (current && isTerminalBannerStatus(current.status)) {
+        graceStartedAt = null;
+        return;
+      }
+
+      if (shouldContinueGracePoll(graceStartedAt, current)) {
+        clearTimer();
+        timer = setTimeout(() => {
+          void runGracePoll();
+        }, OPERATION_START_GRACE_POLL_MS);
+        return;
+      }
+
+      const graceStart = graceStartedAt;
+      graceStartedAt = null;
+      if (shouldNotifyGracePeriodExpired(graceStart, current, sawActiveDuringGrace)) {
+        notifyOperationEnded(serverId);
+      }
+    };
+
+    const startGracePolling = () => {
+      graceStartedAt = Date.now();
+      sawActiveDuringGrace = false;
+      pollAttempt = 0;
+      clearTimer();
+      void runGracePoll();
     };
 
     void load().then((current) => {
@@ -101,7 +160,7 @@ export function useOperationBannerPoll({ serverId, onOperation }: UseOperationBa
       if (!shouldContinueBannerPoll(current)) {
         return;
       }
-      schedule(activeOperationPollDelayMs(0));
+      scheduleActivePoll(activeOperationPollDelayMs(0));
     });
 
     const onStarted = (event: Event) => {
@@ -109,27 +168,14 @@ export function useOperationBannerPoll({ serverId, onOperation }: UseOperationBa
       if (detail?.serverId && detail.serverId !== serverId) {
         return;
       }
-      if (timer) {
-        clearTimeout(timer);
-      }
-      void load().then((current) => {
-        if (!active) {
-          return;
-        }
-        if (!shouldContinueBannerPoll(current)) {
-          return;
-        }
-        schedule(activeOperationPollDelayMs(0));
-      });
+      startGracePolling();
     };
 
     window.addEventListener(OPERATION_STARTED_EVENT, onStarted);
 
     return () => {
       active = false;
-      if (timer) {
-        clearTimeout(timer);
-      }
+      clearTimer();
       window.removeEventListener(OPERATION_STARTED_EVENT, onStarted);
     };
   }, [serverId, load]);

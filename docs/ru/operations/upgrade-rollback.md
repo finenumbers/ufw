@@ -25,10 +25,11 @@ Verify:
 | **v0.9.3** | No | Гибкая ширина колонки Name |
 | **v0.9.4** | No | Фиолетовая подсветка пересекающихся адресов |
 | **v0.9.5** | No | Enable UFW, i18n таблицы, host key guard на apply, CI gate release |
+| **v0.9.6** | No | Grace polling баннера операций, fix залипания sync, terminal banner TTL |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.5` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.6` in `.env`.
 
 ## Rollback
 

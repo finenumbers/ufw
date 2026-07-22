@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  isWithinOperationStartGracePeriod,
+  OPERATION_START_GRACE_PERIOD_MS,
   shouldContinueBannerPoll,
+  shouldContinueGracePoll,
+  shouldNotifyGracePeriodExpired,
   shouldNotifyOperationEnded,
 } from "@/lib/operations/operation-banner-poll";
 import type { ActiveOperation } from "@/types/operation";
@@ -39,4 +43,42 @@ test("shouldContinueBannerPoll only tracks active operations", () => {
   assert.equal(shouldContinueBannerPoll({ ...runningOperation, status: "PENDING" }), true);
   assert.equal(shouldContinueBannerPoll(null), false);
   assert.equal(shouldContinueBannerPoll({ ...runningOperation, status: "SUCCESS" }), false);
+});
+
+test("isWithinOperationStartGracePeriod respects the grace window", () => {
+  const startedAt = 1_000_000;
+  assert.equal(isWithinOperationStartGracePeriod(startedAt, startedAt), true);
+  assert.equal(
+    isWithinOperationStartGracePeriod(startedAt, startedAt + OPERATION_START_GRACE_PERIOD_MS - 1),
+    true,
+  );
+  assert.equal(
+    isWithinOperationStartGracePeriod(startedAt, startedAt + OPERATION_START_GRACE_PERIOD_MS),
+    false,
+  );
+});
+
+test("shouldContinueGracePoll retries null until active or grace expires", () => {
+  const startedAt = 5_000;
+  assert.equal(shouldContinueGracePoll(startedAt, null, startedAt + 100), true);
+  assert.equal(
+    shouldContinueGracePoll(startedAt, null, startedAt + OPERATION_START_GRACE_PERIOD_MS),
+    false,
+  );
+  assert.equal(shouldContinueGracePoll(startedAt, runningOperation, startedAt + 100), false);
+  assert.equal(
+    shouldContinueGracePoll(startedAt, { ...runningOperation, status: "SUCCESS" }, startedAt + 100),
+    false,
+  );
+});
+
+test("shouldNotifyGracePeriodExpired fires only after grace without active op", () => {
+  const startedAt = 10_000;
+  const beforeExpiry = startedAt + OPERATION_START_GRACE_PERIOD_MS - 1;
+  const afterExpiry = startedAt + OPERATION_START_GRACE_PERIOD_MS;
+
+  assert.equal(shouldNotifyGracePeriodExpired(startedAt, null, false, beforeExpiry), false);
+  assert.equal(shouldNotifyGracePeriodExpired(startedAt, null, false, afterExpiry), true);
+  assert.equal(shouldNotifyGracePeriodExpired(startedAt, null, true, afterExpiry), false);
+  assert.equal(shouldNotifyGracePeriodExpired(startedAt, runningOperation, false, afterExpiry), false);
 });

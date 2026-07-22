@@ -15,7 +15,7 @@ While work runs, a banner appears at the top of the app (and on the server detai
 
 On **SUCCESS**, the banner auto-dismisses after about 10 seconds. You can dismiss it manually sooner. Failed and partial operations stay visible until dismissed.
 
-The banner loads active operations from `/api/operations/active`. That endpoint returns only operations in `RUNNING` or `PENDING` state — not terminal ones.
+The banner loads operations from `/api/operations/active`. That endpoint returns operations in `RUNNING` or `PENDING` state, and recently finished `SUCCESS`, `FAILED`, or `PARTIAL` operations for about **10 seconds** after completion.
 
 ## Client polling lifecycle
 

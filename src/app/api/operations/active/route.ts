@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireApiSession } from "@/lib/api-auth";
-import { getActiveOperationLog } from "@/server/services/operation-log.service";
+import { getBannerOperationLog } from "@/server/services/operation-log.service";
 import { parseOperationMetadata } from "@/types/operation";
 
 export async function GET(request: Request) {
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     return NextResponse.json(null);
   }
 
-  const log = await getActiveOperationLog(serverId, authResult.session.user.id);
+  const log = await getBannerOperationLog(serverId, authResult.session.user.id);
   if (!log) {
     return NextResponse.json(null);
   }
