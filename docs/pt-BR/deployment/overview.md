@@ -31,7 +31,6 @@ O Nginx Proxy Manager é **sempre externo** — não incluído neste repositóri
 5. Abrir `APP_URL/setup`, criar admin
 6. Executar `./scripts/smoke-production.sh --env-file .env --ghcr --app-url "$APP_URL"`
 7. Opcional: ativar [varredura de portas externa](./port-scan.md) com `PORT_SCAN_ENABLED=true`
-8. Opcional: ativar [monitoramento de containers Docker](./docker-monitor.md) com `DOCKER_MONITOR_ENABLED=true`
 
 ## Imagens universais
 

@@ -1,6 +1,6 @@
 # Cronologia operazioni
 
-Le attività di lunga durata (applicazione, aggiornamento, installazione UFW, port scan, inventario Docker) sono tracciate nei **log operazioni** e mostrate nell'interfaccia.
+Le attività di lunga durata (applicazione, aggiornamento, installazione UFW, port scan) sono tracciate nei **log operazioni** e mostrate nell'interfaccia.
 
 ## Banner operazione
 
@@ -22,7 +22,7 @@ Due schede:
 
 | Scheda | Contenuto |
 |--------|-----------|
-| **Operazioni** | Log tecnico operazioni — applicazione, sync, aggiornamento, port scan, Docker, ecc. |
+| **Operazioni** | Log tecnico operazioni — applicazione, sync, aggiornamento, port scan, ecc. |
 | **Audit** | Eventi rilevanti per la sicurezza — login, logout, export configurazione |
 
 Entrambe supportano lo scroll infinito per voci più vecchie.
@@ -38,8 +38,6 @@ Esempi attivi:
 - `ufw_sync` / `ufw.sync` — sync iniziale in background quando non esiste uno snapshot
 - `ufw_install` / `ufw.install` — installazione UFW (l'abilitazione avviene durante l'installazione)
 - `port_scan` / `port.scan` — port scan esterno
-- `docker_inventory` / `docker.inventory` — aggiornamento inventario Docker
-- `docker_control` / `docker.control` — avvio/arresto/riavvio container
 - `server_create` / `server.create` — nuovo server aggiunto
 
 Legacy (solo voci storiche nel log):

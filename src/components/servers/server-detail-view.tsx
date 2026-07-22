@@ -13,7 +13,6 @@ import { ServerInitialSync } from "@/components/servers/server-initial-sync";
 import { UfwDashboard } from "@/components/servers/ufw-dashboard";
 import { Button } from "@/components/ui/button";
 import { OPERATION_ENDED_EVENT, OPERATION_STARTED_EVENT } from "@/lib/operations/events";
-import type { DockerInventoryView } from "@/types/docker-monitor";
 import type { PortScanView } from "@/types/port-scan";
 import type { UnifiedRuleRow } from "@/types/rule";
 import type { UfwDetectionResult } from "@/types/ufw";
@@ -35,13 +34,6 @@ const PortScanPanel = dynamic(
   { ssr: false },
 );
 
-const DockerMonitorPanel = dynamic(
-  () =>
-    import("@/components/servers/docker-monitor-panel").then((module) => ({
-      default: module.DockerMonitorPanel,
-    })),
-  { ssr: false },
-);
 
 type ServerDetailViewProps = {
   server: {
@@ -56,9 +48,7 @@ type ServerDetailViewProps = {
   needsSync: boolean;
   sshHostKeyVerified: boolean;
   portFindingCount: number;
-  containerCount: number;
   initialPortScan: PortScanView | null;
-  initialDockerInventory: DockerInventoryView | null;
   initialRows: UnifiedRuleRow[];
   initialTotal: number;
   initialHasMore: boolean;
@@ -66,7 +56,6 @@ type ServerDetailViewProps = {
   rulesAvailable: boolean;
   rulesUnavailableMessage: string;
   portScanEnabled: boolean;
-  dockerMonitorEnabled: boolean;
 };
 
 function sortRows(rows: UnifiedRuleRow[]): UnifiedRuleRow[] {
@@ -80,9 +69,7 @@ export function ServerDetailView({
   needsSync,
   sshHostKeyVerified,
   portFindingCount: initialPortFindingCount,
-  containerCount: initialContainerCount,
   initialPortScan,
-  initialDockerInventory,
   initialRows,
   initialTotal,
   initialHasMore,
@@ -90,13 +77,10 @@ export function ServerDetailView({
   rulesAvailable,
   rulesUnavailableMessage,
   portScanEnabled,
-  dockerMonitorEnabled,
 }: ServerDetailViewProps) {
   const tServers = useTranslations("servers");
   const [portScanStartToken, setPortScanStartToken] = useState(0);
-  const [dockerStartToken, setDockerStartToken] = useState(0);
   const [portFindingCount, setPortFindingCount] = useState(initialPortFindingCount);
-  const [containerCount, setContainerCount] = useState(initialContainerCount);
   const [rows, setRows] = useState(() => sortRows(initialRows));
   const [total, setTotal] = useState(initialTotal);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -134,8 +118,7 @@ export function ServerDetailView({
       return;
     }
     setPortFindingCount(initialPortFindingCount);
-    setContainerCount(initialContainerCount);
-  }, [initialPortFindingCount, initialContainerCount]);
+  }, [initialPortFindingCount]);
 
   useEffect(() => {
     if (rowsDirtyRef.current || operationActiveRef.current || loadingMoreRef.current) {
@@ -213,9 +196,6 @@ export function ServerDetailView({
     setPortFindingCount(scan.summary?.openCount ?? scan.findings.length);
   }, []);
 
-  const handleDockerInventoryUpdated = useCallback((inventory: DockerInventoryView) => {
-    setContainerCount(inventory.summary?.containerCount ?? 0);
-  }, []);
 
   return (
     <div className="space-y-6">
@@ -258,7 +238,6 @@ export function ServerDetailView({
         initialState={ufwState}
         rulesTotal={total}
         portFindingCount={portFindingCount}
-        containerCount={containerCount}
         sshHostKeyVerified={sshHostKeyVerified}
         hasUnsavedEdits={() => rowsDirtyRef.current}
         rows={rows}
@@ -266,9 +245,7 @@ export function ServerDetailView({
         resolveAllRows={resolveAllRows}
         onRulesRefresh={refreshRules}
         portScanEnabled={portScanEnabled}
-        dockerMonitorEnabled={dockerMonitorEnabled}
         onPortScanClick={() => setPortScanStartToken((value) => value + 1)}
-        onDockerRefreshClick={() => setDockerStartToken((value) => value + 1)}
       />
 
       {rulesAvailable ? (
@@ -298,14 +275,6 @@ export function ServerDetailView({
         />
       ) : null}
 
-      {dockerMonitorEnabled ? (
-        <DockerMonitorPanel
-          serverId={server.id}
-          initialInventory={initialDockerInventory}
-          startToken={dockerStartToken}
-          onInventoryUpdated={handleDockerInventoryUpdated}
-        />
-      ) : null}
     </div>
   );
 }

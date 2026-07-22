@@ -150,10 +150,6 @@ enum AuditAction {
   LOGOUT
   PORT_SCAN_STARTED
   PORT_SCAN_COMPLETED
-  DOCKER_INVENTORY_REFRESHED
-  DOCKER_CONTAINER_STARTED
-  DOCKER_CONTAINER_STOPPED
-  DOCKER_CONTAINER_RESTARTED
 }
 
 enum PortScanPerspective {
@@ -229,8 +225,6 @@ model Server {
   applySessions ApplySession[]
   operationLogs OperationLog[]
   portScans     PortScan[]
-  dockerSnapshots DockerInventorySnapshot[]
-
   @@unique([host, port, identityId])
   @@map("server")
 }
@@ -473,51 +467,3 @@ model PortScanFinding {
   @@map("port_scan_finding")
 }
 
-model DockerInventorySnapshot {
-  id              String          @id @default(cuid())
-  serverId        String
-  server          Server          @relation(fields: [serverId], references: [id], onDelete: Cascade)
-  userId          String?
-  status          OperationStatus @default(PENDING)
-  dockerInstalled Boolean         @default(false)
-  dockerReachable Boolean         @default(false)
-  dockerVersion   String?
-  composeVersion  String?
-  containerCount  Int             @default(0)
-  runningCount    Int             @default(0)
-  errorMessage    String?
-  operationLogId  String?
-  capturedAt      DateTime        @default(now())
-
-  containers DockerContainerRecord[]
-
-  @@index([serverId, capturedAt(sort: Desc)])
-  @@index([serverId, status, capturedAt(sort: Desc)])
-  @@map("docker_inventory_snapshot")
-}
-
-model DockerContainerRecord {
-  id              String                  @id @default(cuid())
-  snapshotId      String
-  snapshot        DockerInventorySnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
-  containerId     String
-  name            String
-  image           String
-  status          String
-  health          String?
-  stateExitCode   Int?
-  restartCount    Int?
-  publishedPorts  Json?
-  composeProject  String?
-  composeService  String?
-  cpuPercent      Float?
-  memUsageBytes   BigInt?
-  memLimitBytes   BigInt?
-  startedAt       DateTime?
-  createdAtRemote DateTime?
-  rawInspectJson  Json?
-
-  @@unique([snapshotId, containerId])
-  @@index([snapshotId, name])
-  @@map("docker_container_record")
-}

@@ -1,6 +1,6 @@
 # История операций
 
-Длительные задачи (apply, refresh, установка UFW, port scan, Docker inventory) записываются в **operation logs** и отображаются в интерфейсе.
+Длительные задачи (apply, refresh, установка UFW, port scan) записываются в **operation logs** и отображаются в интерфейсе.
 
 ## Баннер операции
 
@@ -22,7 +22,7 @@
 
 | Вкладка | Содержимое |
 |---------|------------|
-| **Operations** | Технический log — apply, sync, refresh, port scan, Docker и т. д. |
+| **Operations** | Технический log — apply, sync, refresh, port scan и т. д. |
 | **Audit** | События безопасности — login, logout, config export |
 
 Обе поддерживают бесконечную прокрутку для старых записей.
@@ -38,8 +38,6 @@
 - `ufw_sync` / `ufw.sync` — фоновая initial sync при отсутствии snapshot
 - `ufw_install` / `ufw.install` — установка UFW (enable внутри install)
 - `port_scan` / `port.scan` — внешний port scan
-- `docker_inventory` / `docker.inventory` — refresh Docker inventory
-- `docker_control` / `docker.control` — start/stop/restart контейнера
 - `server_create` / `server.create` — новый сервер
 
 Legacy (только исторические записи):

@@ -43,7 +43,7 @@ Wiederholte Server-Aktionen haben eine **30 Sekunden**-Abklingzeit pro Server (n
 - Docker-Inventar-Refresh
 - Docker-Container start, stop, restart
 
-Seit **v0.5.1** werden Legacy-Variablen wie `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` und `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` **ignoriert**, falls sie noch in `.env` stehen.
+Seit **v0.5.1** werden Legacy-Variablen wie `PORT_SCAN_RATE_LIMIT_WINDOW_MS` **ignoriert**, falls sie noch in `.env` stehen.
 
 In-Memory-Rate-Limit-Buckets werden bei Leerstand entfernt (nur Single-Replica-Bereitstellung — siehe [Architektur](../architecture.md)).
 

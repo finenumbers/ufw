@@ -1,6 +1,6 @@
 # Operations history
 
-Long-running tasks (apply, refresh, install UFW, port scan, Docker inventory) are tracked in **operation logs** and shown in the UI.
+Long-running tasks (apply, refresh, install UFW, port scan) are tracked in **operation logs** and shown in the UI.
 
 ## Operation banner
 
@@ -22,7 +22,7 @@ Two tabs:
 
 | Tab | Content |
 |-----|---------|
-| **Operations** | Technical operation log — apply, sync, refresh, port scan, Docker, etc. |
+| **Operations** | Technical operation log — apply, sync, refresh, port scan, etc. |
 | **Audit** | Security-relevant events — login, logout, config export |
 
 Both support infinite scroll for older entries.
@@ -38,8 +38,6 @@ Active examples:
 - `ufw_sync` / `ufw.sync` — background initial sync when no snapshot exists
 - `ufw_install` / `ufw.install` — UFW install (enable runs inside install)
 - `port_scan` / `port.scan` — external port scan
-- `docker_inventory` / `docker.inventory` — Docker inventory refresh
-- `docker_control` / `docker.control` — container start/stop/restart
 - `server_create` / `server.create` — new server added
 
 Legacy (historical log entries only):

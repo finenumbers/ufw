@@ -38,8 +38,6 @@ Exemples actifs :
 - `ufw_sync` / `ufw.sync` — sync initiale en arrière-plan lorsqu'aucun snapshot n'existe
 - `ufw_install` / `ufw.install` — installation UFW (l'activation s'exécute dans l'installation)
 - `port_scan` / `port.scan` — scan de ports externe
-- `docker_inventory` / `docker.inventory` — actualisation de l'inventaire Docker
-- `docker_control` / `docker.control` — démarrage/arrêt/redémarrage de conteneur
 - `server_create` / `server.create` — nouveau serveur ajouté
 
 Legacy (entrées historiques uniquement) :

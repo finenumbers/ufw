@@ -43,7 +43,7 @@ Le server actions ripetute usano un cooldown di **30 secondi** per server (non c
 - Refresh inventario Docker
 - Start, stop e restart container Docker
 
-Da **v0.5.1**, variabili legacy come `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` e `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` sono **ignorate** se ancora presenti in `.env`.
+Da **v0.5.1**, variabili legacy come `PORT_SCAN_RATE_LIMIT_WINDOW_MS` sono **ignorate** se ancora presenti in `.env`.
 
 I bucket dei limiti di frequenza in memoria vengono eliminati quando vuoti (solo deployment a replica singola — vedi [Architettura](../architecture.md)).
 

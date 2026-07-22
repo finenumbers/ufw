@@ -52,8 +52,7 @@ export async function register() {
       swept.applyPending +
       swept.operationPending +
       swept.operationRunning +
-      swept.portScans +
-      swept.dockerInventories;
+      swept.portScans;
 
     if (total > 0) {
       const { createChildLogger } = await import("@/lib/logger");

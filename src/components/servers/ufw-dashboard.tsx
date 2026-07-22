@@ -33,7 +33,6 @@ type UfwDashboardProps = {
   initialState: UfwDetectionResult;
   rulesTotal: number;
   portFindingCount: number;
-  containerCount: number;
   sshHostKeyVerified: boolean;
   hasUnsavedEdits: () => boolean;
   rows: UnifiedRuleRow[];
@@ -41,9 +40,7 @@ type UfwDashboardProps = {
   resolveAllRows: () => Promise<UnifiedRuleRow[]>;
   onRulesRefresh: () => Promise<void>;
   portScanEnabled: boolean;
-  dockerMonitorEnabled: boolean;
   onPortScanClick: () => void;
-  onDockerRefreshClick: () => void;
 };
 
 export function UfwDashboard({
@@ -51,7 +48,6 @@ export function UfwDashboard({
   initialState,
   rulesTotal,
   portFindingCount,
-  containerCount,
   sshHostKeyVerified,
   hasUnsavedEdits,
   rows,
@@ -59,15 +55,12 @@ export function UfwDashboard({
   resolveAllRows,
   onRulesRefresh,
   portScanEnabled,
-  dockerMonitorEnabled,
   onPortScanClick,
-  onDockerRefreshClick,
 }: UfwDashboardProps) {
   const router = useRouter();
   const t = useTranslations("ufw");
   const tRules = useTranslations("rules.toolbar");
   const tPortScan = useTranslations("portScan");
-  const tDocker = useTranslations("dockerMonitor");
   const tc = useTranslations("common");
   const [state, setState] = useState(initialState);
   const [loading, setLoading] = useState(false);
@@ -271,38 +264,21 @@ export function UfwDashboard({
           ) : null}
         </div>
 
-        {portScanEnabled || dockerMonitorEnabled ? (
+        {portScanEnabled ? (
           <div className="ml-auto flex flex-wrap gap-2">
-            {portScanEnabled ? (
-              <div className="flex w-[160px] shrink-0 flex-col gap-1">
-                <Button className="w-full" onClick={onPortScanClick} disabled={loading}>
-                  {tPortScan("scanButton")}
-                </Button>
-                <div
-                  className={cn(
-                    "w-full rounded-md py-1 text-center text-xs font-semibold",
-                    portFindingCount > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
-                  )}
-                >
-                  {tPortScan("portCount", { count: portFindingCount })}
-                </div>
+            <div className="flex w-[160px] shrink-0 flex-col gap-1">
+              <Button className="w-full" onClick={onPortScanClick} disabled={loading}>
+                {tPortScan("scanButton")}
+              </Button>
+              <div
+                className={cn(
+                  "w-full rounded-md py-1 text-center text-xs font-semibold",
+                  portFindingCount > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
+                )}
+              >
+                {tPortScan("portCount", { count: portFindingCount })}
               </div>
-            ) : null}
-            {dockerMonitorEnabled ? (
-              <div className="flex w-[160px] shrink-0 flex-col gap-1">
-                <Button className="w-full" onClick={onDockerRefreshClick} disabled={loading}>
-                  {tDocker("refreshButton")}
-                </Button>
-                <div
-                  className={cn(
-                    "w-full rounded-md py-1 text-center text-xs font-semibold",
-                    containerCount > 0 ? "bg-green-600 text-white" : "bg-red-600 text-white",
-                  )}
-                >
-                  {tDocker("containerCount", { count: containerCount })}
-                </div>
-              </div>
-            ) : null}
+            </div>
           </div>
         ) : null}
       </div>

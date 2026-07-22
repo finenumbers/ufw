@@ -43,14 +43,6 @@ Quando `PORT_SCAN_ENABLED=true`:
 - Limitação de taxa por servidor; eventos de auditoria registrados
 - Exige **egress de rede** do container da aplicação para os hosts gerenciados nas portas varridas — veja [Varredura de portas](../deployment/port-scan.md)
 
-## Monitoramento Docker (opcional)
-
-Quando `DOCKER_MONITOR_ENABLED=true`:
-
-- Inventário e controle rodam via **SSH** apenas em servidores registrados
-- Referências de contêiner validadas; somente ações `START` / `STOP` / `RESTART`
-- Limites de taxa e eventos de auditoria em atualização e controle
-- O usuário SSH precisa de acesso à CLI Docker — veja [Monitoramento Docker](../deployment/docker-monitor.md)
 
 ## Salvaguardas de aplicação e exportação
 

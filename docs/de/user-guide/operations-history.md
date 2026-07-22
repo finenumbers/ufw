@@ -1,6 +1,6 @@
 # Vorgangsverlauf
 
-Langlaufende Aufgaben (Anwenden, Aktualisieren, UFW installieren, Port-Scan, Docker-Inventar) werden in **Vorgangsprotokollen** erfasst und in der UI angezeigt.
+Langlaufende Aufgaben (Anwenden, Aktualisieren, UFW installieren, Port-Scan) werden in **Vorgangsprotokollen** erfasst und in der UI angezeigt.
 
 ## Vorgangsbanner
 
@@ -38,8 +38,6 @@ Aktive Beispiele:
 - `ufw_sync` / `ufw.sync` — Hintergrund-Initial-Sync, wenn kein Snapshot existiert
 - `ufw_install` / `ufw.install` — UFW installieren (Aktivierung läuft innerhalb der Installation)
 - `port_scan` / `port.scan` — externer Port-Scan
-- `docker_inventory` / `docker.inventory` — Docker-Inventar aktualisieren
-- `docker_control` / `docker.control` — Container starten/stoppen/neu starten
 - `server_create` / `server.create` — neuer Server hinzugefügt
 
 Legacy (nur historische Protokolleinträge):

@@ -43,14 +43,6 @@ Cuando `PORT_SCAN_ENABLED=true`:
 - Limitado por servidor; eventos de auditoría registrados
 - Requiere **egreso de red** del contenedor de la aplicación hacia los hosts gestionados en los puertos escaneados — consulte [Escaneo de puertos](../deployment/port-scan.md)
 
-## Monitorización Docker (opcional)
-
-Cuando `DOCKER_MONITOR_ENABLED=true`:
-
-- Inventario y control se ejecutan por **SSH** solo en servidores registrados
-- Referencias de contenedores validadas; solo acciones `START` / `STOP` / `RESTART`
-- Límites de tasa y eventos de auditoría en actualización y control
-- El usuario SSH necesita acceso a la CLI de Docker — consulte [Monitorización Docker](../deployment/docker-monitor.md)
 
 ## Salvaguardas de aplicación y exportación
 

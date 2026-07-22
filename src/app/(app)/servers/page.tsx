@@ -13,7 +13,6 @@ export default async function ServersPage() {
   const t = await getTranslations("servers");
   const tUfw = await getTranslations("ufw");
   const tPortScan = await getTranslations("portScan");
-  const tDocker = await getTranslations("dockerMonitor");
   const tc = await getTranslations("common");
   const servers = await getServersAction();
 
@@ -52,13 +51,6 @@ export default async function ServersPage() {
                     )}
                   >
                     {tPortScan("portCount", { count: server.portFindingCount })}
-                  </span>
-                  <span
-                    className={cn(
-                      server.containerCount > 0 ? "text-green-700" : "text-red-600",
-                    )}
-                  >
-                    {tDocker("containerCount", { count: server.containerCount })}
                   </span>
                 </div>
                 <div className="flex shrink-0 gap-2">

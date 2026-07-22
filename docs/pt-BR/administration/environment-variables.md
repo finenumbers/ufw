@@ -43,7 +43,7 @@ Server actions repetidas usam cooldown de **30 segundos** por servidor (não con
 - Atualização do inventário Docker
 - Start, stop e restart de contêineres Docker
 
-Desde **v0.5.1**, variáveis legadas como `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS` e `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` são **ignoradas** se ainda estiverem no `.env`.
+Desde **v0.5.1**, variáveis legadas como `PORT_SCAN_RATE_LIMIT_WINDOW_MS` são **ignoradas** se ainda estiverem no `.env`.
 
 Buckets de limite de taxa em memória são removidos quando vazios (somente implantação com réplica única — veja [Arquitetura](../architecture.md)).
 

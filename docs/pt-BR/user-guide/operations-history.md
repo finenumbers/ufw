@@ -1,6 +1,6 @@
 # Histórico de operações
 
-Tarefas de longa duração (aplicar, atualizar, instalar UFW, port scan, inventário Docker) são rastreadas em **logs de operação** e exibidas na interface.
+Tarefas de longa duração (aplicar, atualizar, instalar UFW, port scan) são rastreadas em **logs de operação** e exibidas na interface.
 
 ## Banner de operação
 
@@ -22,7 +22,7 @@ Duas abas:
 
 | Aba | Conteúdo |
 |-----|----------|
-| **Operações** | Log técnico de operações — aplicar, sync, atualizar, port scan, Docker, etc. |
+| **Operações** | Log técnico de operações — aplicar, sync, atualizar, port scan, etc. |
 | **Audit** | Eventos relevantes para segurança — login, logout, exportação de configuração |
 
 Ambas suportam rolagem infinita para entradas mais antigas.
@@ -38,8 +38,6 @@ Exemplos ativos:
 - `ufw_sync` / `ufw.sync` — sync inicial em segundo plano quando não existe snapshot
 - `ufw_install` / `ufw.install` — instalação UFW (a ativação ocorre durante a instalação)
 - `port_scan` / `port.scan` — port scan externo
-- `docker_inventory` / `docker.inventory` — atualização do inventário Docker
-- `docker_control` / `docker.control` — iniciar/parar/reiniciar container
 - `server_create` / `server.create` — novo servidor adicionado
 
 Legado (apenas entradas históricas no log):

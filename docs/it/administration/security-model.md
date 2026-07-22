@@ -43,14 +43,6 @@ Quando `PORT_SCAN_ENABLED=true`:
 - Limitazione frequenza per server; eventi di audit registrati
 - Richiede **egress di rete** dal container app verso gli host gestiti sulle porte scansionate — vedi [Scansione porte](../deployment/port-scan.md)
 
-## Monitoraggio Docker (opzionale)
-
-Quando `DOCKER_MONITOR_ENABLED=true`:
-
-- Inventario e controllo avvengono via **SSH** solo sui server registrati
-- Riferimenti container validati; solo azioni `START` / `STOP` / `RESTART`
-- Limiti di frequenza ed eventi di audit su refresh e controllo
-- L'utente SSH necessita accesso alla CLI Docker — vedi [Monitoraggio Docker](../deployment/docker-monitor.md)
 
 ## Salvaguardie applicazione ed export
 

@@ -1,6 +1,6 @@
 # Historial de operaciones
 
-Las tareas de larga duración (aplicar, actualizar, instalar UFW, escaneo de puertos, inventario Docker) se registran en **registros de operaciones** y se muestran en la interfaz.
+Las tareas de larga duración (aplicar, actualizar, instalar UFW, escaneo de puertos) se registran en **registros de operaciones** y se muestran en la interfaz.
 
 ## Banner de operación
 
@@ -38,8 +38,6 @@ Ejemplos activos:
 - `ufw_sync` / `ufw.sync` — sync inicial en segundo plano cuando no hay snapshot
 - `ufw_install` / `ufw.install` — instalar UFW (la activación se ejecuta dentro de la instalación)
 - `port_scan` / `port.scan` — escaneo de puertos externo
-- `docker_inventory` / `docker.inventory` — actualizar inventario Docker
-- `docker_control` / `docker.control` — iniciar/detener/reiniciar contenedor
 - `server_create` / `server.create` — nuevo servidor añadido
 
 Legacy (solo entradas históricas):

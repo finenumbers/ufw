@@ -48,7 +48,7 @@ Implementation: `getPublicAppUrl()` in `src/lib/app-url.ts`.
 Opening a server dashboard is **cache-first** — no SSH on initial page load:
 
 1. **SSR** reads the latest UFW **snapshot** from Postgres (`detectionFromSnapshot`) and renders status and rules from the database.
-2. Rules, port-scan results, and Docker inventory load **in parallel** from Postgres (`Promise.all`) — still no SSH.
+2. Rules and port-scan results load **in parallel** from Postgres (`Promise.all`) — still no SSH.
 3. **Refresh** (dashboard or rules toolbar) triggers a live SSH read and updates the snapshot.
 4. **Initial sync** runs automatically in the background when **no UFW snapshot exists yet in Postgres** (`needsSync`) — for example right after creating a server or before the first refresh.
 

@@ -40,10 +40,8 @@ Repeat server actions use a **30 second** cooldown per server (not configurable 
 
 - UFW status refresh and rules sync
 - Port scan start
-- Docker inventory refresh
-- Docker container start, stop, restart
 
-Since **v0.5.1**, legacy variables such as `PORT_SCAN_RATE_LIMIT_WINDOW_MS`, `DOCKER_REFRESH_RATE_LIMIT_WINDOW_MS`, and `DOCKER_CONTROL_RATE_LIMIT_WINDOW_MS` are **ignored** if still present in `.env`.
+Since **v0.5.1**, legacy variables such as `PORT_SCAN_RATE_LIMIT_WINDOW_MS` are **ignored** if still present in `.env`.
 
 In-memory rate-limit buckets are evicted when empty (single-replica deployment only — see [Architecture](../architecture.md)).
 

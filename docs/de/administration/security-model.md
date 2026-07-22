@@ -43,14 +43,6 @@ When `PORT_SCAN_ENABLED=true`:
 - Rate-limited per server; audit events recorded
 - Requires **network egress** from the app container to managed hosts on scanned ports — see [Port-Scanning](../deployment/port-scan.md)
 
-## Docker-Monitoring (optional)
-
-When `DOCKER_MONITOR_ENABLED=true`:
-
-- Inventory and control run over **SSH** on registered servers only
-- Container references validated; only `START` / `STOP` / `RESTART` actions
-- Rate limits and audit events on refresh and control
-- SSH user needs Docker CLI access — see [Docker-Monitoring](../deployment/docker-monitor.md)
 
 ## Schutz bei Anwenden und Export
 

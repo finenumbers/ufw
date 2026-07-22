@@ -49,14 +49,12 @@ export async function listServersWithInventoryStats() {
       savedRuleCount: 0,
       remoteRuleCount: 0,
       portFindingCount: 0,
-      containerCount: 0,
     };
 
     return {
       ...server,
       savedRuleCount: stats.savedRuleCount,
       portFindingCount: stats.portFindingCount,
-      containerCount: stats.containerCount,
     };
   });
 }

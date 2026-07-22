@@ -4,7 +4,6 @@ export type ServerInventoryStats = {
   savedRuleCount: number;
   remoteRuleCount: number;
   portFindingCount: number;
-  containerCount: number;
 };
 
 async function loadPortFindingCounts(serverIds: string[]): Promise<Map<string, number>> {
@@ -30,23 +29,6 @@ async function loadPortFindingCounts(serverIds: string[]): Promise<Map<string, n
   );
 }
 
-async function loadContainerCounts(serverIds: string[]): Promise<Map<string, number>> {
-  if (serverIds.length === 0) {
-    return new Map();
-  }
-
-  const snapshots = await db.dockerInventorySnapshot.findMany({
-    where: { serverId: { in: serverIds }, status: "SUCCESS" },
-    orderBy: { capturedAt: "desc" },
-    distinct: ["serverId"],
-    select: {
-      serverId: true,
-      containerCount: true,
-    },
-  });
-
-  return new Map(snapshots.map((snapshot) => [snapshot.serverId, snapshot.containerCount]));
-}
 
 async function loadSavedRuleCounts(serverIds: string[]): Promise<Map<string, number>> {
   if (serverIds.length === 0) {
@@ -85,30 +67,27 @@ export function mergeServerInventoryStats(
   savedCounts: Map<string, number>,
   remoteCounts: Map<string, number>,
   portCounts: Map<string, number>,
-  containerCounts: Map<string, number>,
 ): ServerInventoryStats {
   return {
     savedRuleCount: savedCounts.get(serverId) ?? 0,
     remoteRuleCount: remoteCounts.get(serverId) ?? 0,
     portFindingCount: portCounts.get(serverId) ?? 0,
-    containerCount: containerCounts.get(serverId) ?? 0,
   };
 }
 
 export async function getServerInventoryStatsMap(
   serverIds: string[],
 ): Promise<Map<string, ServerInventoryStats>> {
-  const [savedCounts, remoteCounts, portCounts, containerCounts] = await Promise.all([
+  const [savedCounts, remoteCounts, portCounts] = await Promise.all([
     loadSavedRuleCounts(serverIds),
     loadRemoteRuleCounts(serverIds),
     loadPortFindingCounts(serverIds),
-    loadContainerCounts(serverIds),
   ]);
 
   return new Map(
     serverIds.map((serverId) => [
       serverId,
-      mergeServerInventoryStats(serverId, savedCounts, remoteCounts, portCounts, containerCounts),
+      mergeServerInventoryStats(serverId, savedCounts, remoteCounts, portCounts),
     ]),
   );
 }

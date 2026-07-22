@@ -95,22 +95,6 @@ export async function sweepStalePortScans(
   return result.count;
 }
 
-export async function sweepStaleDockerInventories(
-  maxAgeMinutes = DEFAULT_RUNNING_MAX_AGE_MINUTES,
-): Promise<number> {
-  const result = await db.dockerInventorySnapshot.updateMany({
-    where: {
-      status: { in: ["RUNNING", "PENDING"] },
-      capturedAt: { lt: staleBefore(maxAgeMinutes) },
-    },
-    data: {
-      status: "FAILED",
-      errorMessage: "Docker inventory refresh timed out",
-    },
-  });
-
-  return result.count;
-}
 
 export async function prepareServersForMaintenanceOperation(): Promise<{
   applyRunning: number;
@@ -118,23 +102,15 @@ export async function prepareServersForMaintenanceOperation(): Promise<{
   operationPending: number;
   operationRunning: number;
   portScans: number;
-  dockerInventories: number;
 }> {
-  const [
-    applyRunning,
-    applyPending,
-    operationPending,
-    operationRunning,
-    portScans,
-    dockerInventories,
-  ] = await Promise.all([
-    sweepStaleApplySessions(),
-    sweepStalePendingApplySessions(),
-    sweepStalePendingOperationLogs(),
-    sweepStaleRunningOperationLogs(),
-    sweepStalePortScans(),
-    sweepStaleDockerInventories(),
-  ]);
+  const [applyRunning, applyPending, operationPending, operationRunning, portScans] =
+    await Promise.all([
+      sweepStaleApplySessions(),
+      sweepStalePendingApplySessions(),
+      sweepStalePendingOperationLogs(),
+      sweepStaleRunningOperationLogs(),
+      sweepStalePortScans(),
+    ]);
 
   return {
     applyRunning,
@@ -142,6 +118,5 @@ export async function prepareServersForMaintenanceOperation(): Promise<{
     operationPending,
     operationRunning,
     portScans,
-    dockerInventories,
   };
 }
