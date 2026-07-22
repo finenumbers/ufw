@@ -35,16 +35,25 @@ export function useActiveOperationPoll<T extends { status: string }>({
     let timer: number | undefined;
 
     const runPoll = () => {
-      void pollRef.current(targetId).then((result) => {
-        if (cancelled) {
-          return;
-        }
-        if (result && isTerminalOperationStatus(result.status)) {
-          return;
-        }
-        pollAttemptRef.current += 1;
-        timer = window.setTimeout(runPoll, activeOperationPollDelayMs(pollAttemptRef.current));
-      });
+      void pollRef
+        .current(targetId)
+        .then((result) => {
+          if (cancelled) {
+            return;
+          }
+          if (result && isTerminalOperationStatus(result.status)) {
+            return;
+          }
+          pollAttemptRef.current += 1;
+          timer = window.setTimeout(runPoll, activeOperationPollDelayMs(pollAttemptRef.current));
+        })
+        .catch(() => {
+          if (cancelled) {
+            return;
+          }
+          pollAttemptRef.current += 1;
+          timer = window.setTimeout(runPoll, activeOperationPollDelayMs(pollAttemptRef.current));
+        });
     };
 
     runPoll();
@@ -71,7 +80,7 @@ export function useActiveOperationPoll<T extends { status: string }>({
       }
 
       pollAttemptRef.current = 0;
-      void pollRef.current(targetId);
+      void pollRef.current(targetId).catch(() => undefined);
     }
 
     window.addEventListener(OPERATION_ENDED_EVENT, onOperationEnded);

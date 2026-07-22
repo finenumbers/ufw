@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { getTranslations } from "next-intl/server";
+
 import { requireUserId, requireUserIdForAction } from "@/lib/auth/require-user";
 import { checkOperationRateLimit, createRateLimitedFailure } from "@/lib/operation-rate-limit";
 import { isPortScanEnabled } from "@/lib/port-scan/config";
@@ -10,7 +12,8 @@ import type { ActionFailureResult } from "@/types/action-result";
 import {
   getPortScanById,
   getPortScanStatusById,
-  getLatestSuccessfulPortScan,
+  getLatestPortScan,
+  PORT_SCAN_IN_PROGRESS,
   startPortScan,
 } from "@/server/services/port-scan.service";
 import { getServerById } from "@/server/services/server.service";
@@ -44,6 +47,11 @@ export async function startPortScanAction(
     }
     return { success: true, ...result };
   } catch (error) {
+    if (error instanceof Error && error.message === PORT_SCAN_IN_PROGRESS) {
+      const t = await getTranslations("portScan");
+      return { success: false, error: t("scanInProgress") };
+    }
+
     const message = error instanceof Error ? error.message : "Port scan failed to start";
     return { success: false, error: message };
   }
@@ -64,5 +72,5 @@ export async function pollPortScanAction(scanId: string, serverId: string) {
 
 export async function getLatestPortScanForServerAction(serverId: string) {
   await requireUserId();
-  return getLatestSuccessfulPortScan(serverId);
+  return getLatestPortScan(serverId);
 }

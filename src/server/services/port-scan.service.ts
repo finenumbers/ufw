@@ -6,7 +6,6 @@ import { buildCoverageMap } from "@/lib/port-scan/coverage";
 import { mergeDiscoveryAndEnrichment, summarizeFindings } from "@/lib/port-scan/normalize";
 import { resolveScanTarget } from "@/lib/port-scan/target";
 import { runNaabuDiscovery, runNmapEnrichment } from "@/lib/port-scan/workers";
-import { runForServer } from "@/lib/queue/queue-registry";
 import type { PortScanFindingView, PortScanSummary, PortScanView } from "@/types/port-scan";
 import { createAuditEvent } from "@/server/services/audit.service";
 import {
@@ -14,7 +13,9 @@ import {
   startOperation,
   type OperationTracker,
 } from "@/server/services/operation-progress.service";
-import { getLatestSnapshot } from "@/server/services/snapshot.service";
+import { loadLatestSnapshot } from "@/server/services/snapshot.service";
+
+export const PORT_SCAN_IN_PROGRESS = "scan_in_progress";
 
 function toFindingView(row: {
   id: string;
@@ -85,32 +86,31 @@ async function trimScanHistory(serverId: string): Promise<void> {
   });
 }
 
-async function persistFindings(
+export async function replacePortScanFindings(
   scanId: string,
   findings: ReturnType<typeof mergeDiscoveryAndEnrichment>,
+  client: Pick<typeof db, "$transaction" | "portScanFinding"> = db,
 ): Promise<void> {
-  await db.portScanFinding.deleteMany({ where: { scanId } });
-  if (findings.length === 0) {
-    return;
-  }
+  const data = findings.map((row) => ({
+    scanId,
+    port: row.port,
+    protocol: row.protocol,
+    state: row.state,
+    serviceName: row.serviceName,
+    product: row.product,
+    version: row.version,
+    banner: row.banner,
+    cpe: row.cpe,
+    source: row.source,
+    enrichmentStatus: row.enrichmentStatus,
+    ufwCoverage: row.ufwCoverage,
+    rawJson: row.rawJson as Prisma.InputJsonValue,
+  }));
 
-  await db.portScanFinding.createMany({
-    data: findings.map((row) => ({
-      scanId,
-      port: row.port,
-      protocol: row.protocol,
-      state: row.state,
-      serviceName: row.serviceName,
-      product: row.product,
-      version: row.version,
-      banner: row.banner,
-      cpe: row.cpe,
-      source: row.source,
-      enrichmentStatus: row.enrichmentStatus,
-      ufwCoverage: row.ufwCoverage,
-      rawJson: row.rawJson as Prisma.InputJsonValue,
-    })),
-  });
+  await client.$transaction([
+    client.portScanFinding.deleteMany({ where: { scanId } }),
+    ...(findings.length > 0 ? [client.portScanFinding.createMany({ data })] : []),
+  ]);
 }
 
 async function findLatestPortScan(
@@ -130,12 +130,7 @@ async function findLatestPortScan(
   return scan ? toPortScanView(scan) : null;
 }
 
-export async function getLatestSuccessfulPortScan(serverId: string): Promise<PortScanView | null> {
-  const successful = await findLatestPortScan(serverId, "SUCCESS");
-  if (successful) {
-    return successful;
-  }
-
+export async function getLatestPortScan(serverId: string): Promise<PortScanView | null> {
   return findLatestPortScan(serverId);
 }
 
@@ -221,100 +216,92 @@ async function runPortScanPipeline(scanId: string, tracker: OperationTracker): P
     throw new Error("Port scan not found");
   }
 
-  await runForServer(
-    scan.serverId,
-    async () => {
-      await tracker.markRunning();
-      await tracker.startStep("resolve_target", semanticStep("resolve_target", "steps.port_scan_resolve"));
+  try {
+    await tracker.markRunning();
+    await tracker.startStep("resolve_target", semanticStep("resolve_target", "steps.port_scan_resolve"));
 
-      const resolved = await resolveScanTarget(scan.server.host);
-      if (resolved.host !== scan.targetHost) {
-        throw new Error("Scan target mismatch");
-      }
+    const resolved = await resolveScanTarget(scan.server.host);
+    if (resolved.host !== scan.targetHost) {
+      throw new Error("Scan target mismatch");
+    }
 
-      const scanAddress = resolved.ip;
+    const scanAddress = resolved.ip;
 
-      await db.portScan.update({
-        where: { id: scanId },
-        data: {
-          status: "RUNNING",
-          targetIp: resolved.ip,
-        },
-      });
-
-      await tracker.completeStep("resolve_target");
-      await tracker.startStep("discovery", semanticStep("discovery", "steps.port_scan_discovery"));
-      await tracker.setProgress(1, 4, { key: "messages.port_scan_discovery" });
-
-      const discovery = await runNaabuDiscovery(scanAddress);
-
-      await tracker.completeStep("discovery");
-      await tracker.startStep("enrichment", semanticStep("enrichment", "steps.port_scan_enrichment"));
-      await tracker.setProgress(2, 4, { key: "messages.port_scan_enrichment" });
-
-      const enrichment = await runNmapEnrichment(scanAddress, discovery.rows);
-
-      await tracker.completeStep("enrichment");
-      await tracker.startStep("normalize", semanticStep("normalize", "steps.port_scan_normalize"));
-      await tracker.setProgress(3, 4, { key: "messages.port_scan_normalize" });
-
-      const snapshot = await getLatestSnapshot(scan.serverId);
-      const coverageRules =
-        snapshot?.rules.map((rule) => ({
-          action: rule.action,
-          direction: rule.direction,
-          protocol: rule.protocol,
-          fromAddress: rule.fromAddress,
-          toPort: rule.toPort,
-          fromPort: rule.fromPort,
-        })) ?? [];
-
-      const coverageMap = buildCoverageMap(
-        discovery.rows.map((row) => ({ port: row.port, protocol: row.protocol })),
-        coverageRules,
-        { ufwActive: snapshot?.ufwActive },
-      );
-
-      const normalized = mergeDiscoveryAndEnrichment(
-        discovery.rows,
-        enrichment.rows,
-        coverageMap,
-      );
-      const summary = summarizeFindings(normalized);
-
-      await persistFindings(scanId, normalized);
-      await trimScanHistory(scan.serverId);
-
-      await db.portScan.update({
-        where: { id: scanId },
-        data: {
-          status: "SUCCESS",
-          summaryJson: summary as Prisma.InputJsonValue,
-          completedAt: new Date(),
-        },
-      });
-
-      await tracker.completeStep("normalize");
-      await tracker.setProgress(4, 4);
-      await tracker.complete(
-        { key: "messages.port_scan_complete", params: { count: String(summary.openCount) } },
-        summary,
-      );
-
-      await createAuditEvent({
-        userId: scan.userId,
-        action: "PORT_SCAN_COMPLETED",
-        entityType: "server",
-        entityId: scan.serverId,
-        metadata: { scanId, ...summary },
-      });
-    },
-    {
-      onStart: async () => {
-        await tracker.markRunning();
+    await db.portScan.update({
+      where: { id: scanId },
+      data: {
+        status: "RUNNING",
+        targetIp: resolved.ip,
       },
-    },
-  ).catch(async (error) => {
+    });
+
+    await tracker.completeStep("resolve_target");
+    await tracker.startStep("discovery", semanticStep("discovery", "steps.port_scan_discovery"));
+    await tracker.setProgress(1, 4, { key: "messages.port_scan_discovery" });
+
+    const discovery = await runNaabuDiscovery(scanAddress);
+
+    await tracker.completeStep("discovery");
+    await tracker.startStep("enrichment", semanticStep("enrichment", "steps.port_scan_enrichment"));
+    await tracker.setProgress(2, 4, { key: "messages.port_scan_enrichment" });
+
+    const enrichment = await runNmapEnrichment(scanAddress, discovery.rows);
+
+    await tracker.completeStep("enrichment");
+    await tracker.startStep("normalize", semanticStep("normalize", "steps.port_scan_normalize"));
+    await tracker.setProgress(3, 4, { key: "messages.port_scan_normalize" });
+
+    const snapshot = await loadLatestSnapshot(scan.serverId);
+    const coverageRules =
+      snapshot?.rules.map((rule) => ({
+        action: rule.action,
+        direction: rule.direction,
+        protocol: rule.protocol,
+        fromAddress: rule.fromAddress,
+        toPort: rule.toPort,
+        fromPort: rule.fromPort,
+      })) ?? [];
+
+    const coverageMap = buildCoverageMap(
+      discovery.rows.map((row) => ({ port: row.port, protocol: row.protocol })),
+      coverageRules,
+      { ufwActive: snapshot?.ufwActive },
+    );
+
+    const normalized = mergeDiscoveryAndEnrichment(
+      discovery.rows,
+      enrichment.rows,
+      coverageMap,
+    );
+    const summary = summarizeFindings(normalized);
+
+    await replacePortScanFindings(scanId, normalized);
+    await trimScanHistory(scan.serverId);
+
+    await db.portScan.update({
+      where: { id: scanId },
+      data: {
+        status: "SUCCESS",
+        summaryJson: summary as Prisma.InputJsonValue,
+        completedAt: new Date(),
+      },
+    });
+
+    await tracker.completeStep("normalize");
+    await tracker.setProgress(4, 4);
+    await tracker.complete(
+      { key: "messages.port_scan_complete", params: { count: String(summary.openCount) } },
+      summary,
+    );
+
+    await createAuditEvent({
+      userId: scan.userId,
+      action: "PORT_SCAN_COMPLETED",
+      entityType: "server",
+      entityId: scan.serverId,
+      metadata: { scanId, ...summary },
+    });
+  } catch (error) {
     const message = error instanceof Error ? error.message : "Port scan failed";
 
     await db.portScan.update({
@@ -330,7 +317,7 @@ async function runPortScanPipeline(scanId: string, tracker: OperationTracker): P
       { key: "messages.port_scan_failed", params: { error: message } },
       [message],
     );
-  });
+  }
 }
 
 export async function startPortScan(params: {
@@ -340,6 +327,18 @@ export async function startPortScan(params: {
   const server = await db.server.findUnique({ where: { id: params.serverId } });
   if (!server) {
     throw new Error("Server not found");
+  }
+
+  const activeScan = await db.portScan.findFirst({
+    where: {
+      serverId: server.id,
+      status: { in: ["PENDING", "RUNNING"] },
+    },
+    select: { id: true },
+  });
+
+  if (activeScan) {
+    throw new Error(PORT_SCAN_IN_PROGRESS);
   }
 
   const tracker = await startOperation({
@@ -370,13 +369,7 @@ export async function startPortScan(params: {
     metadata: { scanId, profile: "FULL", targetHost: server.host },
   });
 
-  void runPortScanPipeline(scanId, tracker).catch(async (error) => {
-    const message = error instanceof Error ? error.message : "Port scan failed";
-    await tracker.fail(
-      { key: "messages.port_scan_failed", params: { error: message } },
-      [message],
-    );
-  });
+  void runPortScanPipeline(scanId, tracker);
 
   return { scanId, operationId: tracker.operationId };
 }

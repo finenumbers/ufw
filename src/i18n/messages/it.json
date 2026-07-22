@@ -332,6 +332,7 @@
     "scanButton": "Scan ports",
     "portCount": "{count} porte",
     "scanning": "Scanning...",
+    "scanInProgress": "È già in corso una scansione delle porte per questo server.",
     "empty": "No scan results yet. Run a port scan to discover externally reachable services.",
     "columns": {
       "port": "Port",

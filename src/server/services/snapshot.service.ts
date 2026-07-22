@@ -5,7 +5,7 @@ import { computeFingerprint } from "@/lib/ufw/fingerprint";
 import type { RuleCore } from "@/types/rule";
 import type { ParsedRemoteRule, UfwDetectionResult } from "@/types/ufw";
 import { createAuditEvent } from "@/server/services/audit.service";
-import { detectUfwState } from "@/server/services/ssh.service";
+import { detectUfwState, detectUfwStateWithoutQueue } from "@/server/services/ssh.service";
 
 function mapCoreFields(core: RuleCore) {
   return {
@@ -92,21 +92,36 @@ export async function persistSnapshotFromDetection(
   return { snapshotId: snapshot.id, rulesCount: detection.rules.length };
 }
 
+export type CaptureSnapshotOptions = import("@/lib/queue/queue-registry").RunForServerOptions & {
+  skipQueue?: boolean;
+};
+
 export async function captureSnapshot(
   serverId: string,
   userId: string,
-  options?: import("@/lib/queue/queue-registry").RunForServerOptions,
+  options?: CaptureSnapshotOptions,
 ): Promise<{ snapshotId: string; rulesCount: number }> {
-  const detection = await detectUfwState(serverId, options);
+  const { skipQueue, ...queueOptions } = options ?? {};
+  const detection = skipQueue
+    ? await detectUfwStateWithoutQueue(serverId)
+    : await detectUfwState(serverId, queueOptions);
   return persistSnapshotFromDetection(serverId, userId, detection);
 }
 
-export const getLatestSnapshot = cache(async (serverId: string) => {
+const snapshotInclude = {
+  rules: { orderBy: { sortOrder: "asc" as const } },
+};
+
+export async function loadLatestSnapshot(serverId: string) {
   return db.serverSnapshot.findFirst({
     where: { serverId },
     orderBy: { capturedAt: "desc" },
-    include: { rules: { orderBy: { sortOrder: "asc" } } },
+    include: snapshotInclude,
   });
+}
+
+export const getLatestSnapshot = cache(async (serverId: string) => {
+  return loadLatestSnapshot(serverId);
 });
 
 export function detectionFromSnapshot(

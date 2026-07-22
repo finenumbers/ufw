@@ -332,6 +332,7 @@
     "scanButton": "Scan ports",
     "portCount": "{count} portas",
     "scanning": "Scanning...",
+    "scanInProgress": "Já existe uma varredura de portas em andamento para este servidor.",
     "empty": "No scan results yet. Run a port scan to discover externally reachable services.",
     "columns": {
       "port": "Port",

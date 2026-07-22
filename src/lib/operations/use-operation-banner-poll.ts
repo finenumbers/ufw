@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 
 import { isOperationDismissed, notifyOperationEnded, OPERATION_STARTED_EVENT } from "@/lib/operations/events";
+import {
+  shouldContinueBannerPoll,
+  shouldNotifyOperationEnded,
+} from "@/lib/operations/operation-banner-poll";
 import { activeOperationPollDelayMs } from "@/lib/operations/poll-interval";
 import {
   parseOperationMetadata,
@@ -15,22 +19,34 @@ type UseOperationBannerPollOptions = {
 export function useOperationBannerPoll({ serverId, onOperation }: UseOperationBannerPollOptions) {
   const onOperationRef = useRef(onOperation);
   onOperationRef.current = onOperation;
+  const previousStatusRef = useRef<string | undefined>(undefined);
 
   const load = useCallback(async () => {
     if (!serverId) {
+      previousStatusRef.current = undefined;
       onOperationRef.current(null);
       return null;
     }
 
     const response = await fetch(`/api/operations/active?serverId=${serverId}`);
     if (!response.ok) {
+      const previousStatus = previousStatusRef.current;
+      previousStatusRef.current = undefined;
       onOperationRef.current(null);
+      if (shouldNotifyOperationEnded(previousStatus, null)) {
+        notifyOperationEnded(serverId);
+      }
       return null;
     }
 
     const data = (await response.json()) as ActiveOperation | null;
     if (!data || isOperationDismissed(data.id)) {
+      const previousStatus = previousStatusRef.current;
+      previousStatusRef.current = undefined;
       onOperationRef.current(null);
+      if (shouldNotifyOperationEnded(previousStatus, null)) {
+        notifyOperationEnded(serverId);
+      }
       return null;
     }
 
@@ -39,14 +55,14 @@ export function useOperationBannerPoll({ serverId, onOperation }: UseOperationBa
       metadata: parseOperationMetadata(data.metadata),
     };
 
+    const previousStatus = previousStatusRef.current;
+    previousStatusRef.current = parsed.status;
     onOperationRef.current(parsed);
-    if (
-      parsed.status === "SUCCESS" ||
-      parsed.status === "FAILED" ||
-      parsed.status === "PARTIAL"
-    ) {
+
+    if (shouldNotifyOperationEnded(previousStatus, parsed)) {
       notifyOperationEnded(serverId, parsed.type);
     }
+
     return parsed;
   }, [serverId]);
 
@@ -67,9 +83,14 @@ export function useOperationBannerPoll({ serverId, onOperation }: UseOperationBa
           return;
         }
         const current = await load();
-        const nextDelay =
-          current?.status === "RUNNING" ? activeOperationPollDelayMs(0) : 5000;
-        schedule(nextDelay);
+        if (!active) {
+          return;
+        }
+        if (!shouldContinueBannerPoll(current)) {
+          timer = null;
+          return;
+        }
+        schedule(activeOperationPollDelayMs(0));
       }, delayMs);
     };
 
@@ -77,7 +98,10 @@ export function useOperationBannerPoll({ serverId, onOperation }: UseOperationBa
       if (!active) {
         return;
       }
-      schedule(current?.status === "RUNNING" ? activeOperationPollDelayMs(0) : 5000);
+      if (!shouldContinueBannerPoll(current)) {
+        return;
+      }
+      schedule(activeOperationPollDelayMs(0));
     });
 
     const onStarted = (event: Event) => {
@@ -88,7 +112,15 @@ export function useOperationBannerPoll({ serverId, onOperation }: UseOperationBa
       if (timer) {
         clearTimeout(timer);
       }
-      void load().then(() => schedule(activeOperationPollDelayMs(0)));
+      void load().then((current) => {
+        if (!active) {
+          return;
+        }
+        if (!shouldContinueBannerPoll(current)) {
+          return;
+        }
+        schedule(activeOperationPollDelayMs(0));
+      });
     };
 
     window.addEventListener(OPERATION_STARTED_EVENT, onStarted);

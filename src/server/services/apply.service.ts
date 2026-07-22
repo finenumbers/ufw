@@ -22,12 +22,13 @@ import {
   type OperationTracker,
 } from "@/server/services/operation-progress.service";
 import {
-  getLatestSnapshot,
   persistSnapshotFromDetection,
   syncRuleRecordsFromDraft,
 } from "@/server/services/snapshot.service";
 import {
   buildPostApplyRuleRecords,
+  buildPostApplyRuleRecordsFromDetection,
+  detectionRulesToSnapshotRuleRows,
   resolveApplyClaimError,
   storedPlanItemsMatchPlan,
   storedSummaryMatchesPlan,
@@ -141,23 +142,20 @@ async function persistPartialApplyMetadata(
 ): Promise<void> {
   await persistSnapshotFromDetection(serverId, userId, detection);
 
-  const snapshot = await getLatestSnapshot(serverId);
-  if (!snapshot) {
-    return;
-  }
+  const snapshotRules = detectionRulesToSnapshotRuleRows(detection.rules);
 
   const records = await db.ruleRecord.findMany({
     where: { serverId },
     orderBy: { sortOrder: "asc" },
   });
 
-  const rows = buildTableRowsFromSources(snapshot.rules, records);
+  const rows = buildTableRowsFromSources(snapshotRules, records);
   const { replaceDraftSessionRules } = await import("@/server/services/draft.service");
   await replaceDraftSessionRules(serverId, userId, rows);
 
   await syncRuleRecordsFromDraft(
     serverId,
-    buildPostApplyRuleRecords(snapshot.rules, rows),
+    buildPostApplyRuleRecordsFromDetection(detection, rows),
   );
   await syncDraftOriginStates(serverId, userId);
 }
@@ -244,24 +242,32 @@ async function runPostApplySync(
     await persistSnapshotFromDetection(session.serverId, session.userId, options.detection);
   } else {
     const { captureSnapshot } = await import("@/server/services/snapshot.service");
-    await captureSnapshot(session.serverId, session.userId);
+    await captureSnapshot(session.serverId, session.userId, { skipQueue: true });
   }
   await tracker.completeStep("snapshot");
 
   await tracker.setPhase("sync_db", { key: "phases.sync_db" });
   await tracker.startStep("sync_db", semanticStep("sync_db", "steps.sync_db"));
 
-  const snapshot = await getLatestSnapshot(session.serverId);
-  if (!snapshot) {
-    throw new Error("Snapshot missing after apply");
-  }
-
   const desiredRows = parseDesiredRows(session.desiredJson);
 
-  await syncRuleRecordsFromDraft(
-    session.serverId,
-    buildPostApplyRuleRecords(snapshot.rules, desiredRows),
-  );
+  if (options?.detection) {
+    await syncRuleRecordsFromDraft(
+      session.serverId,
+      buildPostApplyRuleRecordsFromDetection(options.detection, desiredRows),
+    );
+  } else {
+    const { loadLatestSnapshot } = await import("@/server/services/snapshot.service");
+    const snapshot = await loadLatestSnapshot(session.serverId);
+    if (!snapshot) {
+      throw new Error("Snapshot missing after apply");
+    }
+
+    await syncRuleRecordsFromDraft(
+      session.serverId,
+      buildPostApplyRuleRecords(snapshot.rules, desiredRows),
+    );
+  }
   await tracker.completeStep("sync_db");
 
   await tracker.setPhase("origin_states", { key: "phases.origin_states" });
@@ -469,11 +475,33 @@ export async function confirmApply(
           const detection = execResult.partial
             ? await buildDetectionFromClient(client, config.password)
             : null;
+          if (detection) {
+            await persistPartialApplyMetadata(session.serverId, userId, detection);
+          }
           return { execResult, detection, dbOnly: false as const };
         }
 
         const detection = await buildDetectionFromClient(client, config.password);
-        return { execResult, detection, dbOnly: false as const };
+
+        if (desiredRows.length > 0) {
+          await updateDraftRules(session.serverId, userId, desiredRows);
+        }
+
+        try {
+          await runPostApplySync(session, tracker, { detection });
+          return { execResult, detection, dbOnly: false as const };
+        } catch (syncError) {
+          const message =
+            syncError instanceof Error ? syncError.message : "Post-apply sync failed";
+          await persistPartialApplyMetadata(session.serverId, userId, detection);
+          return {
+            execResult,
+            detection,
+            dbOnly: false as const,
+            syncFailed: true as const,
+            syncError: message,
+          };
+        }
       },
       { onStart: async () => tracker.markRunning() },
     );
@@ -502,14 +530,6 @@ export async function confirmApply(
 
     if (!sshResult.execResult.success) {
       const sessionStatus = sshResult.execResult.partial ? "PARTIAL" : "FAILED";
-
-      if (sshResult.execResult.partial && sshResult.detection) {
-        await persistPartialApplyMetadata(
-          session.serverId,
-          userId,
-          sshResult.detection,
-        );
-      }
 
       await db.applySession.update({
         where: { id: sessionId },
@@ -551,19 +571,8 @@ export async function confirmApply(
       throw new Error("Post-apply snapshot data missing");
     }
 
-    if (desiredRows.length > 0) {
-      await updateDraftRules(session.serverId, userId, desiredRows);
-    }
-
-    try {
-      await runPostApplySync(session, tracker, { detection: sshResult.detection });
-    } catch (syncError) {
-      const message =
-        syncError instanceof Error ? syncError.message : "Post-apply sync failed";
-
-      if (sshResult.detection) {
-        await persistPartialApplyMetadata(session.serverId, userId, sshResult.detection);
-      }
+    if ("syncFailed" in sshResult && sshResult.syncFailed) {
+      const message = sshResult.syncError ?? "Post-apply sync failed";
 
       await db.applySession.update({
         where: { id: sessionId },

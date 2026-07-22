@@ -15,6 +15,8 @@ import {
   startPortScanAction,
 } from "@/server/actions/port-scan";
 
+const PORT_SCAN_OPERATION_TYPES = ["port.scan"] as const;
+
 type PortScanPanelProps = {
   serverId: string;
   initialScan?: PortScanView | null;
@@ -98,7 +100,7 @@ export function PortScanPanel({
     serverId,
     targetId: scan?.id,
     active: scan?.status === "RUNNING" || scan?.status === "PENDING",
-    operationTypes: ["port.scan"],
+    operationTypes: [...PORT_SCAN_OPERATION_TYPES],
     poll: pollScan,
   });
 

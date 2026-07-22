@@ -16,6 +16,7 @@ import {
   seedDraftFromUnifiedRules,
   syncDraftOriginStates,
 } from "@/server/services/draft.service";
+import { runForServer } from "@/lib/queue/queue-registry";
 import { semanticStep } from "@/server/services/operation-progress.service";
 import { detectUfwState } from "@/server/services/ssh.service";
 
@@ -219,35 +220,43 @@ export async function refreshRemoteRules(
     ? {
         onStart: async () => {
           await tracker.markRunning();
-          await tracker.startStep("load_ufw", semanticStep("load_ufw", "steps.load_ufw"));
+          if (!detection) {
+            await tracker.startStep("load_ufw", semanticStep("load_ufw", "steps.load_ufw"));
+          }
         },
       }
     : undefined;
 
-  if (detection) {
-    if (tracker) {
-      await tracker.startStep("load_ufw", semanticStep("load_ufw", "steps.load_ufw"));
-    }
-    await persistSnapshotFromDetection(serverId, userId, detection);
-    if (tracker) {
-      await tracker.completeStep("load_ufw");
-    }
-  } else {
-    await captureSnapshot(serverId, userId, queueOptions);
-    if (tracker) {
-      await tracker.completeStep("load_ufw");
-    }
-  }
+  await runForServer(
+    serverId,
+    async () => {
+      if (detection) {
+        if (tracker) {
+          await tracker.startStep("load_ufw", semanticStep("load_ufw", "steps.load_ufw"));
+        }
+        await persistSnapshotFromDetection(serverId, userId, detection);
+        if (tracker) {
+          await tracker.completeStep("load_ufw");
+        }
+      } else {
+        await captureSnapshot(serverId, userId, { skipQueue: true });
+        if (tracker) {
+          await tracker.completeStep("load_ufw");
+        }
+      }
 
-  if (tracker) {
-    await tracker.startStep("draft_sync", semanticStep("draft_sync", "steps.draft_sync"));
-  }
+      if (tracker) {
+        await tracker.startStep("draft_sync", semanticStep("draft_sync", "steps.draft_sync"));
+      }
 
-  await syncDraftFromRemoteSnapshot(serverId, userId);
+      await syncDraftFromRemoteSnapshot(serverId, userId);
 
-  if (tracker) {
-    await tracker.completeStep("draft_sync");
-  }
+      if (tracker) {
+        await tracker.completeStep("draft_sync");
+      }
+    },
+    queueOptions,
+  );
 }
 
 export type RulesViewPage = {

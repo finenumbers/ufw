@@ -8,7 +8,7 @@ import { getServerPath } from "@/lib/server-path";
 import { getSession } from "@/lib/session";
 import { getServerByAddressAction } from "@/server/actions/servers";
 import { getRulesViewPageAction } from "@/server/actions/rules";
-import { getLatestSuccessfulPortScan } from "@/server/services/port-scan.service";
+import { getLatestPortScan } from "@/server/services/port-scan.service";
 import {
   detectionFromSnapshot,
   getLatestSnapshot,
@@ -63,7 +63,7 @@ export default async function ServerDetailPage({ params }: PageProps) {
       ? getRulesViewPageAction(server.id, 0)
       : Promise.resolve({ rows: [], total: 0, hasMore: false, nextOffset: 0 }),
     getServerInventoryStatsMap([server.id]),
-    portScanEnabled ? getLatestSuccessfulPortScan(server.id) : Promise.resolve(null),
+    portScanEnabled ? getLatestPortScan(server.id) : Promise.resolve(null),
   ]);
 
   const stats = inventoryStats.get(server.id);

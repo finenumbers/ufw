@@ -3,6 +3,7 @@ import type { RuleAction, RuleDirection, RuleProtocol, LogMode } from "@prisma/c
 import { hasApplyChanges } from "@/lib/ufw/plan";
 import type { ApplyPlan, ApplyPreviewResult } from "@/types/apply";
 import type { UnifiedRuleRow } from "@/types/rule";
+import type { UfwDetectionResult } from "@/types/ufw";
 
 type SnapshotRuleRecord = {
   fingerprint: string;
@@ -19,6 +20,51 @@ type SnapshotRuleRecord = {
   ruleComment: string | null;
   ipv6: boolean;
 };
+
+function detectionRulesToSnapshotRecords(rules: UfwDetectionResult["rules"]): SnapshotRuleRecord[] {
+  return rules.map((rule) => ({
+    fingerprint: rule.fingerprint,
+    action: rule.core.action,
+    direction: rule.core.direction ?? null,
+    interface: rule.core.interface ?? null,
+    protocol: rule.core.protocol ?? null,
+    fromAddress: rule.core.fromAddress ?? null,
+    fromPort: rule.core.fromPort ?? null,
+    toAddress: rule.core.toAddress ?? null,
+    toPort: rule.core.toPort ?? null,
+    appName: rule.core.appName ?? null,
+    logMode: rule.core.logMode,
+    ruleComment: rule.core.ruleComment ?? null,
+    ipv6: rule.core.ipv6,
+  }));
+}
+
+export function detectionRulesToSnapshotRuleRows(rules: UfwDetectionResult["rules"]) {
+  return rules.map((rule, index) => ({
+    fingerprint: rule.fingerprint,
+    sortOrder: index,
+    action: rule.core.action,
+    direction: rule.core.direction ?? null,
+    interface: rule.core.interface ?? null,
+    protocol: rule.core.protocol ?? null,
+    fromAddress: rule.core.fromAddress ?? null,
+    fromPort: rule.core.fromPort ?? null,
+    toAddress: rule.core.toAddress ?? null,
+    toPort: rule.core.toPort ?? null,
+    appName: rule.core.appName ?? null,
+    logMode: rule.core.logMode,
+    ruleComment: rule.core.ruleComment ?? null,
+    ipv6: rule.core.ipv6,
+    rawLine: rule.rawLine,
+  }));
+}
+
+export function buildPostApplyRuleRecordsFromDetection(
+  detection: UfwDetectionResult,
+  desiredRows: UnifiedRuleRow[],
+) {
+  return buildPostApplyRuleRecords(detectionRulesToSnapshotRecords(detection.rules), desiredRows);
+}
 
 export function buildPostApplyRuleRecords(
   snapshotRules: SnapshotRuleRecord[],
