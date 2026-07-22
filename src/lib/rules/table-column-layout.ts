@@ -1,7 +1,6 @@
 const COLUMN_CLASSES: Record<string, string> = {
   ufwNumber: "w-[30px] max-w-[30px]",
   group: "w-[110px] max-w-[110px]",
-  name: "w-[110px] max-w-[110px]",
   action: "w-[90px] max-w-[90px]",
   direction: "w-[85px] max-w-[85px]",
   interface: "w-[90px] max-w-[90px]",
