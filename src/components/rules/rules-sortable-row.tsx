@@ -4,6 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { flexRender, type Row } from "@tanstack/react-table";
 import { GripVertical } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 import { getRulesTableColumnClass } from "@/lib/rules/table-column-layout";
@@ -22,6 +23,7 @@ export function SortableRuleRow({
   dragDisabled = false,
   showHandle = true,
 }: SortableRuleRowProps) {
+  const t = useTranslations("rules.table");
   const {
     attributes,
     listeners,
@@ -57,7 +59,7 @@ export function SortableRuleRow({
               ref={setActivatorNodeRef}
               type="button"
               className="flex h-6 w-6 cursor-grab items-center justify-center rounded text-muted-foreground hover:bg-black/5 active:cursor-grabbing"
-              aria-label="Переместить правило"
+              aria-label={t("moveRule")}
               {...attributes}
               {...listeners}
             >

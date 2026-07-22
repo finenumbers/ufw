@@ -24,10 +24,10 @@ When port scan is enabled, the scan panel loads the **latest scan of any status*
 | UFW status | Actions |
 |------------|---------|
 | Not installed | **Refresh Status**, then **Install UFW** (after refresh confirms missing) |
-| Installed but inactive | **Refresh Status** — install button hidden if UFW exists but inactive |
+| Installed but inactive | **Refresh Status**, then **Enable UFW** (after refresh confirms inactive) |
 | Installed and active | **Add Rule**, **Save rules**, **Refresh Status**, optional **Scan ports** |
 
-**Refresh Status** runs live SSH, updates snapshot, and syncs the rules table. **Install UFW** stays disabled until refresh confirms UFW is not installed.
+**Refresh Status** runs live SSH, updates snapshot, and syncs the rules table. **Install UFW** stays disabled until refresh confirms UFW is not installed. **Enable UFW** appears when UFW is installed but inactive.
 
 Until refresh, the UFW badge may show a **cached** label from the last snapshot.
 

@@ -38,9 +38,7 @@ Rate limit: 5 exports per minute per user.
 
 ## Clearing history
 
-**Clear history** on operations page removes operation log entries per UI action. Does not roll back server changes or delete audit events in all cases — confirm dialog text for current behaviour.
-
-Does not modify remote UFW or local rule drafts.
+**Clear history** on the operations page removes both operation log entries and audit events. A single `OPERATIONS_CLEARED` audit record remains. Does not roll back server changes or modify local rule drafts.
 
 ## Related docs
 

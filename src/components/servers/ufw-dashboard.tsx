@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import type { UnifiedRuleRow } from "@/types/rule";
 import type { UfwDetectionResult } from "@/types/ufw";
 import { previewApplyAction } from "@/server/actions/apply";
-import { installUfwAction, loadUfwStateAction } from "@/server/actions/servers";
+import { enableUfwAction, installUfwAction, loadUfwStateAction } from "@/server/actions/servers";
 
 const dashboardActionButtonClass = "w-[160px] shrink-0";
 
@@ -165,7 +165,32 @@ export function UfwDashboard({
     setLoading(false);
   }
 
+  async function handleEnable() {
+    setLoading(true);
+    clearOperationError();
+    notifyOperationStarted(serverId);
+    const result = await enableUfwAction(serverId);
+    if (result.success) {
+      const refreshResult = await loadUfwStateAction(serverId);
+      setStatusChecked(true);
+      if (!refreshResult.success) {
+        setSshReachable(false);
+        showOperationFailure(refreshResult, tc);
+      } else {
+        setSshReachable(true);
+        setState(refreshResult.state);
+        await onRulesRefresh();
+        router.refresh();
+      }
+    } else {
+      setOperationError(result.message);
+    }
+    setLoading(false);
+  }
+
   const installEnabled = statusChecked && sshReachable === true && !state.installed;
+  const enableEnabled =
+    statusChecked && sshReachable === true && state.installed && !state.active;
   const showVerifiedStatus = statusChecked && sshReachable === true;
   const showCachedStatus = !showVerifiedStatus && (initialState.installed || initialState.active);
 
@@ -262,6 +287,33 @@ export function UfwDashboard({
               </AlertDialogContent>
             </AlertDialog>
           ) : null}
+          {state.installed && !state.active ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  className={cn(
+                    dashboardActionButtonClass,
+                    "border-yellow-400 bg-yellow-300 text-yellow-950 hover:bg-yellow-400 hover:text-yellow-950",
+                  )}
+                  disabled={loading || !enableEnabled}
+                >
+                  {t("enableUfw")}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("enableTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("enableDescription")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => void handleEnable()}>
+                    {t("confirmEnable")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : null}
         </div>
 
         {portScanEnabled ? (
@@ -291,6 +343,9 @@ export function UfwDashboard({
       ) : null}
       {statusChecked && sshReachable && !state.installed ? (
         <p className="text-sm text-muted-foreground">{t("ufwNotInstalled")}</p>
+      ) : null}
+      {statusChecked && sshReachable && state.installed && !state.active ? (
+        <p className="text-sm text-muted-foreground">{t("ufwInstalledInactive")}</p>
       ) : null}
       {!sshHostKeyVerified ? (
         <p className="text-sm text-amber-700 dark:text-amber-400">{t("hostKeyUnverified")}</p>

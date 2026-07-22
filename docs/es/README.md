@@ -1,6 +1,6 @@
 # UFW Remote Manager — Documentación (Español)
 
-Guía completa para administradores y operadores. Alineada con la **v0.9.2**.
+Guía completa para administradores y operadores. Alineada con la **v0.9.5**.
 
 ## Primeros pasos
 

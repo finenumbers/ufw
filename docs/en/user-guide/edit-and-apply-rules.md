@@ -8,10 +8,9 @@ When UFW is **installed and active**, the **rules table** on the server dashboar
 |---------|-------------|
 | **Search** | Filter visible rows |
 | **Column filters** | Filter by group or name |
-| **Group sections** | Expand/collapse grouped rows |
 | **Drag-and-drop** | Reorder rules (order affects UFW) |
-| **Row colors** | [Origin state](../concepts/ufw-rules-and-states.md) indicators |
-| **Inline edit** | Double-click or edit action on row |
+| **Row colors** | [Origin state](../concepts/ufw-rules-and-states.md) and overlap indicators |
+| **Inline edit** | Always-on inline fields in each row |
 | **Add / delete** | Toolbar and row actions |
 | **Load more** | Infinite scroll for large rule sets |
 

@@ -256,15 +256,15 @@ export function RulesTable({
         id: "ufwNumber",
         header: "#",
         cell: ({ row }) =>
-          row.original.ufwRuleNumber != null ? row.original.ufwRuleNumber : "—",
+          row.original.ufwRuleNumber != null ? row.original.ufwRuleNumber : t("emDash"),
       },
       {
         id: "group",
-        accessorFn: (row) => row.ui.group || "Ungrouped",
+        accessorFn: (row) => row.ui.group || t("ungrouped"),
         header: () => null,
         cell: ({ row }) =>
           readOnly ? (
-            row.original.ui.group || "—"
+            row.original.ui.group || t("emDash")
           ) : (
             <>
               <Input
@@ -286,7 +286,7 @@ export function RulesTable({
         header: () => null,
         cell: ({ row }) =>
           readOnly ? (
-            row.original.ui.name || "—"
+            row.original.ui.name || t("emDash")
           ) : (
             <>
               <Input
@@ -304,7 +304,7 @@ export function RulesTable({
       },
       {
         id: "action",
-        header: "Action",
+        header: t("colAction"),
         cell: ({ row }) =>
           readOnly ? (
             row.original.core.action
@@ -329,7 +329,7 @@ export function RulesTable({
       },
       {
         id: "direction",
-        header: "Direction",
+        header: t("colDirection"),
         cell: ({ row }) =>
           readOnly ? (
             row.original.core.direction ?? "IN"
@@ -353,10 +353,10 @@ export function RulesTable({
       },
       {
         id: "interface",
-        header: "Interface",
+        header: t("colInterface"),
         cell: ({ row }) =>
           readOnly ? (
-            row.original.core.interface || "—"
+            row.original.core.interface || t("emDash")
           ) : (
             <select
               className={selectClassName}
@@ -369,7 +369,7 @@ export function RulesTable({
                 )
               }
             >
-              <option value="">—</option>
+              <option value="">{t("emDash")}</option>
               {interfaceOptionsRef.current.map((value) => (
                 <option key={value} value={value}>
                   {value}
@@ -380,15 +380,15 @@ export function RulesTable({
       },
       {
         id: "fromAddress",
-        header: "From",
+        header: t("colFrom"),
         cell: ({ row }) =>
           readOnly ? (
-            row.original.core.fromAddress ?? "any"
+            row.original.core.fromAddress ?? t("anyAddress")
           ) : (
             <Input
               className={tableInputClassName}
               value={row.original.core.fromAddress ?? ""}
-              placeholder="any"
+              placeholder={t("anyAddress")}
               onChange={(e) =>
                 onChangeRef.current(
                   updateCore(rowsRef.current, row.original.clientRowId, {
@@ -401,10 +401,10 @@ export function RulesTable({
       },
       {
         id: "fromPort",
-        header: "From Port",
+        header: t("colFromPort"),
         cell: ({ row }) =>
           readOnly ? (
-            row.original.core.fromPort || "—"
+            row.original.core.fromPort || t("emDash")
           ) : (
             <Input
               className={tableInputClassName}
@@ -421,15 +421,15 @@ export function RulesTable({
       },
       {
         id: "toAddress",
-        header: "To",
+        header: t("colTo"),
         cell: ({ row }) =>
           readOnly ? (
-            row.original.core.toAddress ?? "any"
+            row.original.core.toAddress ?? t("anyAddress")
           ) : (
             <Input
               className={tableInputClassName}
               value={row.original.core.toAddress ?? ""}
-              placeholder="any"
+              placeholder={t("anyAddress")}
               onChange={(e) =>
                 onChangeRef.current(
                   updateCore(rowsRef.current, row.original.clientRowId, {
@@ -442,10 +442,10 @@ export function RulesTable({
       },
       {
         id: "toPort",
-        header: "To Port",
+        header: t("colToPort"),
         cell: ({ row }) =>
           readOnly ? (
-            row.original.core.toPort || "—"
+            row.original.core.toPort || t("emDash")
           ) : (
             <Input
               className={tableInputClassName}
@@ -462,10 +462,10 @@ export function RulesTable({
       },
       {
         id: "protocol",
-        header: "Protocol",
+        header: t("colProtocol"),
         cell: ({ row }) =>
           readOnly ? (
-            row.original.core.protocol ?? "—"
+            row.original.core.protocol ?? t("emDash")
           ) : (
             <select
               className={selectClassName}
@@ -478,7 +478,7 @@ export function RulesTable({
                 )
               }
             >
-              <option value="">—</option>
+              <option value="">{t("emDash")}</option>
               <option value="TCP">TCP</option>
               <option value="UDP">UDP</option>
               <option value="ICMP">ICMP</option>
@@ -488,7 +488,7 @@ export function RulesTable({
       },
       {
         id: "logMode",
-        header: "Log",
+        header: t("colLog"),
         cell: ({ row }) =>
           readOnly ? (
             row.original.core.logMode
@@ -512,10 +512,10 @@ export function RulesTable({
       },
       {
         id: "ipv6",
-        header: "IPv6",
+        header: t("colIpv6"),
         cell: ({ row }) =>
           readOnly ? (
-            row.original.core.ipv6 ? "yes" : "no"
+            row.original.core.ipv6 ? t("yes") : t("no")
           ) : (
             <select
               className={selectClassName}
@@ -528,8 +528,8 @@ export function RulesTable({
                 )
               }
             >
-              <option value="false">no</option>
-              <option value="true">yes</option>
+              <option value="false">{t("no")}</option>
+              <option value="true">{t("yes")}</option>
             </select>
           ),
       },
@@ -630,6 +630,10 @@ export function RulesTable({
           <span className="h-3 w-8 rounded border bg-violet-300" />
           {t("legendAddressOverlap")}
         </span>
+        <span className="inline-flex items-center gap-2">
+          <span className="h-3 w-8 rounded border bg-orange-100" />
+          {t("legendConflict")}
+        </span>
         {showDragHandle && dragDisabled ? (
           <span className="text-muted-foreground/80">
             {t("clearFiltersToReorder")}
@@ -657,29 +661,29 @@ export function RulesTable({
                   )}>
                     {header.column.id === "group" ? (
                       <RulesColumnHeaderFilter
-                        label="Group"
+                        label={t("colGroup")}
                         value={groupHeaderFilter}
                         options={groupFilterOptions}
                         onChange={setGroupHeaderFilter}
                         allLabel={t("filterAll")}
                         noMatchesLabel={t("filterNoMatches")}
-                        filterAria={t("filterColumn", { label: "Group" })}
-                        clearFilterAria={t("filterClear", { label: "Group" })}
-                        showOptionsAria={t("filterShowOptions", { label: "Group" })}
-                        optionsAria={t("filterOptions", { label: "Group" })}
+                        filterAria={t("filterColumn", { label: t("colGroup") })}
+                        clearFilterAria={t("filterClear", { label: t("colGroup") })}
+                        showOptionsAria={t("filterShowOptions", { label: t("colGroup") })}
+                        optionsAria={t("filterOptions", { label: t("colGroup") })}
                       />
                     ) : header.column.id === "name" ? (
                       <RulesColumnHeaderFilter
-                        label="Name"
+                        label={t("colName")}
                         value={nameHeaderFilter}
                         options={nameFilterOptions}
                         onChange={setNameHeaderFilter}
                         allLabel={t("filterAll")}
                         noMatchesLabel={t("filterNoMatches")}
-                        filterAria={t("filterColumn", { label: "Name" })}
-                        clearFilterAria={t("filterClear", { label: "Name" })}
-                        showOptionsAria={t("filterShowOptions", { label: "Name" })}
-                        optionsAria={t("filterOptions", { label: "Name" })}
+                        filterAria={t("filterColumn", { label: t("colName") })}
+                        clearFilterAria={t("filterClear", { label: t("colName") })}
+                        showOptionsAria={t("filterShowOptions", { label: t("colName") })}
+                        optionsAria={t("filterOptions", { label: t("colName") })}
                       />
                     ) : header.isPlaceholder ? null : (
                       flexRender(header.column.columnDef.header, header.getContext())

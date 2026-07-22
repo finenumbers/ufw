@@ -184,7 +184,12 @@
     "refreshDiscardTitle": "Descartar alterações não salvas?",
     "refreshDiscardDescription": "Atualizar status recarregará as regras do servidor e resetará alterações não salvas na tabela.",
     "confirmRefreshDiscard": "Atualizar mesmo assim",
-    "hostKeyUnverified": "Chave SSH do host não verificada. Atualize o status antes de aplicar regras."
+    "hostKeyUnverified": "Chave SSH do host não verificada. Atualize o status antes de aplicar regras.",
+    "enableUfw": "Ativar UFW",
+    "enableTitle": "Ativar UFW?",
+    "enableDescription": "O UFW será ativado no servidor remoto via SSH.",
+    "confirmEnable": "Confirmar ativação",
+    "ufwInstalledInactive": "UFW está instalado, mas inativo. Clique em «Ativar UFW»."
   },
   "rules": {
     "toolbar": {
@@ -229,7 +234,26 @@
       "deleteRule": "Excluir regra",
       "loadingMore": "Carregando mais...",
       "scrollForMore": "Role para baixo para mais",
-      "loadedCount": "Mostrando {loaded} de {total} regras"
+      "loadedCount": "Mostrando {loaded} de {total} regras",
+      "legendConflict": "Conflito entre dados locais e remotos da regra",
+      "colGroup": "Grupo",
+      "colName": "Nome",
+      "colAction": "Ação",
+      "colDirection": "Direção",
+      "colInterface": "Interface",
+      "colFrom": "De",
+      "colFromPort": "Porta origem",
+      "colTo": "Para",
+      "colToPort": "Porta dest.",
+      "colProtocol": "Protocolo",
+      "colLog": "Log",
+      "colIpv6": "IPv6",
+      "ungrouped": "Sem grupo",
+      "anyAddress": "any",
+      "yes": "sim",
+      "no": "não",
+      "emDash": "—",
+      "moveRule": "Mover regra"
     }
   },
   "operationsPage": {
@@ -269,7 +293,8 @@
       "ufw_install": "Instalando UFW",
       "ssh_test": "Testando SSH",
       "server_create": "Criando servidor",
-      "port_scan": "Scanning open ports"
+      "port_scan": "Scanning open ports",
+      "ufw_enable": "Ativando UFW"
     },
     "banner": {
       "success": "Concluído: todas as operações finalizadas com sucesso",
@@ -305,7 +330,9 @@
       "port_scan_enrichment": "Identifying services with Nmap",
       "port_scan_normalize": "Normalizing scan results",
       "port_scan_complete": "Done: found {count} open port(s)",
-      "port_scan_failed": "Port scan failed: {error}"
+      "port_scan_failed": "Port scan failed: {error}",
+      "enable_start": "Ativando UFW no servidor",
+      "enable_complete": "Concluído: UFW ativado no servidor"
     },
     "phases": {
       "ufw_commands": "Aplicando comandos UFW",

@@ -48,6 +48,7 @@ Database stores dotted names; UI translates them.
 | `ufw.refresh` | Refresh Status — live SSH + rules sync |
 | `ufw.sync` | Background initial sync when no snapshot |
 | `ufw.install` | Remote UFW install and enable |
+| `ufw.enable` | Activate UFW when already installed |
 | `port.scan` | External port scan |
 | `server.create` | Server create with SSH failure |
 
@@ -57,9 +58,7 @@ Legacy (historical entries only):
 
 ## Clearing history
 
-**Clear history** removes old operation log entries from the UI/database per retention action. Does not affect servers, rules, or remote UFW.
-
-Audit tab may retain events per policy — see [Audit log and export](../administration/audit-log-and-export.md).
+**Clear history** removes operation log entries and audit events from the database (a single purge audit record remains). Does not affect servers, rules, or remote UFW.
 
 ## Related docs
 

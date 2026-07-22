@@ -25,7 +25,7 @@ Vérifier :
 
 Lors de la mise à niveau depuis pré-v0.9.0, s'assurer que migrate se termine — données inventaire legacy purgées.
 
-Épingler l'image : `GHCR_IMAGE_TAG=v0.9.2` dans `.env`.
+Épingler l'image : `GHCR_IMAGE_TAG=v0.9.5` dans `.env`.
 
 ## Retour arrière
 

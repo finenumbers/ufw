@@ -22,10 +22,13 @@ Verify:
 | **v0.9.0** | Yes — removes legacy inventory tables | Legacy inventory UI removed |
 | **v0.9.1** | No | Legacy cleanup, doc guardrails |
 | **v0.9.2** | No | Apply sync fix, operation banner lifecycle, port scan off SSH queue, overlap guard |
+| **v0.9.3** | No | Flexible rules Name column width |
+| **v0.9.4** | No | Address overlap violet highlight, import overlap notice |
+| **v0.9.5** | No | Enable UFW action, rules table i18n, host key apply guard, release CI gate |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.2` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.5` in `.env`.
 
 ## Rollback
 

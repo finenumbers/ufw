@@ -25,7 +25,7 @@ Fingerprints identify rules across remote reloads and local edits.
 | **CONFLICT** | Same fingerprint, different core fields | Drift — review before apply |
 | **DELETED** | Marked deleted in draft | Will be removed on apply |
 
-Colors help spot drift **before** applying. After **Force resync from server**, the draft realigns to the remote snapshot.
+Colors help spot drift **before** applying. Violet highlights [address overlap](#address-overlap-highlight). After **Force resync from server**, the draft realigns to the remote snapshot.
 
 ## Address overlap highlight
 

@@ -35,11 +35,24 @@ import {
 } from "@/server/services/apply-sync";
 import type { UnifiedRuleRow } from "@/types/rule";
 import { buildTableRowsFromSources, getLiveRemoteParsedRules } from "@/server/services/rules-view.service";
+import { getServerById } from "@/server/services/server.service";
 import { runSshForServer } from "@/server/services/ssh.service";
 import { syncDraftOriginStates, updateDraftRules } from "@/server/services/draft.service";
 import type { ApplyPlan } from "@/types/apply";
 
 export const APPLY_REMOTE_CHANGED = "APPLY_REMOTE_CHANGED";
+export const APPLY_HOST_KEY_UNVERIFIED =
+  "SSH host key is not verified yet. Refresh status before applying rules.";
+
+async function assertApplyHostKeyVerified(serverId: string): Promise<void> {
+  const server = await getServerById(serverId);
+  if (!server) {
+    throw new Error("Server not found");
+  }
+  if (!server.sshHostKeyVerified) {
+    throw new Error(APPLY_HOST_KEY_UNVERIFIED);
+  }
+}
 
 function validatePlanCommands(plan: ApplyPlan): void {
   for (const item of plan.items) {
@@ -165,6 +178,8 @@ export async function previewApply(
   userId: string,
   desired: UnifiedRuleRow[],
 ): Promise<ApplyPreviewResult> {
+  await assertApplyHostKeyVerified(serverId);
+
   const validatedDesired = parseUnifiedRuleRows(desired);
   const validationError = validateRulesForUfwApply(validatedDesired);
   if (validationError) {
@@ -293,6 +308,13 @@ export async function confirmApply(
 
   if (!session || session.userId !== userId) {
     return { success: false, error: "Apply session not found" };
+  }
+
+  try {
+    await assertApplyHostKeyVerified(session.serverId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : APPLY_HOST_KEY_UNVERIFIED;
+    return { success: false, error: message };
   }
 
   const claim = await db.applySession.updateMany({

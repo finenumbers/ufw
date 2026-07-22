@@ -357,6 +357,84 @@ export async function installUfwAction(
   }
 }
 
+export async function enableUfwAction(
+  serverId: string,
+): Promise<{ success: boolean; message: string }> {
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) {
+    return { success: false, message: auth.failure.error };
+  }
+
+  const rateLimit = assertRateLimit(`ufw-enable:${serverId}`, { limit: 3, windowMs: 60_000 });
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      message: "Too many enable attempts. Please try again later.",
+    };
+  }
+
+  const tracker = await startOperation({
+    serverId,
+    userId: auth.userId,
+    type: "ufw.enable",
+    messageI18n: { key: "messages.enable_start" },
+    steps: [
+      semanticStep("enable", "steps.enable"),
+      semanticStep("load_ufw", "steps.load_ufw"),
+      semanticStep("draft_sync", "steps.draft_sync"),
+    ],
+  });
+
+  try {
+    const enableResult = await remoteEnableUfw(serverId, {
+      onStart: async () => {
+        await tracker.markRunning();
+        await tracker.startStep("enable", semanticStep("enable", "steps.enable"));
+      },
+    });
+
+    await createAuditEvent({
+      userId: auth.userId,
+      action: "UFW_ENABLE",
+      entityType: "server",
+      entityId: serverId,
+      metadata: { success: enableResult.success },
+    });
+
+    if (!enableResult.success) {
+      await tracker.failStep("enable", enableResult.message);
+      await tracker.fail(
+        { key: "messages.operation_failed", params: { error: enableResult.message } },
+        [enableResult.message],
+      );
+      await revalidateServerPaths(serverId);
+      return enableResult;
+    }
+
+    await tracker.completeStep("enable");
+
+    const state = await detectUfwState(serverId);
+    if (!state.installed || !state.active) {
+      const message = "UFW is not active after enable";
+      await tracker.fail(
+        { key: "messages.operation_failed", params: { error: message } },
+        [message],
+      );
+      await revalidateServerPaths(serverId);
+      return { success: false, message };
+    }
+
+    await refreshRemoteRules(serverId, auth.userId, tracker, state);
+    await tracker.complete({ key: "messages.enable_complete" });
+    await revalidateServerPaths(serverId);
+    return { success: true, message: "UFW enabled successfully" };
+  } catch (error) {
+    const message = sanitizeGenericClientError(error, "Enable failed");
+    await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
+    return { success: false, message };
+  }
+}
+
 async function readConfigFile(formData: FormData): Promise<string> {
   const file = formData.get("file");
 

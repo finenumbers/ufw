@@ -2,7 +2,7 @@
 
 **UFW Remote Manager** ist eine selbst gehostete Webanwendung zur Verwaltung von **UFW (Uncomplicated Firewall)** auf entfernten Linux-Servern über **SSH**. Sie bearbeiten Firewall-Regeln im Browser, sehen Änderungen in der Vorschau, bestätigen explizit und wenden sie sicher an — mit vollständigem Audit-Trail.
 
-Repository: [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw) · Aktuelles Release: **v0.9.2**
+Repository: [github.com/finenumbers/ufw](https://github.com/finenumbers/ufw) · Aktuelles Release: **v0.9.5**
 
 ## Für wen ist die App gedacht?
 
