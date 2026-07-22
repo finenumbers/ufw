@@ -52,7 +52,7 @@ export async function importRulesAction(
   serverId: string,
   formData: FormData,
 ): Promise<
-  | { success: true; rows: UnifiedRuleRow[]; duplicateCount: number }
+  | { success: true; rows: UnifiedRuleRow[]; duplicateCount: number; overlapCount: number }
   | { success: false; error: string }
 > {
   const auth = await requireUserIdForAction();
@@ -95,9 +95,13 @@ export async function importRulesAction(
       return { success: false, error: validationError };
     }
 
-    const { rows, duplicateCount } = await importRulesToDraft(serverId, auth.userId, imported);
+    const { rows, duplicateCount, overlapCount } = await importRulesToDraft(
+      serverId,
+      auth.userId,
+      imported,
+    );
     await revalidateServerPaths(serverId);
-    return { success: true, rows, duplicateCount };
+    return { success: true, rows, duplicateCount, overlapCount };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Import failed";
     return { success: false, error: message };

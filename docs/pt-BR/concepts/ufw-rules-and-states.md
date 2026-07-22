@@ -27,6 +27,18 @@ Fingerprints identificam regras entre recargas remotas e edições locais.
 
 Cores ajudam a detectar deriva **antes** de aplicar. Após **Ressincronização forçada do servidor**, o rascunho realinha ao snapshot remoto.
 
+## Destaque de endereços sobrepostos
+
+Regras diferentes podem cobrir o mesmo tráfego mesmo com fingerprints distintas — por exemplo `95.163.183.223` dentro de `95.163.183.192/26`, ou um `/24` mais amplo cobrindo um `/26` existente.
+
+Linhas envolvidas em pelo menos um par assim são destacadas em **violeta** na tabela. Essa cor tem prioridade sobre verde/amarelo/vermelho de origem. **Ambas** as linhas do par são destacadas.
+
+A legenda acima da tabela inclui uma amostra violeta: **Faixas IP ou CIDR sobrepostas**.
+
+A sobreposição é calculada a partir do rascunho atual (mesma direction, mesma família IP, endereços não `anywhere`). É **apenas um aviso** — importação e apply não são bloqueados. Remova ou ajuste endereços até o destaque violeta desaparecer.
+
+Típico após importar: um novo host ou CIDR sobrepõe uma regra já no servidor. Revise a ordem — o UFW usa a primeira regra correspondente.
+
 ## Duas contagens de regras
 
 A UI mostra contagens diferentes em lugares diferentes:

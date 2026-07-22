@@ -193,6 +193,7 @@
       "import": "Importer",
       "export": "Exporter",
       "importDuplicatesSkipped": "{count} règle(s) en double ignorée(s) lors de l'import.",
+      "importAddressOverlapDetected": "{count} règle(s) avec adresses qui se chevauchent détectée(s) après l'import.",
       "hint": "Les modifications non enregistrées sont annulées lors de « Actualiser le statut ». L'écriture dans la base locale et UFW se fait uniquement via <highlight>Enregistrer les règles</highlight> avec confirmation."
     },
     "applyDialog": {
@@ -215,6 +216,7 @@
       "legendRemoteOnly": "Présent sur UFW, absent de la BD locale",
       "legendMatched": "Présent sur UFW et dans la BD locale",
       "legendLocalOnly": "Absent de UFW, présent dans la BD locale",
+      "legendAddressOverlap": "Plages IP ou CIDR qui se chevauchent",
       "clearFiltersToReorder": "Effacez la recherche et les filtres de colonnes pour réordonner",
       "noRulesFound": "Aucune règle trouvée",
       "filterAll": "Tous",

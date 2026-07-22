@@ -27,6 +27,18 @@ Le fingerprint identificano le regole tra ricaricamenti remoti e modifiche local
 
 I colori aiutano a individuare la deriva **prima** dell'applicazione. Dopo **Risincronizzazione forzata dal server**, la bozza si riallinea allo snapshot remoto.
 
+## Evidenziazione indirizzi sovrapposti
+
+Regole diverse possono coprire lo stesso traffico anche con fingerprint diverse — ad esempio `95.163.183.223` dentro `95.163.183.192/26`, o un `/24` più ampio che copre un `/26` esistente.
+
+Le righe coinvolte in almeno una coppia del genere sono evidenziate in **viola** nella tabella. Questo colore ha priorità su verde/giallo/rosso di origine. Sono evidenziate **entrambe** le righe della coppia.
+
+La legenda sopra la tabella include un campione viola: **Intervalli IP o CIDR sovrapposti**.
+
+La sovrapposizione è calcolata dal draft corrente (stessa direction, stessa famiglia IP, indirizzi non `anywhere`). È **solo un avviso** — import e apply non sono bloccati. Rimuovete o modificate indirizzi finché l'evidenziazione viola non scompare.
+
+Tipico dopo import: un nuovo host o CIDR si sovrappone a una regola già sul server. Controllate l'ordine — UFW usa la prima regola corrispondente.
+
 ## Due conteggi regole
 
 L'UI mostra conteggi diversi in punti diversi:

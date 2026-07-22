@@ -193,6 +193,7 @@
       "import": "Import",
       "export": "Export",
       "importDuplicatesSkipped": "Skipped {count} duplicate rule(s) during import.",
+      "importAddressOverlapDetected": "{count} rule(s) with overlapping addresses detected after import.",
       "hint": "Unsaved table edits are discarded when you refresh status. Save to the local database and remote UFW only via <highlight>Save Rules</highlight> with confirmation."
     },
     "applyDialog": {
@@ -215,6 +216,7 @@
       "legendRemoteOnly": "Present on UFW, not in local DB",
       "legendMatched": "Present on UFW and in local DB",
       "legendLocalOnly": "Not on UFW, present in local DB",
+      "legendAddressOverlap": "Overlapping IP or CIDR ranges",
       "clearFiltersToReorder": "Clear search and column filters to reorder rules",
       "noRulesFound": "No rules found",
       "filterAll": "All",

@@ -38,6 +38,7 @@ Disponible desde el diálogo de vista previa de aplicación y advertencias relac
 Barra de herramientas → importar **CSV**, **XLSX** o **JSON**:
 
 - Las filas se fusionan en el borrador; duplicados por huella omitidos o fusionados según reglas de importación
+- Los rangos IP o CIDR superpuestos se resaltan en **violeta** en la tabla (véase [Reglas UFW y estados](../concepts/ufw-rules-and-states.md))
 - Valide filas en la tabla antes de vista previa de aplicación
 - La importación afecta solo al borrador hasta aplicar
 

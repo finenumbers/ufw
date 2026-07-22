@@ -27,6 +27,18 @@ Les empreintes identifient les règles à travers les rechargements distants et 
 
 Les couleurs aident à repérer la dérive **avant** l'application. Après **Resynchronisation forcée depuis le serveur**, le brouillon se réaligne sur le snapshot distant.
 
+## Surbrillance des adresses qui se chevauchent
+
+Des règles différentes peuvent correspondre au même trafic même si leurs empreintes diffèrent — par exemple `95.163.183.223` dans `95.163.183.192/26`, ou un `/24` plus large couvrant un `/26` existant.
+
+Les lignes impliquées dans au moins une telle paire sont surlignées en **violet** dans le tableau. Cette couleur prime sur les couleurs d'origine vert/jaune/rouge. **Les deux** lignes d'une paire sont surlignées.
+
+La légende au-dessus du tableau inclut un échantillon violet : **Plages IP ou CIDR qui se chevauchent**.
+
+Le chevauchement est calculé à partir du brouillon actuel (même direction, même famille IP, adresses non `anywhere`). C'est **uniquement un avertissement** — import et application ne sont pas bloqués. Modifiez ou supprimez des adresses jusqu'à disparition du surlignage violet.
+
+Typique après import : un nouvel hôte ou CIDR chevauche une règle déjà sur le serveur. Vérifiez l'ordre — UFW utilise la première règle correspondante.
+
 ## Deux comptes de règles
 
 L'interface affiche des comptes différents selon l'emplacement :

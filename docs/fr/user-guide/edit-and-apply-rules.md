@@ -38,6 +38,7 @@ Disponible depuis la boîte de dialogue d'aperçu d'application et les avertisse
 Barre d'outils → importer **CSV**, **XLSX** ou **JSON** :
 
 - Les lignes fusionnent dans le brouillon ; doublons par empreinte ignorés ou fusionnés selon les règles d'import
+- Les plages IP ou CIDR qui se chevauchent sont surlignées en **violet** dans le tableau (voir [Règles UFW et états](../concepts/ufw-rules-and-states.md))
 - Valider les lignes dans le tableau avant aperçu d'application
 - L'import affecte le brouillon uniquement jusqu'à l'application
 

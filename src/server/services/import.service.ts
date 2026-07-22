@@ -1,3 +1,4 @@
+import { countOverlappingRows } from "@/lib/ufw/address-overlap";
 import { mergeImportWithDraftRows } from "@/lib/imports/merge-import-with-draft";
 import type { ImportRuleRow } from "@/lib/validations/import";
 import type { UnifiedRuleRow } from "@/types/rule";
@@ -12,7 +13,7 @@ export async function importRulesToDraft(
   serverId: string,
   userId: string,
   imported: ImportRuleRow[],
-): Promise<{ rows: UnifiedRuleRow[]; duplicateCount: number }> {
+): Promise<{ rows: UnifiedRuleRow[]; duplicateCount: number; overlapCount: number }> {
   await getOrCreateDraftSession(serverId, userId);
   const existing = await getDraftRules(serverId, userId);
 
@@ -46,6 +47,7 @@ export async function importRulesToDraft(
     }));
 
   const { rows: merged, duplicateCount } = mergeImportWithDraftRows(existingRows, imported);
+  const overlapCount = countOverlappingRows(merged);
   await replaceDraftSessionRules(serverId, userId, merged);
 
   await createAuditEvent({
@@ -53,8 +55,8 @@ export async function importRulesToDraft(
     action: "RULES_IMPORTED",
     entityType: "server",
     entityId: serverId,
-    metadata: { importedCount: imported.length, duplicateCount },
+    metadata: { importedCount: imported.length, duplicateCount, overlapCount },
   });
 
-  return { rows: merged, duplicateCount };
+  return { rows: merged, duplicateCount, overlapCount };
 }

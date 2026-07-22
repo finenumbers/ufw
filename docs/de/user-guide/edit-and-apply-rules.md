@@ -38,6 +38,7 @@ Verfügbar im Apply-Vorschau-Dialog und zugehörigen Warnungen — kein Ersatz f
 Toolbar → **Importieren** **CSV**, **XLSX** oder **JSON**:
 
 - Zeilen werden in Entwurf gemerged; Duplikate per Fingerabdruck übersprungen oder gemerged gemäß Importregeln
+- Überlappende IP- oder CIDR-Bereiche werden in der Tabelle **violett** hervorgehoben (siehe [UFW-Regeln und Zustände](../concepts/ufw-rules-and-states.md))
 - Zeilen in der Tabelle vor Apply-Vorschau validieren
 - Import betrifft nur Entwurf bis zum Anwenden
 

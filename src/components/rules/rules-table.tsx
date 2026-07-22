@@ -37,6 +37,7 @@ import {
 } from "@/lib/rules/column-filters";
 import { getRulesTableColumnClass } from "@/lib/rules/table-column-layout";
 import type { RuleCore, UnifiedRuleRow } from "@/types/rule";
+import { findOverlappingRowIds } from "@/lib/ufw/address-overlap";
 import { syncIpv6FlagWithAddresses } from "@/lib/ufw/commands";
 import { getDistinctRuleFieldValuesAction, getInterfaceOptionsAction } from "@/server/actions/rules";
 import { useInfiniteScroll } from "@/lib/hooks/use-infinite-scroll";
@@ -48,9 +49,13 @@ const tableInputClassName = `${tableFontClass} h-6 min-h-6 px-1.5 py-0`;
 const selectClassName =
   `flex h-6 min-h-6 w-full min-w-0 rounded-md border border-input bg-transparent px-1 py-0 ${tableFontClass} ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`;
 
-function getRuleRowClassName(row: UnifiedRuleRow): string {
+function getRuleRowClassName(row: UnifiedRuleRow, overlappingIds: Set<string>): string {
   if (row.isPendingSave) {
     return "";
+  }
+
+  if (overlappingIds.has(row.clientRowId)) {
+    return "bg-violet-300 hover:bg-violet-300/90";
   }
 
   switch (row.originState) {
@@ -173,6 +178,8 @@ export function RulesTable({
     groupHeaderFilter.trim().length > 0 ||
     nameHeaderFilter.trim().length > 0;
   const showDragHandle = !readOnly;
+
+  const overlappingIds = useMemo(() => findOverlappingRowIds(rows), [rows]);
 
   const groupFilterOptions = useMemo(
     () => collectDistinctGroups(rows, nameHeaderFilter),
@@ -619,6 +626,10 @@ export function RulesTable({
           <span className="h-3 w-8 rounded border bg-red-300" />
           {t("legendLocalOnly")}
         </span>
+        <span className="inline-flex items-center gap-2">
+          <span className="h-3 w-8 rounded border bg-violet-300" />
+          {t("legendAddressOverlap")}
+        </span>
         {showDragHandle && dragDisabled ? (
           <span className="text-muted-foreground/80">
             {t("clearFiltersToReorder")}
@@ -692,7 +703,7 @@ export function RulesTable({
               table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className={cn("border-t", getRuleRowClassName(row.original))}
+                  className={cn("border-t", getRuleRowClassName(row.original, overlappingIds))}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
@@ -721,7 +732,7 @@ export function RulesTable({
                     <SortableRuleRow
                       key={row.original.clientRowId}
                       row={row}
-                      rowClassName={getRuleRowClassName(row.original)}
+                      rowClassName={getRuleRowClassName(row.original, overlappingIds)}
                       dragDisabled={dragDisabled}
                       showHandle={showDragHandle}
                     />

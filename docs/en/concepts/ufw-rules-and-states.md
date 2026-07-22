@@ -27,6 +27,18 @@ Fingerprints identify rules across remote reloads and local edits.
 
 Colors help spot drift **before** applying. After **Force resync from server**, the draft realigns to the remote snapshot.
 
+## Address overlap highlight
+
+Some rules can match the same traffic even when their fingerprints differ — for example `95.163.183.223` inside `95.163.183.192/26`, or a wider `/24` covering an existing `/26`.
+
+Rows involved in at least one such overlap are highlighted **violet** in the rules table. This color takes precedence over the green/yellow/red origin colors. Both rows in an overlapping pair are highlighted.
+
+The legend above the table includes a violet swatch: **Overlapping IP or CIDR ranges**.
+
+Overlap is computed from the current draft (same direction, same IP family, non-`anywhere` addresses). It is a **warning only** — import and apply are not blocked. Remove or adjust addresses until the violet highlight disappears.
+
+Typical after import: a new host or CIDR overlaps an existing rule on the server. Review order carefully — UFW uses the first matching rule.
+
 ## Two rule counts
 
 The UI shows different counts in different places:

@@ -193,6 +193,7 @@
       "import": "Importieren",
       "export": "Exportieren",
       "importDuplicatesSkipped": "{count} doppelte Regel(n) beim Import übersprungen.",
+      "importAddressOverlapDetected": "{count} Regel(n) mit überlappenden Adressen nach dem Import erkannt.",
       "hint": "Nicht gespeicherte Änderungen gehen bei «Status aktualisieren» verloren. Schreiben in die lokale Datenbank und UFW nur über <highlight>Regeln speichern</highlight> mit Bestätigung."
     },
     "applyDialog": {
@@ -215,6 +216,7 @@
       "legendRemoteOnly": "Auf UFW, nicht in der lokalen DB",
       "legendMatched": "Auf UFW und in der lokalen DB",
       "legendLocalOnly": "Nicht auf UFW, in der lokalen DB",
+      "legendAddressOverlap": "Überlappende IP- oder CIDR-Bereiche",
       "clearFiltersToReorder": "Suche und Spaltenfilter löschen, um Regeln neu anzuordnen",
       "noRulesFound": "Keine Regeln gefunden",
       "filterAll": "Alle",

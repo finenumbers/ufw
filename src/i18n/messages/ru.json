@@ -131,6 +131,7 @@
       "import": "Импорт",
       "export": "Экспорт",
       "importDuplicatesSkipped": "Пропущено дубликатов правил при импорте: {count}.",
+      "importAddressOverlapDetected": "Обнаружено правил с пересекающимися адресами: {count}.",
       "hint": "Несохранённые правки сбрасываются при «Обновить статус». Запись в локальную БД и UFW — только через <highlight>Сохранить правила</highlight> с подтверждением."
     },
     "applyDialog": {
@@ -153,6 +154,7 @@
       "legendRemoteOnly": "Есть на UFW, нет в локальной БД",
       "legendMatched": "Есть на UFW и в локальной БД",
       "legendLocalOnly": "Нет на UFW, есть в локальной БД",
+      "legendAddressOverlap": "Пересекающиеся IP или диапазоны CIDR",
       "clearFiltersToReorder": "Сбросьте поиск и фильтры колонок для изменения порядка",
       "noRulesFound": "Правила не найдены",
       "filterAll": "Все",

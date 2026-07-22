@@ -38,6 +38,7 @@ Available from apply preview dialog and related warnings — not substitute for 
 Toolbar → import **CSV**, **XLSX**, or **JSON**:
 
 - Rows merge into draft; duplicates by fingerprint skipped or merged per import rules
+- Overlapping IP or CIDR ranges are highlighted **violet** in the table (see [UFW rules and states](../concepts/ufw-rules-and-states.md))
 - Validate rows in table before apply preview
 - Import affects draft only until apply
 

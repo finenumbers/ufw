@@ -27,6 +27,18 @@ Fingerabdrücke identifizieren Regeln über Remote-Reloads und lokale Bearbeitun
 
 Farben helfen, Drift **vor** dem Anwenden zu erkennen. Nach **Erzwungene Synchronisation vom Server** richtet sich der Entwurf am Remote-Snapshot aus.
 
+## Hervorhebung überlappender Adressen
+
+Verschiedene Regeln können denselben Traffic treffen, auch wenn sich die Fingerabdrücke unterscheiden — z. B. `95.163.183.223` innerhalb von `95.163.183.192/26` oder ein breiteres `/24` über einem bestehenden `/26`.
+
+Zeilen, die in mindestens ein solches Paar fallen, werden in der Regeltabelle **violett** hervorgehoben. Diese Farbe hat Vorrang vor den grün/gelb/rot Origin-Farben. **Beide** Zeilen eines Paares werden markiert.
+
+Die Legende über der Tabelle enthält ein violettes Feld: **Überlappende IP- oder CIDR-Bereiche**.
+
+Die Überlappung wird aus dem aktuellen Entwurf berechnet (gleiche Richtung, gleiche IP-Familie, Adressen nicht `anywhere`). Es ist **nur eine Warnung** — Import und Anwenden werden nicht blockiert. Entfernen oder passen Sie Adressen an, bis die violette Markierung verschwindet.
+
+Typisch nach Import: ein neuer Host oder CIDR überlappt eine bestehende Regel auf dem Server. Reihenfolge prüfen — UFW nutzt die erste passende Regel.
+
 ## Zwei Regelzähler
 
 Die UI zeigt an verschiedenen Stellen unterschiedliche Zähler:

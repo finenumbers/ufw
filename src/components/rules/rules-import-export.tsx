@@ -43,12 +43,16 @@ export function RulesImportExport({
     }
 
     await onImportSuccess?.();
+    const notices: string[] = [];
+    if (result.duplicateCount > 0) {
+      notices.push(t("importDuplicatesSkipped", { count: result.duplicateCount }));
+    }
+    if (result.overlapCount > 0) {
+      notices.push(t("importAddressOverlapDetected", { count: result.overlapCount }));
+    }
     onStatusChange?.({
       error: null,
-      notice:
-        result.duplicateCount > 0
-          ? t("importDuplicatesSkipped", { count: result.duplicateCount })
-          : null,
+      notice: notices.length > 0 ? notices.join(" ") : null,
     });
   }
 

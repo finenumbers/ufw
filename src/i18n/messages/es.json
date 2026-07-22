@@ -193,6 +193,7 @@
       "import": "Importar",
       "export": "Exportar",
       "importDuplicatesSkipped": "Se omitieron {count} regla(s) duplicada(s) durante la importación.",
+      "importAddressOverlapDetected": "Se detectaron {count} regla(s) con direcciones superpuestas tras la importación.",
       "hint": "Los cambios no guardados se descartan al «Actualizar estado». La escritura en la base local y UFW solo mediante <highlight>Guardar reglas</highlight> con confirmación."
     },
     "applyDialog": {
@@ -215,6 +216,7 @@
       "legendRemoteOnly": "Presente en UFW, no en BD local",
       "legendMatched": "Presente en UFW y en BD local",
       "legendLocalOnly": "No en UFW, presente en BD local",
+      "legendAddressOverlap": "Rangos IP o CIDR superpuestos",
       "clearFiltersToReorder": "Borre la búsqueda y los filtros de columna para reordenar",
       "noRulesFound": "No se encontraron reglas",
       "filterAll": "Todos",

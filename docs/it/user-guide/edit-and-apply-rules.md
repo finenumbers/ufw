@@ -38,6 +38,7 @@ Disponibile dalla finestra anteprima apply e avvisi correlati — non sostituisc
 Toolbar → import **CSV**, **XLSX** o **JSON**:
 
 - Le righe si uniscono alla bozza; duplicati per fingerprint saltati o uniti secondo regole import
+- Gli intervalli IP o CIDR sovrapposti sono evidenziati in **viola** nella tabella (vedere [Regole UFW e stati](../concepts/ufw-rules-and-states.md))
 - Validate le righe nella tabella prima dell'anteprima apply
 - L'import influisce solo la bozza fino all'apply
 

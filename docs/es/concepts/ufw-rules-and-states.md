@@ -27,6 +27,18 @@ Las huellas identifican reglas entre recargas remotas y ediciones locales.
 
 Los colores ayudan a detectar deriva **antes** de aplicar. Tras **Resincronización forzada desde el servidor**, el borrador se realinea con el snapshot remoto.
 
+## Resaltado de direcciones superpuestas
+
+Reglas distintas pueden coincidir con el mismo tráfico aunque sus huellas difieran — por ejemplo `95.163.183.223` dentro de `95.163.183.192/26`, o un `/24` más amplio que cubre un `/26` existente.
+
+Las filas implicadas en al menos un par así se resaltan en **violeta** en la tabla. Este color tiene prioridad sobre los colores de origen verde/amarillo/rojo. Se resaltan **ambas** filas del par.
+
+La leyenda sobre la tabla incluye una muestra violeta: **Rangos IP o CIDR superpuestos**.
+
+La superposición se calcula desde el borrador actual (misma dirección, misma familia IP, direcciones no `anywhere`). Es **solo una advertencia** — importación y aplicación no se bloquean. Elimine o ajuste direcciones hasta que desaparezca el resaltado violeta.
+
+Típico tras importar: un nuevo host o CIDR se superpone a una regla ya en el servidor. Revise el orden — UFW usa la primera regla coincidente.
+
 ## Dos recuentos de reglas
 
 La interfaz muestra recuentos distintos en lugares diferentes:

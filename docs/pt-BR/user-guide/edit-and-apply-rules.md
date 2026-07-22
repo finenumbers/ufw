@@ -38,6 +38,7 @@ Disponível no diálogo de pré-visualização de apply e avisos relacionados �
 Barra de ferramentas → importar **CSV**, **XLSX** ou **JSON**:
 
 - Linhas mesclam no rascunho; duplicatas por fingerprint ignoradas ou mescladas conforme regras de importação
+- Faixas IP ou CIDR sobrepostas são destacadas em **violeta** na tabela (veja [Regras UFW e estados](../concepts/ufw-rules-and-states.md))
 - Valide linhas na tabela antes da pré-visualização de apply
 - Importação afeta apenas rascunho até apply
 

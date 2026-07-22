@@ -193,6 +193,7 @@
       "import": "Importar",
       "export": "Exportar",
       "importDuplicatesSkipped": "Ignoradas {count} regra(s) duplicada(s) durante a importação.",
+      "importAddressOverlapDetected": "{count} regra(s) com endereços sobrepostos detectada(s) após a importação.",
       "hint": "Alterações não salvas são descartadas ao «Atualizar status». Gravação no banco local e UFW apenas via <highlight>Salvar regras</highlight> com confirmação."
     },
     "applyDialog": {
@@ -215,6 +216,7 @@
       "legendRemoteOnly": "Presente no UFW, não no BD local",
       "legendMatched": "Presente no UFW e no BD local",
       "legendLocalOnly": "Não no UFW, presente no BD local",
+      "legendAddressOverlap": "Faixas IP ou CIDR sobrepostas",
       "clearFiltersToReorder": "Limpe a busca e os filtros de coluna para reordenar",
       "noRulesFound": "Nenhuma regra encontrada",
       "filterAll": "Todos",
