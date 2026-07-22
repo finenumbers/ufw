@@ -40,8 +40,6 @@ Le server actions ripetute usano un cooldown di **30 secondi** per server (non c
 
 - Refresh stato UFW e sync regole
 - Avvio port scan
-- Refresh inventario Docker
-- Start, stop e restart container Docker
 
 Da **v0.5.1**, variabili legacy come `PORT_SCAN_RATE_LIMIT_WINDOW_MS` sono **ignorate** se ancora presenti in `.env`.
 

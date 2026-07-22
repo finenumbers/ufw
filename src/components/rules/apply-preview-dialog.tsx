@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { notifyOperationStarted } from "@/lib/operations/events";
 import { useActionFailureState } from "@/lib/i18n/use-action-failure-state";
 import { confirmApplyAction } from "@/server/actions/apply";
-import { forceResyncFromRemoteAction } from "@/server/actions/servers";
+import { syncRemoteRulesAction } from "@/server/actions/servers";
 
 type ApplyPreviewDialogProps = {
   open: boolean;
@@ -74,7 +74,7 @@ export function ApplyPreviewDialog({
     clearMessage();
     notifyOperationStarted(serverId);
 
-    const result = await forceResyncFromRemoteAction(serverId);
+    const result = await syncRemoteRulesAction(serverId);
     setResyncLoading(false);
 
     if (!result.success) {

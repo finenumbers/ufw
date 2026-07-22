@@ -22,7 +22,7 @@ Zwei Tabs:
 
 | Tab | Inhalt |
 |-----|--------|
-| **Vorgänge** | Technisches Vorgangsprotokoll — Anwenden, Sync, Aktualisieren, Port-Scan, Docker usw. |
+| **Vorgänge** | Technisches Vorgangsprotokoll — Anwenden, Sync, Aktualisieren, Port-Scan usw. |
 | **Audit** | Sicherheitsrelevante Ereignisse — Anmeldung, Abmeldung, Konfigurationsexport |
 
 Beide unterstützen unendliches Scrollen für ältere Einträge.

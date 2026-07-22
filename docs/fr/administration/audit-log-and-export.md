@@ -16,7 +16,7 @@ Consultez sur **Historique des opérations** → onglet **Audit**.
 
 ## Journaux d'opérations
 
-Écrits pour les tâches longues : application, actualisation, installation, scan de ports, inventaire/contrôle Docker, etc. Inclut les métadonnées d'étapes et messages de succès/échec.
+Écrits pour les tâches longues : application, actualisation, installation, scan de ports, etc. Inclut les métadonnées d'étapes et messages de succès/échec.
 
 Consultez sur **Historique des opérations** → onglet **Opérations** ou la **bannière d'opération** en direct.
 

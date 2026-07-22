@@ -40,8 +40,6 @@ Las acciones repetidas de servidor usan un periodo de espera de **30 segundos** 
 
 - Actualización de estado UFW y sincronización de reglas
 - Inicio de escaneo de puertos
-- Actualización del inventario Docker
-- Inicio, parada y reinicio de contenedores Docker
 
 Desde **v0.5.1**, variables heredadas como `PORT_SCAN_RATE_LIMIT_WINDOW_MS` se **ignoran** si siguen presentes en `.env`.
 

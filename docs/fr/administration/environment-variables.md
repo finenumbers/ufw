@@ -40,8 +40,6 @@ Les actions répétées sur un serveur ont un délai de **30 secondes** (non con
 
 - Actualisation du statut UFW et synchronisation des règles
 - Démarrage d'un scan de ports
-- Actualisation de l'inventaire Docker
-- Démarrage, arrêt et redémarrage de conteneurs Docker
 
 Depuis **v0.5.1**, les variables héritées telles que `PORT_SCAN_RATE_LIMIT_WINDOW_MS` sont **ignorées** si elles restent dans `.env`.
 

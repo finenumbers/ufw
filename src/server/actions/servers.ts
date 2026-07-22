@@ -167,13 +167,6 @@ export async function syncRemoteRulesAction(
   return runRemoteRulesSync(serverId);
 }
 
-/** @deprecated Use syncRemoteRulesAction — kept for apply-preview resync UI. */
-export async function forceResyncFromRemoteAction(
-  serverId: string,
-): Promise<{ success: true } | ActionFailureResult> {
-  return syncRemoteRulesAction(serverId);
-}
-
 async function runRemoteRulesSync(
   serverId: string,
 ): Promise<{ success: true } | ActionFailureResult> {

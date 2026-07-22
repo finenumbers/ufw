@@ -1,6 +1,6 @@
 # Historique des opérations
 
-Les tâches longues (application, actualisation, installation UFW, scan de ports, inventaire Docker) sont enregistrées dans les **journaux d'opérations** et affichées dans l'interface.
+Les tâches longues (application, actualisation, installation UFW, scan de ports) sont enregistrées dans les **journaux d'opérations** et affichées dans l'interface.
 
 ## Bannière d'opération
 
@@ -22,7 +22,7 @@ Deux onglets :
 
 | Onglet | Contenu |
 |--------|---------|
-| **Opérations** | Journal technique — application, sync, actualisation, scan de ports, Docker, etc. |
+| **Opérations** | Journal technique — application, sync, actualisation, scan de ports, etc. |
 | **Audit** | Événements liés à la sécurité — connexion, déconnexion, export de configuration |
 
 Les deux prennent en charge le défilement infini pour les entrées plus anciennes.

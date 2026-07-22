@@ -40,8 +40,6 @@ Wiederholte Server-Aktionen haben eine **30 Sekunden**-Abklingzeit pro Server (n
 
 - UFW-Status-Refresh und Regel-Sync
 - Port-Scan-Start
-- Docker-Inventar-Refresh
-- Docker-Container start, stop, restart
 
 Seit **v0.5.1** werden Legacy-Variablen wie `PORT_SCAN_RATE_LIMIT_WINDOW_MS` **ignoriert**, falls sie noch in `.env` stehen.
 

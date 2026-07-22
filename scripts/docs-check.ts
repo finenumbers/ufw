@@ -88,9 +88,39 @@ function assertHubLinks(): void {
   }
 }
 
+const BANNED_DOC_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
+  { pattern: /docker-monitor/i, label: "docker-monitor" },
+  { pattern: /DOCKER_MONITOR/i, label: "DOCKER_MONITOR" },
+  { pattern: /DOCKER_INVENTORY/i, label: "DOCKER_INVENTORY" },
+  { pattern: /docker\.inventory/i, label: "docker.inventory" },
+  { pattern: /Docker-Inventar/i, label: "Docker-Inventar" },
+  { pattern: /inventaire\/contrôle Docker/i, label: "inventaire/contrôle Docker" },
+  { pattern: /inventario\/controllo Docker/i, label: "inventario/controllo Docker" },
+  { pattern: /Docker inventory\/control/i, label: "Docker inventory/control" },
+  { pattern: /inventaire Docker/i, label: "inventaire Docker" },
+  { pattern: /Docker container monitor/i, label: "Docker container monitor" },
+];
+
+function assertNoBannedPhrases(): void {
+  for (const locale of LOCALES) {
+    const localeDir = path.join(DOCS_ROOT, locale);
+    for (const relFile of listMarkdownFiles(localeDir)) {
+      const filePath = path.join(localeDir, relFile);
+      const content = fs.readFileSync(filePath, "utf8");
+      for (const { pattern, label } of BANNED_DOC_PATTERNS) {
+        assert.ok(
+          !pattern.test(content),
+          `Banned phrase "${label}" found in ${locale}/${relFile}`,
+        );
+      }
+    }
+  }
+}
+
 assertLocaleParity();
 assertInternalLinks();
 assertHubLinks();
+assertNoBannedPhrases();
 
 console.log(
   `docs-check passed: ${LOCALES.length} locales, ${listMarkdownFiles(path.join(DOCS_ROOT, SOURCE_LOCALE)).length} files each`,

@@ -208,7 +208,6 @@
       "partialResync": "Alcune regole sono state applicate prima dell'errore. Usa «Risincronizzazione forzata» per allineare lo stato locale con UFW.",
       "forceResync": "Risincronizzazione forzata dal server",
       "forceResyncing": "Risincronizzazione...",
-      "forceResyncFailed": "Risincronizzazione non riuscita",
       "remoteChanged": "Lo stato UFW remoto è cambiato dall'anteprima. Ripetere l'anteprima prima di applicare."
     },
     "table": {
@@ -333,7 +332,6 @@
     "scanButton": "Scan ports",
     "portCount": "{count} porte",
     "scanning": "Scanning...",
-    "disabled": "Port scanning is disabled. Set PORT_SCAN_ENABLED=true in the app environment.",
     "empty": "No scan results yet. Run a port scan to discover externally reachable services.",
     "columns": {
       "port": "Port",

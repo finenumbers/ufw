@@ -40,7 +40,6 @@ Compose и Portainer stack по умолчанию используют `ghcr.io
 
 - Обновление статуса UFW и sync правил
 - Запуск port scan
-- Start, stop, restart Docker-контейнеров
 
 С **v0.5.1** устаревшие переменные `PORT_SCAN_RATE_LIMIT_WINDOW_MS` **игнорируются**, если остались в `.env`.
 

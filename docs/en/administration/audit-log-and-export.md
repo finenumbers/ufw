@@ -16,7 +16,7 @@ View on **Operations history** → **Audit** tab.
 
 ## Operation logs
 
-Written for long-running work: apply, refresh, install, port scan, Docker inventory/control, etc. Includes step metadata and success/failure messages.
+Written for long-running work: apply, refresh, install, port scan, etc. Includes step metadata and success/failure messages.
 
 View on **Operations history** → **Operations** tab or the live **operation banner**.
 

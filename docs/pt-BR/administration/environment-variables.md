@@ -40,8 +40,6 @@ Server actions repetidas usam cooldown de **30 segundos** por servidor (não con
 
 - Atualização de status UFW e sync de regras
 - Início de varredura de portas
-- Atualização do inventário Docker
-- Start, stop e restart de contêineres Docker
 
 Desde **v0.5.1**, variáveis legadas como `PORT_SCAN_RATE_LIMIT_WINDOW_MS` são **ignoradas** se ainda estiverem no `.env`.
 

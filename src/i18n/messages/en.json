@@ -208,7 +208,6 @@
       "partialResync": "Some rules were applied before the error. Use Force resync to align local state with UFW.",
       "forceResync": "Force resync from server",
       "forceResyncing": "Resyncing...",
-      "forceResyncFailed": "Resync failed",
       "remoteChanged": "Remote UFW state changed since preview. Please preview again before applying."
     },
     "table": {
@@ -333,7 +332,6 @@
     "scanButton": "Scan ports",
     "portCount": "{count} ports",
     "scanning": "Scanning...",
-    "disabled": "Port scanning is disabled. Set PORT_SCAN_ENABLED=true in the app environment.",
     "empty": "No scan results yet. Run a port scan to discover externally reachable services.",
     "columns": {
       "port": "Port",

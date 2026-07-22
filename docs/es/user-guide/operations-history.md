@@ -22,7 +22,7 @@ Dos pestañas:
 
 | Pestaña | Contenido |
 |---------|-----------|
-| **Operaciones** | Registro técnico — aplicar, sync, actualizar, escaneo de puertos, Docker, etc. |
+| **Operaciones** | Registro técnico — aplicar, sync, actualizar, escaneo de puertos, etc. |
 | **Audit** | Eventos relevantes para seguridad — inicio/cierre de sesión, exportación de configuración |
 
 Ambas admiten desplazamiento infinito para entradas antiguas.

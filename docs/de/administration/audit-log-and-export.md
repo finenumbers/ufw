@@ -16,7 +16,7 @@ Anzeige unter **Vorgangsverlauf** → Tab **Audit**.
 
 ## Vorgangsprotokolle
 
-Geschrieben für lang laufende Arbeit: Anwenden, Refresh, Installieren, Port-Scan, Docker-Inventar/Steuerung usw. Enthält Schritt-Metadaten und Erfolgs-/Fehlermeldungen.
+Geschrieben für lang laufende Arbeit: Anwenden, Refresh, Installieren, Port-Scan usw. Enthält Schritt-Metadaten und Erfolgs-/Fehlermeldungen.
 
 Anzeige unter **Vorgangsverlauf** → Tab **Vorgänge** oder im live **Vorgangsbanner**.
 
