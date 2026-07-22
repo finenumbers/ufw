@@ -2,8 +2,8 @@ import { ANYWHERE, normalizeAddress } from "@/lib/ufw/types";
 import type { UnifiedRuleRow } from "@/types/rule";
 
 type AddressRange = {
-  start: bigint;
-  end: bigint;
+  start: number;
+  end: number;
 };
 
 function ipv4ToInt(ip: string): number | null {
@@ -39,15 +39,16 @@ function parseIpv4Range(address: string): AddressRange | null {
   }
 
   if (prefix === 32) {
-    const value = BigInt(networkInt);
-    return { start: value, end: value };
+    return { start: networkInt, end: networkInt };
   }
 
   const hostBits = 32 - prefix;
-  const size = 1n << BigInt(hostBits);
-  const mask = hostBits === 32 ? 0xffffffffn : ((1n << BigInt(prefix)) - 1n) << BigInt(hostBits);
-  const start = BigInt(networkInt) & mask;
-  return { start, end: start + size - 1n };
+  const mask = prefix === 0 ? 0 : (~0 << hostBits) >>> 0;
+  const start = (networkInt & mask) >>> 0;
+  const end =
+    prefix === 0 ? 0xffffffff : ((start + (1 << hostBits) - 1) >>> 0);
+
+  return { start, end };
 }
 
 function normalizeComparableAddress(value?: string | null): string | null {
