@@ -89,7 +89,8 @@
     },
     "reachability": {
       "latency": "{ms} ms",
-      "unreachable": "Nicht erreichbar"
+      "unreachable": "Nicht erreichbar",
+      "probeFailed": "kein Ping"
     }
   },
   "serverForm": {

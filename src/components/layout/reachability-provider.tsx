@@ -5,14 +5,26 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { REACHABILITY_STALE_MS } from "@/lib/reachability/schedule";
 import type { ReachabilitySnapshot, ServerReachability } from "@/types/reachability";
 
-const ReachabilityContext = createContext<ReadonlyMap<string, ServerReachability>>(new Map());
+type ReachabilityView = {
+  probe: ReachabilitySnapshot["probe"];
+  servers: ReadonlyMap<string, ServerReachability>;
+};
+
+const ReachabilityContext = createContext<ReachabilityView>({
+  probe: "pending",
+  servers: new Map(),
+});
 
 export function useServerReachability(serverId: string): ServerReachability | null {
-  return useContext(ReachabilityContext).get(serverId) ?? null;
+  return useContext(ReachabilityContext).servers.get(serverId) ?? null;
+}
+
+export function useReachabilityProbe(): ReachabilityView["probe"] {
+  return useContext(ReachabilityContext).probe;
 }
 
 export function ReachabilityProvider({ children }: { children: React.ReactNode }) {
-  const [servers, setServers] = useState<ReadonlyMap<string, ServerReachability>>(new Map());
+  const [view, setView] = useState<ReachabilityView>({ probe: "pending", servers: new Map() });
 
   useEffect(() => {
     let active = true;
@@ -54,10 +66,15 @@ export function ReachabilityProvider({ children }: { children: React.ReactNode }
 
         const checkedAt = data.checkedAt ? Date.parse(data.checkedAt) : Number.NaN;
         const stale = !Number.isFinite(checkedAt) || Date.now() - checkedAt > REACHABILITY_STALE_MS;
-        if (data.probe === "ready" && !stale) {
-          setServers(new Map(data.servers.map((server) => [server.id, server])));
-        } else {
-          setServers(new Map());
+        if (data.probe === "unavailable") {
+          setView({ probe: "unavailable", servers: new Map() });
+        } else if (data.probe === "ready" && !stale) {
+          setView({
+            probe: "ready",
+            servers: new Map(data.servers.map((server) => [server.id, server])),
+          });
+        } else if (data.probe === "pending") {
+          setView({ probe: "pending", servers: new Map() });
         }
 
         schedule(data.probe === "pending" || data.refreshing ? 2_000 : 10_000);
@@ -86,5 +103,5 @@ export function ReachabilityProvider({ children }: { children: React.ReactNode }
     };
   }, []);
 
-  return <ReachabilityContext.Provider value={servers}>{children}</ReachabilityContext.Provider>;
+  return <ReachabilityContext.Provider value={view}>{children}</ReachabilityContext.Provider>;
 }

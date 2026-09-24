@@ -5,7 +5,7 @@ import { Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useServerReachability } from "@/components/layout/reachability-provider";
-import { Badge } from "@/components/ui/badge";
+import { ServerReachabilityBadge } from "@/components/layout/server-reachability-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getServerPath } from "@/lib/server-path";
@@ -21,32 +21,6 @@ type ServerCardData = {
   portFindingCount: number;
 };
 
-function ReachabilityBadge({ serverId }: { serverId: string }) {
-  const t = useTranslations("servers.reachability");
-  const reachability = useServerReachability(serverId);
-  if (!reachability || reachability.status === "unknown") {
-    return null;
-  }
-
-  if (reachability.status === "reachable" && reachability.rttMs != null) {
-    return (
-      <Badge variant="reachable" className="absolute right-3 top-3">
-        {t("latency", { ms: reachability.rttMs })}
-      </Badge>
-    );
-  }
-
-  if (reachability.status === "unreachable") {
-    return (
-      <Badge variant="unreachable" className="absolute right-3 top-3">
-        {t("unreachable")}
-      </Badge>
-    );
-  }
-
-  return null;
-}
-
 function ServerCard({ server }: { server: ServerCardData }) {
   const t = useTranslations("servers");
   const tUfw = useTranslations("ufw");
@@ -56,7 +30,7 @@ function ServerCard({ server }: { server: ServerCardData }) {
 
   return (
     <Card className={cn("relative", unreachable && "border-red-300 bg-red-100")}>
-      <ReachabilityBadge serverId={server.id} />
+      <ServerReachabilityBadge serverId={server.id} className="absolute right-3 top-3 z-10" />
       <CardHeader className="pr-28">
         <CardTitle>{server.name}</CardTitle>
         <CardDescription>

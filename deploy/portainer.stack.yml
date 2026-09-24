@@ -46,6 +46,10 @@ services:
     image: ghcr.io/finenumbers/ufw-remote-manager:${GHCR_IMAGE_TAG:-latest}
     container_name: ufw-app
     restart: unless-stopped
+    cap_add:
+      - NET_RAW
+    sysctls:
+      net.ipv4.ping_group_range: "0 2147483647"
     environment:
       DATABASE_URL: postgresql://ufw:${POSTGRES_PASSWORD}@postgres:5432/ufw?schema=public
       APP_URL: ${APP_URL:?APP_URL is required}

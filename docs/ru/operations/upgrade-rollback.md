@@ -27,10 +27,11 @@ Verify:
 | **v0.9.5** | No | Enable UFW, i18n таблицы, host key guard на apply, CI gate release |
 | **v0.9.6** | No | Grace polling баннера операций, fix залипания sync, terminal banner TTL |
 | **v0.9.7** | No | ICMP-доступность: бейдж задержки на карточках и красная подсветка недоступных узлов |
+| **v0.9.8** | No | ICMP-бейдж для частных и CGNAT-адресов; явная метка, если ping в контейнере не запускается |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.7` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.8` in `.env`.
 
 ## Rollback
 
