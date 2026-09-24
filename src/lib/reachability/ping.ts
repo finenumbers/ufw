@@ -15,14 +15,19 @@ export function displayRttMs(rtt: number): number {
   return Math.max(1, Math.round(rtt));
 }
 
-/** One echo, then exit. Same command on Linux and macOS: `ping -c 1 <host>`. */
+/**
+ * One echo, then exit. Same argv on Linux iputils and macOS: `ping -n -c 1 <host>`.
+ * `-n` is required. iputils resolves the reply address before it prints `time=`, and a dead
+ * PTR can block for the whole probe budget. The process is then killed with no sample, so a
+ * live host is classified as a timeout.
+ */
 export function buildPingCommand(host: string): { command: string; args: string[] } | null {
   const trimmed = host.trim();
   if (!trimmed || trimmed.length > 253 || trimmed.startsWith("-") || /\s/.test(trimmed)) {
     return null;
   }
 
-  return { command: "ping", args: ["-c", "1", trimmed] };
+  return { command: "ping", args: ["-n", "-c", "1", trimmed] };
 }
 
 export function parsePingRtt(stdout: string): number | null {

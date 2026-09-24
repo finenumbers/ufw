@@ -19,18 +19,18 @@ test("displayRttMs rounds and never shows zero for a reply", () => {
   assert.equal(displayRttMs(0.4), 1);
 });
 
-test("buildPingCommand is ping -c 1 of the saved host", () => {
+test("buildPingCommand is numeric ping -n -c 1 of the saved host", () => {
   assert.deepEqual(buildPingCommand("poland.gate.finenumbers.com"), {
     command: "ping",
-    args: ["-c", "1", "poland.gate.finenumbers.com"],
+    args: ["-n", "-c", "1", "poland.gate.finenumbers.com"],
   });
   assert.deepEqual(buildPingCommand("1.1.1.1"), {
     command: "ping",
-    args: ["-c", "1", "1.1.1.1"],
+    args: ["-n", "-c", "1", "1.1.1.1"],
   });
   assert.deepEqual(buildPingCommand("  8.8.8.8  "), {
     command: "ping",
-    args: ["-c", "1", "8.8.8.8"],
+    args: ["-n", "-c", "1", "8.8.8.8"],
   });
   assert.equal(buildPingCommand("-c"), null);
   assert.equal(buildPingCommand("bad host"), null);
