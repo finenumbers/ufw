@@ -31,6 +31,11 @@ test("applyProbeSample turns red on the second consecutive miss", () => {
   assert.equal(twice.consecutiveFailures, 2);
 });
 
+test("applyProbeSample keeps a reply without RTT reachable", () => {
+  const next = applyProbeSample(undefined, { reachable: true, rttMs: null });
+  assert.deepEqual(next, { status: "reachable", rttMs: null, consecutiveFailures: 0 });
+});
+
 test("applyProbeSample recovers on the next reply", () => {
   const down = applyProbeSample(undefined, { reachable: false, rttMs: null });
   const up = applyProbeSample(down, { reachable: true, rttMs: 12 });

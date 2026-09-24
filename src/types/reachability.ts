@@ -7,7 +7,7 @@ export type ServerReachability = {
 };
 
 export type ReachabilitySnapshot = {
-  probe: "pending" | "ready" | "unavailable";
+  probe: "pending" | "ready";
   refreshing: boolean;
   checkedAt: string | null;
   servers: ServerReachability[];

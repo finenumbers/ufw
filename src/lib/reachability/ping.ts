@@ -1,15 +1,14 @@
 import { spawn } from "node:child_process";
 
-const PING_TIMEOUT_MS = 3_000;
+const PING_TIMEOUT_MS = 4_000;
 const MAX_OUTPUT_CHARS = 16_384;
 
 const IPV4_PATTERN =
   /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d?\d)){3})$/;
 
 export type PingOutcome =
-  | { kind: "reply"; rttMs: number }
-  | { kind: "timeout" }
-  | { kind: "unavailable" };
+  | { kind: "reply"; rttMs: number | null }
+  | { kind: "timeout" };
 
 export function isPingableAddress(ip: string): boolean {
   if (!ip || ip.length > 64 || ip.startsWith("-") || ip.includes("%")) {
@@ -67,12 +66,22 @@ export function parsePingRtt(stdout: string): number | null {
   return value;
 }
 
-function isProbeUnavailable(stderr: string, code: string | undefined): boolean {
-  if (code === "ENOENT" || code === "EPERM" || code === "EACCES") {
-    return true;
+export function classifyPingResult(input: { code: number | null; stdout: string }): PingOutcome {
+  if (input.code !== 0) {
+    return { kind: "timeout" };
   }
 
-  return /operation not permitted|permission denied/i.test(stderr);
+  const rtt = parsePingRtt(input.stdout);
+  return { kind: "reply", rttMs: rtt == null ? null : displayRttMs(rtt) };
+}
+
+function probePath(): string {
+  const current = (process.env.PATH ?? "")
+    .split(":")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const fallback = ["/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin"];
+  return [...new Set([...current, ...fallback])].join(":");
 }
 
 export function probeAddress(
@@ -81,13 +90,13 @@ export function probeAddress(
 ): Promise<PingOutcome> {
   const command = buildPingCommand(platform, ip);
   if (!command) {
-    return Promise.resolve({ kind: "unavailable" });
+    return Promise.resolve({ kind: "timeout" });
   }
 
   return new Promise((resolve) => {
     const child = spawn(command.command, command.args, {
       env: {
-        PATH: process.env.PATH ?? "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        PATH: probePath(),
         LC_ALL: "C",
         LANG: "C",
       } as unknown as NodeJS.ProcessEnv,
@@ -95,7 +104,6 @@ export function probeAddress(
     });
 
     let stdout = "";
-    let stderr = "";
     let settled = false;
 
     const finish = (outcome: PingOutcome) => {
@@ -118,30 +126,15 @@ export function probeAddress(
       }
     });
 
-    child.stderr?.on("data", (chunk: Buffer) => {
-      if (stderr.length < MAX_OUTPUT_CHARS) {
-        stderr += chunk.toString("utf8");
-      }
-    });
+    child.stderr?.resume();
 
-    child.on("error", (error: NodeJS.ErrnoException) => {
+    child.on("error", () => {
       child.kill("SIGKILL");
-      finish(isProbeUnavailable(stderr, error.code) ? { kind: "unavailable" } : { kind: "timeout" });
+      finish({ kind: "timeout" });
     });
 
     child.on("close", (code) => {
-      if (isProbeUnavailable(stderr, undefined)) {
-        finish({ kind: "unavailable" });
-        return;
-      }
-
-      if (code === 0) {
-        const rtt = parsePingRtt(stdout);
-        finish(rtt == null ? { kind: "timeout" } : { kind: "reply", rttMs: displayRttMs(rtt) });
-        return;
-      }
-
-      finish({ kind: "timeout" });
+      finish(classifyPingResult({ code, stdout }));
     });
   });
 }

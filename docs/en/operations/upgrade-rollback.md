@@ -28,10 +28,11 @@ Verify:
 | **v0.9.6** | No | Operation banner grace polling, stuck sync guard fix, terminal banner TTL |
 | **v0.9.7** | No | ICMP reachability badges on server cards and sidebar |
 | **v0.9.8** | No | Show ICMP latency for private and CGNAT servers; surface a badge when ping cannot run |
+| **v0.9.9** | No | Per-address ICMP result: latency or Unreachable, red card and sidebar row |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.8` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.9` in `.env`.
 
 ## Rollback
 

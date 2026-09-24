@@ -90,7 +90,7 @@
     "reachability": {
       "latency": "{ms} ms",
       "unreachable": "No disponible",
-      "probeFailed": "sin ping"
+      "online": "Accesible"
     }
   },
   "serverForm": {

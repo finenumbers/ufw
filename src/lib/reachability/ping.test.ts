@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   buildPingCommand,
+  classifyPingResult,
   displayRttMs,
   isPingableAddress,
   parsePingRtt,
@@ -44,6 +45,31 @@ test("buildPingCommand uses platform deadlines and rejects unsafe targets", () =
   assert.equal(buildPingCommand("win32", "1.1.1.1"), null);
   assert.equal(buildPingCommand("linux", "example.com"), null);
   assert.equal(buildPingCommand("linux", "-c"), null);
+});
+
+test("classifyPingResult treats a reply as success even when stderr reports a socket warning", () => {
+  const outcome = classifyPingResult({
+    code: 0,
+    stdout: "64 bytes from 1.1.1.1: icmp_seq=1 ttl=57 time=83.2 ms\n",
+  });
+  assert.deepEqual(outcome, { kind: "reply", rttMs: 83 });
+});
+
+test("classifyPingResult keeps exit 0 without a time sample as a reply", () => {
+  assert.deepEqual(classifyPingResult({ code: 0, stdout: "1 packets transmitted, 1 received\n" }), {
+    kind: "reply",
+    rttMs: null,
+  });
+});
+
+test("classifyPingResult marks a failed probe as a timeout for that address", () => {
+  assert.deepEqual(
+    classifyPingResult({
+      code: 1,
+      stdout: "ping: socktype: SOCK_DGRAM: Operation not permitted\n",
+    }),
+    { kind: "timeout" },
+  );
 });
 
 test("isPingableAddress allows only IP literals", () => {

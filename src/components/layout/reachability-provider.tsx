@@ -19,10 +19,6 @@ export function useServerReachability(serverId: string): ServerReachability | nu
   return useContext(ReachabilityContext).servers.get(serverId) ?? null;
 }
 
-export function useReachabilityProbe(): ReachabilityView["probe"] {
-  return useContext(ReachabilityContext).probe;
-}
-
 export function ReachabilityProvider({ children }: { children: React.ReactNode }) {
   const [view, setView] = useState<ReachabilityView>({ probe: "pending", servers: new Map() });
 
@@ -66,9 +62,7 @@ export function ReachabilityProvider({ children }: { children: React.ReactNode }
 
         const checkedAt = data.checkedAt ? Date.parse(data.checkedAt) : Number.NaN;
         const stale = !Number.isFinite(checkedAt) || Date.now() - checkedAt > REACHABILITY_STALE_MS;
-        if (data.probe === "unavailable") {
-          setView({ probe: "unavailable", servers: new Map() });
-        } else if (data.probe === "ready" && !stale) {
+        if (data.probe === "ready" && !stale) {
           setView({
             probe: "ready",
             servers: new Map(data.servers.map((server) => [server.id, server])),

@@ -3,8 +3,9 @@ import PQueue from "p-queue";
 
 import { db } from "@/lib/db";
 import { createChildLogger } from "@/lib/logger";
+import { applyAddressResults } from "@/lib/reachability/cycle";
 import { probeAddress, type PingOutcome } from "@/lib/reachability/ping";
-import { applyProbeSample, type HostObservation } from "@/lib/reachability/sample";
+import type { HostObservation } from "@/lib/reachability/sample";
 import {
   REACHABILITY_BACKOFF_MS,
   shouldStartReachabilityProbe,
@@ -23,7 +24,6 @@ type ReachabilityState = {
   inflight: Promise<void> | null;
   backoffUntil: number;
   observations: Map<string, HostObservation>;
-  unavailableLogged: boolean;
 };
 
 type ReachabilityGlobal = typeof globalThis & {
@@ -38,7 +38,6 @@ function createState(): ReachabilityState {
     inflight: null,
     backoffUntil: 0,
     observations: new Map(),
-    unavailableLogged: false,
   };
 }
 
@@ -88,7 +87,6 @@ export function ensureReachabilityRefresh(now = Date.now()): void {
       now,
       checkedAt: state.checkedAt,
       inflight: state.inflight != null,
-      unavailable: state.probe === "unavailable",
       backoffUntil: state.backoffUntil,
     })
   ) {
@@ -129,56 +127,23 @@ async function refresh(): Promise<void> {
 
     const queue = new PQueue({ concurrency: PROBE_CONCURRENCY });
     const outcomes = new Map<string, PingOutcome>();
-    let unavailable = false;
 
     await Promise.all(
       [...ips].map((ip) =>
         queue.add(async () => {
-          const outcome = await probeAddress(ip);
-          outcomes.set(ip, outcome);
-          if (outcome.kind === "unavailable") {
-            unavailable = true;
-          }
+          outcomes.set(ip, await probeAddress(ip));
         }),
       ),
     );
 
-    if (unavailable) {
-      markProbeUnavailable(state, servers);
-      return;
-    }
-
-    const liveHosts = new Set(hosts);
-    for (const host of state.observations.keys()) {
-      if (!liveHosts.has(host)) {
-        state.observations.delete(host);
-      }
-    }
-
-    const observations = new Map<string, HostObservation | "skip">();
-    for (const host of hosts) {
-      const target = targets.get(host);
-      if (!target || target.kind === "skip") {
-        observations.set(host, "skip");
-        continue;
-      }
-
-      const sample =
-        target.kind === "unresolved"
-          ? { reachable: false, rttMs: null }
-          : sampleFromOutcome(outcomes.get(target.ip));
-      const next = applyProbeSample(state.observations.get(host), sample);
-      state.observations.set(host, next);
-      observations.set(host, next);
-    }
-
-    state.servers = servers.map((server) => {
-      const observation = observations.get(server.host);
-      if (!observation || observation === "skip") {
-        return { id: server.id, status: "unknown" as const, rttMs: null };
-      }
-      return { id: server.id, status: observation.status, rttMs: observation.rttMs };
+    const cycle = applyAddressResults({
+      servers,
+      targets,
+      outcomes,
+      previous: state.observations,
     });
+    state.observations = cycle.observations;
+    state.servers = cycle.servers;
     state.checkedAt = Date.now();
     state.probe = "ready";
   } catch (error) {
@@ -190,22 +155,3 @@ async function refresh(): Promise<void> {
   }
 }
 
-function sampleFromOutcome(outcome: PingOutcome | undefined): { reachable: boolean; rttMs: number | null } {
-  if (outcome?.kind === "reply") {
-    return { reachable: true, rttMs: outcome.rttMs };
-  }
-  return { reachable: false, rttMs: null };
-}
-
-function markProbeUnavailable(
-  state: ReachabilityState,
-  servers: Array<{ id: string }>,
-): void {
-  state.probe = "unavailable";
-  state.checkedAt = Date.now();
-  state.servers = servers.map((server) => ({ id: server.id, status: "unknown", rttMs: null }));
-  if (!state.unavailableLogged) {
-    state.unavailableLogged = true;
-    log.warn("ICMP probe unavailable: ping is missing or not permitted");
-  }
-}

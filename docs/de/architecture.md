@@ -1,6 +1,6 @@
 # Architektur
 
-Diese Seite beschreibt den Aufbau von UFW Remote Manager, den Datenfluss und wo Secrets liegen. Version **v0.9.8**.
+Diese Seite beschreibt den Aufbau von UFW Remote Manager, den Datenfluss und wo Secrets liegen. Version **v0.9.9**.
 
 ![Bereitstellungstopologie](../assets/architecture-topology.svg)
 

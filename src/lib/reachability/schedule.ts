@@ -6,10 +6,9 @@ export function shouldStartReachabilityProbe(input: {
   now: number;
   checkedAt: number | null;
   inflight: boolean;
-  unavailable: boolean;
   backoffUntil: number;
 }): boolean {
-  if (input.unavailable || input.inflight) {
+  if (input.inflight) {
     return false;
   }
 

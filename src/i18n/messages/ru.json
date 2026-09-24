@@ -89,8 +89,8 @@
     },
     "reachability": {
       "latency": "{ms} мс",
-      "unreachable": "Недоступен",
-      "probeFailed": "нет ping"
+      "online": "Доступен",
+      "unreachable": "Недоступен"
     }
   },
   "serverForm": {

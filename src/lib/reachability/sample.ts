@@ -8,7 +8,7 @@ export function applyProbeSample(
   previous: HostObservation | undefined,
   sample: { reachable: boolean; rttMs: number | null },
 ): HostObservation {
-  if (sample.reachable && sample.rttMs != null) {
+  if (sample.reachable) {
     return {
       status: "reachable",
       rttMs: sample.rttMs,
