@@ -32,10 +32,11 @@ Verify:
 | **v0.9.10** | No | Plain ping of the saved host; a missing ping binary no longer marks every server unreachable |
 | **v0.9.11** | No | Keep ping in the image; removing libcap2-bin was deleting iputils-ping |
 | **v0.9.12** | No | Ping probes skip reverse DNS, so a dead PTR no longer marks a live host unreachable |
+| **v0.9.13** | No | TSPU restriction badge from cheburcheck, shown under the ping badge |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.12` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.13` in `.env`.
 
 ## Rollback
 

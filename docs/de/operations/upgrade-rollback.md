@@ -25,7 +25,7 @@ Verifizieren:
 
 Beim Upgrade von vor v0.9.0 sicherstellen, dass Migrate abgeschlossen ist — Legacy-Inventar-Daten bereinigt.
 
-Image pinnen: `GHCR_IMAGE_TAG=v0.9.12` in `.env`.
+Image pinnen: `GHCR_IMAGE_TAG=v0.9.13` in `.env`.
 
 ## Rollback
 

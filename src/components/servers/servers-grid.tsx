@@ -5,6 +5,7 @@ import { Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useServerReachability } from "@/components/layout/reachability-provider";
+import { ServerBlockBadge } from "@/components/layout/server-block-badge";
 import { ServerReachabilityBadge } from "@/components/layout/server-reachability-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,8 +31,11 @@ function ServerCard({ server }: { server: ServerCardData }) {
 
   return (
     <Card className={cn("relative", unreachable && "border-red-300 bg-red-100")}>
-      <ServerReachabilityBadge serverId={server.id} className="absolute right-3 top-3 z-10" />
-      <CardHeader className="pr-28">
+      <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1">
+        <ServerReachabilityBadge serverId={server.id} />
+        <ServerBlockBadge serverId={server.id} host={server.host} />
+      </div>
+      <CardHeader className="pr-40">
         <CardTitle>{server.name}</CardTitle>
         <CardDescription>
           {server.username}@{server.host}:{server.port}

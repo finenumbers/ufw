@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { AppVersionFooter } from "@/components/layout/app-version-footer";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { ServerBlockBadge } from "@/components/layout/server-block-badge";
 import { ServerReachabilityBadge } from "@/components/layout/server-reachability-badge";
 import { useServerReachability } from "@/components/layout/reachability-provider";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,7 @@ function SidebarServerLink({ server, active }: { server: ServerItem; active: boo
   const unreachable = reachability?.status === "unreachable";
 
   return (
-    <Link
-      href={getServerPath(server.host)}
+    <div
       className={cn(
         "mb-1 flex items-start justify-between gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-zinc-100",
         active && "bg-zinc-200 font-medium text-foreground hover:bg-zinc-200",
@@ -39,14 +39,17 @@ function SidebarServerLink({ server, active }: { server: ServerItem; active: boo
         unreachable && active && "bg-red-200 font-medium hover:bg-red-200",
       )}
     >
-      <div className="min-w-0">
+      <Link href={getServerPath(server.host)} className="min-w-0 flex-1">
         <div className="truncate">{server.name}</div>
         <div className={cn("truncate text-xs text-muted-foreground", unreachable && "text-red-800")}>
           {server.host}
         </div>
+      </Link>
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        <ServerReachabilityBadge serverId={server.id} className="mt-0.5" />
+        <ServerBlockBadge serverId={server.id} host={server.host} />
       </div>
-      <ServerReachabilityBadge serverId={server.id} className="mt-0.5" />
-    </Link>
+    </div>
   );
 }
 

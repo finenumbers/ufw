@@ -91,6 +91,10 @@
       "latency": "{ms} ms",
       "unreachable": "Indisponível",
       "online": "Acessível"
+    },
+    "blockCheck": {
+      "unrestricted": "Não restrito",
+      "blocked": "Bloqueado"
     }
   },
   "serverForm": {

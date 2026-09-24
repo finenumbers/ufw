@@ -40,6 +40,7 @@ Production compose (`docker-compose.prod.yml`):
 - App listens inside Docker network for NPM
 - Target SSH from app container to managed servers
 - ICMP from the app container to pinned addresses of managed servers
+- HTTPS from the app container to cheburcheck.ru to check whether managed server hosts are restricted
 
 TLS terminates at **Nginx Proxy Manager**. Internal HTTP between NPM and `ufw-app` is by design — see [Nginx Proxy Manager](../deployment/nginx-proxy-manager.md).
 

@@ -236,3 +236,21 @@ export function validateSshHost(host: string): string | null {
 
   return null;
 }
+
+/** Private, CGNAT, loopback, link-local, and metadata literals. Ignores SSH_ALLOWED_CIDRS. */
+export function isDisallowedExternalAddress(host: string): boolean {
+  const trimmed = host.trim();
+  if (isIpv4(trimmed)) {
+    return isBlockedIpv4(trimmed);
+  }
+
+  if (isIpv6(trimmed)) {
+    const mappedIpv4 = extractIpv4FromMappedIpv6(trimmed);
+    if (mappedIpv4) {
+      return isBlockedIpv4(mappedIpv4);
+    }
+    return isBlockedIpv6(trimmed);
+  }
+
+  return false;
+}

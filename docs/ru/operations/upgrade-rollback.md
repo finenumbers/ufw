@@ -32,10 +32,11 @@ Verify:
 | **v0.9.10** | No | Обычный ping сохранённого хоста; отсутствие ping больше не помечает все узлы недоступными |
 | **v0.9.11** | No | ping остаётся в образе: удаление libcap2-bin снимало пакет iputils-ping |
 | **v0.9.12** | No | Проба ping не ждёт обратный DNS, поэтому мёртвый PTR больше не помечает живой узел недоступным |
+| **v0.9.13** | No | Бейдж ограничения ТСПУ через cheburcheck под бейджем ping |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.12` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.13` in `.env`.
 
 ## Rollback
 

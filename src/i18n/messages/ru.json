@@ -91,6 +91,10 @@
       "latency": "{ms} мс",
       "online": "Доступен",
       "unreachable": "Недоступен"
+    },
+    "blockCheck": {
+      "unrestricted": "Не ограничен",
+      "blocked": "Заблокирован"
     }
   },
   "serverForm": {
