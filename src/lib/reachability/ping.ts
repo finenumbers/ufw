@@ -90,7 +90,7 @@ export function probeAddress(
         PATH: process.env.PATH ?? "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
         LC_ALL: "C",
         LANG: "C",
-      },
+      } as unknown as NodeJS.ProcessEnv,
       stdio: ["ignore", "pipe", "pipe"],
     });
 
