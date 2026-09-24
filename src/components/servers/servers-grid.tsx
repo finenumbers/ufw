@@ -37,9 +37,7 @@ function ServerCard({ server }: { server: ServerCardData }) {
       </div>
       <CardHeader className="pr-40">
         <CardTitle>{server.name}</CardTitle>
-        <CardDescription>
-          {server.username}@{server.host}:{server.port}
-        </CardDescription>
+        <CardDescription>{server.host}</CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-between gap-4">
         <div className="flex flex-col gap-1 text-sm font-semibold">
