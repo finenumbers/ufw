@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { ReachabilityProvider } from "@/components/layout/reachability-provider";
 import { listServers } from "@/server/services/server.service";
 import { requireSession } from "@/lib/session";
 
@@ -13,9 +14,17 @@ export default async function AppLayout({
   const servers = await listServers();
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppSidebar servers={servers} />
-      <main className="ml-60 min-h-screen p-6">{children}</main>
-    </div>
+    <ReachabilityProvider>
+      <div className="min-h-screen bg-background">
+        <AppSidebar
+          servers={servers.map((server) => ({
+            id: server.id,
+            name: server.name,
+            host: server.host,
+          }))}
+        />
+        <main className="ml-60 min-h-screen p-6">{children}</main>
+      </div>
+    </ReachabilityProvider>
   );
 }

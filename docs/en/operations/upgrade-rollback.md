@@ -26,10 +26,11 @@ Verify:
 | **v0.9.4** | No | Address overlap violet highlight, import overlap notice |
 | **v0.9.5** | No | Enable UFW action, rules table i18n, host key apply guard, release CI gate |
 | **v0.9.6** | No | Operation banner grace polling, stuck sync guard fix, terminal banner TTL |
+| **v0.9.7** | No | ICMP reachability badges on server cards and sidebar |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.6` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.7` in `.env`.
 
 ## Rollback
 

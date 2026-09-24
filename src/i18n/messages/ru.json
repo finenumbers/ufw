@@ -86,6 +86,10 @@
       "deleting": "Удаление...",
       "dangerTitle": "Опасная зона",
       "dangerDescription": "Удаление сервера удаляет все связанные записи из локальной базы данных."
+    },
+    "reachability": {
+      "latency": "{ms} мс",
+      "unreachable": "Недоступен"
     }
   },
   "serverForm": {

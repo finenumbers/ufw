@@ -86,6 +86,10 @@
       "deleting": "Deleting...",
       "dangerTitle": "Danger Zone",
       "dangerDescription": "Deleting a server removes all related records from the local database."
+    },
+    "reachability": {
+      "latency": "{ms} ms",
+      "unreachable": "Unreachable"
     }
   },
   "serverForm": {

@@ -39,6 +39,7 @@ Produktions-Compose (`docker-compose.prod.yml`):
 - Postgres **nicht** auf Host veröffentlicht
 - App lauscht im Docker-Netzwerk für NPM
 - Ziel-SSH vom App-Container zu verwalteten Servern
+- ICMP vom App-Container an festgelegte Adressen der verwalteten Server
 
 TLS terminiert bei **Nginx Proxy Manager**. Internes HTTP zwischen NPM und `ufw-app` ist beabsichtigt — siehe [Nginx Proxy Manager](../deployment/nginx-proxy-manager.md).
 

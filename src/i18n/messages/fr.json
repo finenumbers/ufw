@@ -86,6 +86,10 @@
       "deleting": "Suppression...",
       "dangerTitle": "Zone dangereuse",
       "dangerDescription": "La suppression d'un serveur retire tous les enregistrements associés de la base locale."
+    },
+    "reachability": {
+      "latency": "{ms} ms",
+      "unreachable": "Injoignable"
     }
   },
   "serverForm": {

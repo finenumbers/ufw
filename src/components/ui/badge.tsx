@@ -16,6 +16,8 @@ const badgeVariants = cva(
         remote: "border-transparent bg-yellow-300 text-yellow-950",
         local: "border-transparent bg-red-300 text-red-950",
         draft: "border-transparent bg-blue-100 text-blue-800",
+        reachable: "border-transparent bg-green-600 text-white",
+        unreachable: "border-transparent bg-red-600 text-white",
       },
     },
     defaultVariants: {

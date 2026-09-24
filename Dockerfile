@@ -37,12 +37,14 @@ ENV HOSTNAME=0.0.0.0
 ARG NAABU_VERSION=2.3.5
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates nmap curl unzip \
+  && apt-get install -y --no-install-recommends openssl ca-certificates nmap curl unzip iputils-ping libcap2-bin \
+  && ping_bin="$(command -v ping)" \
+  && setcap -v cap_net_raw=ep "$ping_bin" \
   && curl -sL "https://github.com/projectdiscovery/naabu/releases/download/v${NAABU_VERSION}/naabu_${NAABU_VERSION}_linux_amd64.zip" -o /tmp/naabu.zip \
   && unzip /tmp/naabu.zip -d /tmp/naabu \
   && install -m 0755 /tmp/naabu/naabu /usr/local/bin/naabu \
   && rm -rf /tmp/naabu /tmp/naabu.zip \
-  && apt-get purge -y --auto-remove curl unzip \
+  && apt-get purge -y --auto-remove curl unzip libcap2-bin \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs nextjs

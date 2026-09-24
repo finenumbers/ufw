@@ -86,6 +86,10 @@
       "deleting": "Excluindo...",
       "dangerTitle": "Zona de perigo",
       "dangerDescription": "Excluir um servidor remove todos os registros relacionados do banco de dados local."
+    },
+    "reachability": {
+      "latency": "{ms} ms",
+      "unreachable": "Indisponível"
     }
   },
   "serverForm": {

@@ -86,6 +86,10 @@
       "deleting": "Wird gelöscht...",
       "dangerTitle": "Gefahrenbereich",
       "dangerDescription": "Das Löschen eines Servers entfernt alle zugehörigen Datensätze aus der lokalen Datenbank."
+    },
+    "reachability": {
+      "latency": "{ms} ms",
+      "unreachable": "Nicht erreichbar"
     }
   },
   "serverForm": {

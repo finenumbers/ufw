@@ -86,6 +86,10 @@
       "deleting": "Eliminazione...",
       "dangerTitle": "Zona pericolosa",
       "dangerDescription": "L'eliminazione di un server rimuove tutti i record correlati dal database locale."
+    },
+    "reachability": {
+      "latency": "{ms} ms",
+      "unreachable": "Irraggiungibile"
     }
   },
   "serverForm": {
