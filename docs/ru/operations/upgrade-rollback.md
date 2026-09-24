@@ -34,10 +34,11 @@ Verify:
 | **v0.9.12** | No | Проба ping не ждёт обратный DNS, поэтому мёртвый PTR больше не помечает живой узел недоступным |
 | **v0.9.13** | No | Бейдж ограничения ТСПУ через cheburcheck под бейджем ping |
 | **v0.9.14** | No | Проверка ТСПУ раз в 10 минут; на карточках серверов только хост |
+| **v0.9.15** | No | Светло-синяя карточка при блокировке ТСПУ; светло-красная при отсутствии ping |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.14` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.15` in `.env`.
 
 ## Rollback
 

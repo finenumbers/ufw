@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useServerBlockCheck } from "@/components/layout/block-check-provider";
 import { useServerReachability } from "@/components/layout/reachability-provider";
 import { ServerBlockBadge } from "@/components/layout/server-block-badge";
 import { ServerReachabilityBadge } from "@/components/layout/server-reachability-badge";
@@ -28,9 +29,16 @@ function ServerCard({ server }: { server: ServerCardData }) {
   const tPortScan = useTranslations("portScan");
   const tc = useTranslations("common");
   const unreachable = useServerReachability(server.id)?.status === "unreachable";
+  const tspuBlocked = useServerBlockCheck(server.id) === "blocked";
 
   return (
-    <Card className={cn("relative", unreachable && "border-red-300 bg-red-100")}>
+    <Card
+      className={cn(
+        "relative",
+        tspuBlocked && "border-blue-200 bg-blue-100",
+        unreachable && "border-red-200 bg-red-100",
+      )}
+    >
       <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1">
         <ServerReachabilityBadge serverId={server.id} />
         <ServerBlockBadge serverId={server.id} host={server.host} />

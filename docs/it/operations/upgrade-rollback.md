@@ -25,7 +25,7 @@ Verificate:
 
 Aggiornando da pre-v0.9.0, assicuratevi che migrate completi — dati inventario legacy eliminati.
 
-Fissate immagine: `GHCR_IMAGE_TAG=v0.9.14` in `.env`.
+Fissate immagine: `GHCR_IMAGE_TAG=v0.9.15` in `.env`.
 
 ## Rollback
 
