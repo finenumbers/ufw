@@ -25,7 +25,7 @@ Verifique:
 
 Ao atualizar de pré-v0.9.0, garanta que migrate complete — dados de inventário legacy purgados.
 
-Fixe imagem: `GHCR_IMAGE_TAG=v0.9.9` no `.env`.
+Fixe imagem: `GHCR_IMAGE_TAG=v0.9.10` no `.env`.
 
 ## Rollback
 

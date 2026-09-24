@@ -29,10 +29,11 @@ Verify:
 | **v0.9.7** | No | ICMP reachability badges on server cards and sidebar |
 | **v0.9.8** | No | Show ICMP latency for private and CGNAT servers; surface a badge when ping cannot run |
 | **v0.9.9** | No | Per-address ICMP result: latency or Unreachable, red card and sidebar row |
+| **v0.9.10** | No | Plain ping of the saved host; a missing ping binary no longer marks every server unreachable |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.9` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.10` in `.env`.
 
 ## Rollback
 

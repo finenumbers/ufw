@@ -29,10 +29,11 @@ Verify:
 | **v0.9.7** | No | ICMP-доступность: бейдж задержки на карточках и красная подсветка недоступных узлов |
 | **v0.9.8** | No | ICMP-бейдж для частных и CGNAT-адресов; явная метка, если ping в контейнере не запускается |
 | **v0.9.9** | No | Отдельный ICMP-результат каждого адреса: задержка или «Недоступен», красная карточка и строка |
+| **v0.9.10** | No | Обычный ping сохранённого хоста; отсутствие ping больше не помечает все узлы недоступными |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.9` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.10` in `.env`.
 
 ## Rollback
 

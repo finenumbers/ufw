@@ -1,14 +1,7 @@
-import { isPingableAddress } from "@/lib/reachability/ping";
-
 const IPV4_PATTERN =
   /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d?\d)){3})$/;
 
 const BLOCKED_NAMES = new Set(["localhost", "localhost.localdomain", "metadata.google.internal"]);
-
-export type ProbeTarget =
-  | { kind: "skip" }
-  | { kind: "unresolved" }
-  | { kind: "ip"; ip: string };
 
 function ipv4ToInt(ip: string): number | null {
   const parts = ip.split(".");
@@ -36,7 +29,7 @@ function isLiteralIp(host: string): boolean {
 }
 
 /** Stored servers may be private or CGNAT. Block only destinations that must not be probed. */
-export function isUnsafeProbeAddress(ip: string): boolean {
+function isUnsafeProbeAddress(ip: string): boolean {
   const trimmed = ip.trim().toLowerCase();
   if (!trimmed || BLOCKED_NAMES.has(trimmed)) {
     return true;
@@ -65,45 +58,20 @@ export function isUnsafeProbeAddress(ip: string): boolean {
   );
 }
 
-function isSafeHostname(host: string): boolean {
-  if (!host || host.length > 253 || host.startsWith("-") || host.endsWith(".")) {
-    return false;
-  }
-
-  return /^[a-z0-9.-]+$/i.test(host) && !BLOCKED_NAMES.has(host.toLowerCase());
-}
-
-export async function resolveProbeTarget(
-  host: string,
-  lookup: (hostname: string) => Promise<string>,
-): Promise<ProbeTarget> {
+/** Skip addresses ping must not be aimed at. Ordinary hostnames are probed as stored. */
+export function shouldSkipPingHost(host: string): boolean {
   const trimmed = host.trim();
-  if (!isSafeHostname(trimmed) && !isLiteralIp(trimmed)) {
-    return { kind: "skip" };
+  if (!trimmed || trimmed.length > 253 || trimmed.startsWith("-") || trimmed.includes("%") || /\s/.test(trimmed)) {
+    return true;
   }
 
-  if (isUnsafeProbeAddress(trimmed)) {
-    return { kind: "skip" };
+  if (BLOCKED_NAMES.has(trimmed.toLowerCase())) {
+    return true;
   }
 
   if (isLiteralIp(trimmed)) {
-    if (!isPingableAddress(trimmed)) {
-      return { kind: "skip" };
-    }
-    return { kind: "ip", ip: trimmed };
+    return isUnsafeProbeAddress(trimmed);
   }
 
-  if (!isSafeHostname(trimmed)) {
-    return { kind: "skip" };
-  }
-
-  try {
-    const address = (await lookup(trimmed)).trim();
-    if (isUnsafeProbeAddress(address) || !isPingableAddress(address)) {
-      return { kind: "skip" };
-    }
-    return { kind: "ip", ip: address };
-  } catch {
-    return { kind: "unresolved" };
-  }
+  return false;
 }

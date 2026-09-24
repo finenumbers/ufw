@@ -1,49 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { resolveProbeTarget } from "@/lib/reachability/target";
+import { shouldSkipPingHost } from "@/lib/reachability/target";
 
-test("resolveProbeTarget skips loopback, metadata, and garbage", async () => {
-  const lookup = async () => {
-    throw new Error("lookup should not run");
-  };
-  assert.deepEqual(await resolveProbeTarget("127.0.0.1", lookup), { kind: "skip" });
-  assert.deepEqual(await resolveProbeTarget("169.254.169.254", lookup), { kind: "skip" });
-  assert.deepEqual(await resolveProbeTarget("localhost", lookup), { kind: "skip" });
-  assert.deepEqual(await resolveProbeTarget("bad host", lookup), { kind: "skip" });
+test("shouldSkipPingHost skips loopback, metadata, flags, and garbage", () => {
+  assert.equal(shouldSkipPingHost("127.0.0.1"), true);
+  assert.equal(shouldSkipPingHost("169.254.169.254"), true);
+  assert.equal(shouldSkipPingHost("localhost"), true);
+  assert.equal(shouldSkipPingHost("bad host"), true);
+  assert.equal(shouldSkipPingHost("-c"), true);
+  assert.equal(shouldSkipPingHost("fe80::1"), true);
 });
 
-test("resolveProbeTarget pins private, CGNAT, and public literals", async () => {
-  assert.deepEqual(await resolveProbeTarget("10.0.0.1", async () => "203.0.113.5"), {
-    kind: "ip",
-    ip: "10.0.0.1",
-  });
-  assert.deepEqual(await resolveProbeTarget("100.64.1.1", async () => "203.0.113.5"), {
-    kind: "ip",
-    ip: "100.64.1.1",
-  });
-  assert.deepEqual(await resolveProbeTarget("8.8.8.8", async () => "203.0.113.5"), {
-    kind: "ip",
-    ip: "8.8.8.8",
-  });
-});
-
-test("resolveProbeTarget keeps private DNS answers and skips metadata answers", async () => {
-  assert.deepEqual(await resolveProbeTarget("example.com", async () => "8.8.8.8"), {
-    kind: "ip",
-    ip: "8.8.8.8",
-  });
-  assert.deepEqual(await resolveProbeTarget("vpn.example.com", async () => "10.1.1.1"), {
-    kind: "ip",
-    ip: "10.1.1.1",
-  });
-  assert.deepEqual(await resolveProbeTarget("example.com", async () => "169.254.169.254"), {
-    kind: "skip",
-  });
-  assert.deepEqual(
-    await resolveProbeTarget("example.com", async () => {
-      throw new Error("ENOTFOUND");
-    }),
-    { kind: "unresolved" },
-  );
+test("shouldSkipPingHost pings ordinary names and private addresses", () => {
+  assert.equal(shouldSkipPingHost("poland.gate.finenumbers.com"), false);
+  assert.equal(shouldSkipPingHost("10.0.0.1"), false);
+  assert.equal(shouldSkipPingHost("100.64.1.1"), false);
+  assert.equal(shouldSkipPingHost("8.8.8.8"), false);
 });

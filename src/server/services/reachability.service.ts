@@ -1,4 +1,3 @@
-import dns from "node:dns/promises";
 import PQueue from "p-queue";
 
 import { db } from "@/lib/db";
@@ -10,11 +9,10 @@ import {
   REACHABILITY_BACKOFF_MS,
   shouldStartReachabilityProbe,
 } from "@/lib/reachability/schedule";
-import { resolveProbeTarget, type ProbeTarget } from "@/lib/reachability/target";
+import { shouldSkipPingHost } from "@/lib/reachability/target";
 import type { ReachabilitySnapshot, ServerReachability } from "@/types/reachability";
 
 const log = createChildLogger("reachability");
-const LOOKUP_TIMEOUT_MS = 2_000;
 const PROBE_CONCURRENCY = 8;
 
 type ReachabilityState = {
@@ -47,27 +45,6 @@ function getState(): ReachabilityState {
     globals.__ufwReachabilityState = createState();
   }
   return globals.__ufwReachabilityState;
-}
-
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("lookup timeout")), timeoutMs);
-    promise.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (error: unknown) => {
-        clearTimeout(timer);
-        reject(error);
-      },
-    );
-  });
-}
-
-async function lookupIpv4(hostname: string): Promise<string> {
-  const result = await withTimeout(dns.lookup(hostname, { family: 4 }), LOOKUP_TIMEOUT_MS);
-  return result.address;
 }
 
 export function getReachabilitySnapshot(): ReachabilitySnapshot {
@@ -110,38 +87,33 @@ async function refresh(): Promise<void> {
       orderBy: { name: "asc" },
     });
     const hosts = [...new Set(servers.map((server) => server.host))];
-    const targets = new Map<string, ProbeTarget>();
-
-    await Promise.all(
-      hosts.map(async (host) => {
-        targets.set(host, await resolveProbeTarget(host, lookupIpv4));
-      }),
-    );
-
-    const ips = new Set<string>();
-    for (const target of targets.values()) {
-      if (target.kind === "ip") {
-        ips.add(target.ip);
-      }
-    }
-
+    const skipped = new Set(hosts.filter((host) => shouldSkipPingHost(host)));
     const queue = new PQueue({ concurrency: PROBE_CONCURRENCY });
     const outcomes = new Map<string, PingOutcome>();
 
     await Promise.all(
-      [...ips].map((ip) =>
-        queue.add(async () => {
-          outcomes.set(ip, await probeAddress(ip));
-        }),
-      ),
+      hosts
+        .filter((host) => !skipped.has(host))
+        .map((host) =>
+          queue.add(async () => {
+            outcomes.set(host, await probeAddress(host));
+          }),
+        ),
     );
 
     const cycle = applyAddressResults({
       servers,
-      targets,
+      skipped,
       outcomes,
       previous: state.observations,
     });
+    if (cycle.probeUnavailable) {
+      const reason = [...outcomes.values()].find((outcome) => outcome.kind === "unavailable");
+      log.warn(
+        { reason: reason?.kind === "unavailable" ? reason.reason : "ping failed" },
+        "ICMP probe unavailable",
+      );
+    }
     state.observations = cycle.observations;
     state.servers = cycle.servers;
     state.checkedAt = Date.now();
