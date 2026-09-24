@@ -45,14 +45,8 @@ RUN apt-get update \
   && unzip /tmp/naabu.zip -d /tmp/naabu \
   && install -m 0755 /tmp/naabu/naabu /usr/local/bin/naabu \
   && rm -rf /tmp/naabu /tmp/naabu.zip \
-  && apt-get purge -y --auto-remove curl unzip libcap2-bin \
-  && if ! command -v ping >/dev/null 2>&1; then \
-       apt-get install -y --no-install-recommends iputils-ping libcap2-bin \
-       && ping_bin="$(command -v ping)" \
-       && setcap cap_net_raw=ep "$ping_bin" \
-       && setcap -v cap_net_raw=ep "$ping_bin" \
-       && apt-get purge -y --auto-remove libcap2-bin; \
-     fi \
+  && apt-mark manual iputils-ping \
+  && apt-get purge -y --auto-remove curl unzip \
   && command -v ping >/dev/null \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --system --gid 1001 nodejs \
