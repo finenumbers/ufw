@@ -18,4 +18,5 @@ test("canQueryBlockCheckHost rejects private, CGNAT, and metadata addresses", ()
   assert.equal(canQueryBlockCheckHost("::ffff:10.0.0.1"), false);
   assert.equal(canQueryBlockCheckHost("localhost"), false);
   assert.equal(canQueryBlockCheckHost("vpn.internal"), false);
+  assert.equal(canQueryBlockCheckHost("host.docker.internal"), false);
 });

@@ -35,10 +35,11 @@ Verify:
 | **v0.9.13** | No | TSPU restriction badge from cheburcheck, shown under the ping badge |
 | **v0.9.14** | No | TSPU checks every 10 minutes; server cards show the host only |
 | **v0.9.15** | No | Light blue server cards when TSPU-blocked; light red when ping fails |
+| **v0.9.16** | No | Opt-in SSH to the Docker host via `host.docker.internal` |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.15` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.16` in `.env`.
 
 ## Rollback
 

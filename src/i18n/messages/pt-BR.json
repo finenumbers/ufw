@@ -194,6 +194,7 @@
     "refreshDiscardDescription": "Atualizar status recarregará as regras do servidor e resetará alterações não salvas na tabela.",
     "confirmRefreshDiscard": "Atualizar mesmo assim",
     "hostKeyUnverified": "Chave SSH do host não verificada. Atualize o status antes de aplicar regras.",
+    "dockerHostWarning": "Este servidor é a máquina em que o UFW Remote Manager está em execução. Ativar o UFW ou bloquear a rede dos contêineres pode derrubar o painel e cortar o gerenciamento. Mantenha acesso ao console do host.",
     "enableUfw": "Ativar UFW",
     "enableTitle": "Ativar UFW?",
     "enableDescription": "O UFW será ativado no servidor remoto via SSH.",

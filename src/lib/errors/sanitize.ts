@@ -6,6 +6,14 @@ export function sanitizeSshClientError(error: unknown): string {
   const message = error instanceof Error ? error.message : "Unknown SSH error";
   log.warn({ err: message }, "SSH client error");
 
+  if (
+    message.startsWith("Host ") ||
+    message.startsWith("Resolved IP ") ||
+    message.startsWith("Docker host alias ")
+  ) {
+    return message;
+  }
+
   if (message.toLowerCase().includes("host key")) {
     return "SSH host key verification failed. The server key may have changed.";
   }

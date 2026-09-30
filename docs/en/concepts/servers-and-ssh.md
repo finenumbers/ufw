@@ -12,8 +12,15 @@ Before save, the app validates the target host:
 | Cloud metadata IPs | **Rejected** |
 | Public hostnames / IPs | Allowed |
 | Custom allowlist | Set `SSH_ALLOWED_CIDRS` to permit specific private ranges (lab/VPN) |
+| This Docker host | Set `SSH_ALLOW_DOCKER_HOST=true`, then use host `host.docker.internal` |
 
 DNS resolution is validated where applicable so typos fail early.
+
+`SSH_ALLOW_DOCKER_HOST` does not allow arbitrary private IPs. The alias must resolve inside the app container to an RFC1918 address (the Docker host gateway). Loopback, link-local, metadata, and literal gateway IPs such as `172.17.0.1` stay blocked. Block-check does not query this name.
+
+After deploy, confirm from the app container that the name resolves and TCP to the SSH port is open. `sshd` must listen on `0.0.0.0` or that gateway address, not only the public IP. Allow TCP/22 from the app container's source subnet — look it up on the running container; do not assume `172.18.0.0/16`. The SSH user needs passwordless sudo for `ufw`.
+
+Enabling UFW on this host, or denying the container subnet, can drop forwarding between the app network and Nginx Proxy Manager. The panel can disappear while SSH from the container still works. Keep console access before you enable UFW or tighten rules here.
 
 ## Connection verification
 

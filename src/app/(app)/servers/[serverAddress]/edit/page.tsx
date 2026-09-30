@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServerDeleteDialog } from "@/components/servers/server-delete-dialog";
 import { ServerForm } from "@/components/servers/server-form";
+import { readSshTargetPolicy } from "@/lib/ssh/target-policy";
 import { getServerByAddressAction } from "@/server/actions/servers";
 import { listIdentitiesAction } from "@/server/actions/identities";
 
@@ -53,6 +54,7 @@ export default async function EditServerPage({ params }: PageProps) {
               port: server.port,
               identityId: server.identityId,
             }}
+            sshTargetPolicy={readSshTargetPolicy()}
           />
         </CardContent>
       </Card>

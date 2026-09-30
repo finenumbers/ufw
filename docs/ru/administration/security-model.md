@@ -48,6 +48,7 @@ TLS terminates at **Nginx Proxy Manager**. Internal HTTP between NPM and `ufw-ap
 
 - Default block on private/metadata target IPs
 - Optional `SSH_ALLOWED_CIDRS` for lab/VPN
+- Optional `SSH_ALLOW_DOCKER_HOST` разрешает только имя `host.docker.internal`, если оно резолвится в шлюз RFC1918. Остальные частные цели по-прежнему запрещены, и это имя не уходит в проверку блокировок
 - Host key TOFU — see [Серверы и SSH](../concepts/servers-and-ssh.md)
 - Apply blocked until host key verified
 

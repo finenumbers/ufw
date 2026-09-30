@@ -6,16 +6,25 @@ const BLOCKED_LITERAL_HOSTS = new Set([
 
 const METADATA_IPV4 = "169.254.169.254";
 
-function parseAllowedCidrs(): string[] {
-  const raw = process.env.SSH_ALLOWED_CIDRS?.trim();
-  if (!raw) {
-    return [];
-  }
+export const DOCKER_HOST_ALIAS = "host.docker.internal";
 
-  return raw
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean);
+export const DOCKER_HOST_UNRESOLVED_MESSAGE = "Docker host alias did not resolve";
+
+export const DOCKER_HOST_UNROUTABLE_MESSAGE =
+  "Docker host alias did not resolve to a private address";
+
+export type SshTargetPolicy = {
+  allowDockerHost: boolean;
+  allowedCidrs: string[];
+};
+
+export const DEFAULT_SSH_TARGET_POLICY: SshTargetPolicy = {
+  allowDockerHost: false,
+  allowedCidrs: [],
+};
+
+export function isDockerHostAlias(host: string): boolean {
+  return host.trim().toLowerCase() === DOCKER_HOST_ALIAS;
 }
 
 function ipv4ToInt(ip: string): number | null {
@@ -131,16 +140,34 @@ function isAllowedByCidr(ip: string, allowedCidrs: string[]): boolean {
   return allowedCidrs.some((cidr) => isIpv4InCidr(ip, cidr));
 }
 
+/** RFC1918 gateway addresses only. Loopback, link-local, CGNAT, and public IPs are rejected. */
+export function isAcceptableDockerHostGateway(ip: string): boolean {
+  const ipInt = ipv4ToInt(ip.trim());
+  if (ipInt == null) {
+    return false;
+  }
+
+  const ranges: Array<[number, number]> = [
+    [ipv4ToInt("10.0.0.0")!, ipv4ToInt("10.255.255.255")!],
+    [ipv4ToInt("172.16.0.0")!, ipv4ToInt("172.31.255.255")!],
+    [ipv4ToInt("192.168.0.0")!, ipv4ToInt("192.168.255.255")!],
+  ];
+
+  return ranges.some(([start, end]) => ipInt >= start && ipInt <= end);
+}
+
 /** Validate a resolved IP address against blocked ranges and optional allowlist. */
-export function validateResolvedIp(ip: string): string | null {
+export function validateResolvedIp(
+  ip: string,
+  policy: SshTargetPolicy = DEFAULT_SSH_TARGET_POLICY,
+): string | null {
   const trimmed = ip.trim();
   if (!trimmed) {
     return "Resolved IP is empty";
   }
 
   if (isIpv4(trimmed)) {
-    const allowedCidrs = parseAllowedCidrs();
-    if (isAllowedByCidr(trimmed, allowedCidrs)) {
+    if (isAllowedByCidr(trimmed, policy.allowedCidrs)) {
       return null;
     }
 
@@ -154,8 +181,7 @@ export function validateResolvedIp(ip: string): string | null {
   if (isIpv6(trimmed)) {
     const mappedIpv4 = extractIpv4FromMappedIpv6(trimmed);
     if (mappedIpv4) {
-      const allowedCidrs = parseAllowedCidrs();
-      if (isAllowedByCidr(mappedIpv4, allowedCidrs)) {
+      if (isAllowedByCidr(mappedIpv4, policy.allowedCidrs)) {
         return null;
       }
 
@@ -176,7 +202,10 @@ export function validateResolvedIp(ip: string): string | null {
   return "Resolved IP is not valid";
 }
 
-export function validateSshHost(host: string): string | null {
+export function validateSshHost(
+  host: string,
+  policy: SshTargetPolicy = DEFAULT_SSH_TARGET_POLICY,
+): string | null {
   const trimmed = host.trim();
   if (!trimmed) {
     return "Host is required";
@@ -187,13 +216,16 @@ export function validateSshHost(host: string): string | null {
   }
 
   const normalized = trimmed.toLowerCase();
+  if (isDockerHostAlias(normalized)) {
+    return policy.allowDockerHost ? null : "Host is not allowed";
+  }
+
   if (BLOCKED_LITERAL_HOSTS.has(normalized)) {
     return "Host is not allowed";
   }
 
   if (isIpv4(trimmed)) {
-    const allowedCidrs = parseAllowedCidrs();
-    if (isAllowedByCidr(trimmed, allowedCidrs)) {
+    if (isAllowedByCidr(trimmed, policy.allowedCidrs)) {
       return null;
     }
 
@@ -207,8 +239,7 @@ export function validateSshHost(host: string): string | null {
   if (isIpv6(trimmed)) {
     const mappedIpv4 = extractIpv4FromMappedIpv6(trimmed);
     if (mappedIpv4) {
-      const allowedCidrs = parseAllowedCidrs();
-      if (isAllowedByCidr(mappedIpv4, allowedCidrs)) {
+      if (isAllowedByCidr(mappedIpv4, policy.allowedCidrs)) {
         return null;
       }
 

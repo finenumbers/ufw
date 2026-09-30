@@ -17,6 +17,7 @@ import { OPERATION_ENDED_EVENT, OPERATION_STARTED_EVENT } from "@/lib/operations
 import type { PortScanView } from "@/types/port-scan";
 import type { UnifiedRuleRow } from "@/types/rule";
 import type { UfwDetectionResult } from "@/types/ufw";
+import { isDockerHostAlias } from "@/lib/validations/ssh-host";
 import { getRulesViewPageAction } from "@/server/actions/rules";
 
 const RulesGroupSection = dynamic(
@@ -249,6 +250,7 @@ export function ServerDetailView({
         onRulesRefresh={refreshRules}
         portScanEnabled={portScanEnabled}
         onPortScanClick={() => setPortScanStartToken((value) => value + 1)}
+        isDockerHost={isDockerHostAlias(server.host)}
       />
 
       {rulesAvailable ? (

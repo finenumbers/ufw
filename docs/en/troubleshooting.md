@@ -15,6 +15,7 @@ Symptom → likely cause → fix. For concepts see linked docs.
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | Private IP rejected | Host validation | Use public IP/hostname or `SSH_ALLOWED_CIDRS` |
+| Cannot add the machine running the app | Container SSH cannot use localhost or the public IP of the same host | `SSH_ALLOW_DOCKER_HOST=true`, host `host.docker.internal`, recreate `ufw-app` |
 | Connection refused | Firewall, wrong port, host down | Verify from Docker host: `ssh -p PORT user@host` |
 | Auth failed | Wrong identity credentials | Edit identity; re-enter secret |
 | Host key warning | First connect or server rebuilt | **Refresh Status** to capture new fingerprint |

@@ -28,6 +28,10 @@ Not recommended. Rate limits and queues are in-memory (single replica design).
 
 Default security — blocks RFC1918 and metadata addresses. Set `SSH_ALLOWED_CIDRS` for lab/VPN targets.
 
+### Can I manage the machine that runs this app?
+
+Yes, with `SSH_ALLOW_DOCKER_HOST=true` and server host `host.docker.internal`. Localhost and the host's public IP are not reachable from the app container. See [Servers and SSH](./concepts/servers-and-ssh.md).
+
 ### Why is apply disabled?
 
 SSH host key may be **unverified**. Run **Refresh Status** successfully first.

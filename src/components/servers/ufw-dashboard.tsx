@@ -41,6 +41,7 @@ type UfwDashboardProps = {
   onRulesRefresh: () => Promise<void>;
   portScanEnabled: boolean;
   onPortScanClick: () => void;
+  isDockerHost: boolean;
 };
 
 export function UfwDashboard({
@@ -56,6 +57,7 @@ export function UfwDashboard({
   onRulesRefresh,
   portScanEnabled,
   onPortScanClick,
+  isDockerHost,
 }: UfwDashboardProps) {
   const router = useRouter();
   const t = useTranslations("ufw");
@@ -360,6 +362,9 @@ export function UfwDashboard({
       ) : null}
       {!sshHostKeyVerified ? (
         <p className="text-sm text-amber-700 dark:text-amber-400">{t("hostKeyUnverified")}</p>
+      ) : null}
+      {isDockerHost ? (
+        <p className="text-sm text-amber-700 dark:text-amber-400">{t("dockerHostWarning")}</p>
       ) : null}
 
       {operationError ? <p className="text-sm text-destructive">{operationError}</p> : null}

@@ -18,7 +18,8 @@ import {
 import { assertRateLimit } from "@/lib/rate-limit";
 import { decodeServerAddress, getServerPath } from "@/lib/server-path";
 import type { ActionFailureResult } from "@/types/action-result";
-import { serverSchema, type ServerInput } from "@/lib/validations/server";
+import { readSshTargetPolicy } from "@/lib/ssh/target-policy";
+import { createServerSchema, type ServerInput } from "@/lib/validations/server";
 import {
   applyServersConfigImport,
   diffServersConfigImport,
@@ -83,7 +84,7 @@ export async function createServerAction(
     return auth.failure;
   }
 
-  const parsed = serverSchema.safeParse(input);
+  const parsed = createServerSchema(readSshTargetPolicy()).safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
   }
@@ -109,7 +110,7 @@ export async function updateServerAction(
     return auth.failure;
   }
 
-  const parsed = serverSchema.safeParse(input);
+  const parsed = createServerSchema(readSshTargetPolicy()).safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" };
   }

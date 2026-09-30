@@ -50,6 +50,8 @@ services:
       - NET_RAW
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       DATABASE_URL: postgresql://ufw:${POSTGRES_PASSWORD}@postgres:5432/ufw?schema=public
       APP_URL: ${APP_URL:?APP_URL is required}
@@ -61,6 +63,8 @@ services:
       LOG_LEVEL: info
       PORT_SCAN_ENABLED: ${PORT_SCAN_ENABLED:-false}
       TRUST_PROXY: ${TRUST_PROXY:-1}
+      SSH_ALLOWED_CIDRS: ${SSH_ALLOWED_CIDRS:-}
+      SSH_ALLOW_DOCKER_HOST: ${SSH_ALLOW_DOCKER_HOST:-false}
     healthcheck:
       test:
         [

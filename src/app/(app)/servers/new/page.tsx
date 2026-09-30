@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServerForm } from "@/components/servers/server-form";
+import { readSshTargetPolicy } from "@/lib/ssh/target-policy";
 import { listIdentitiesAction } from "@/server/actions/identities";
 
 export default async function NewServerPage() {
@@ -20,7 +21,11 @@ export default async function NewServerPage() {
           <CardDescription>{t("detailsDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <ServerForm mode="create" identities={identities} />
+          <ServerForm
+            mode="create"
+            identities={identities}
+            sshTargetPolicy={readSshTargetPolicy()}
+          />
         </CardContent>
       </Card>
     </div>

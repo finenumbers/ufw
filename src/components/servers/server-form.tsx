@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { formatIdentityOptionLabel } from "@/components/identities/identity-form";
@@ -18,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { serverSchema, type ServerInput } from "@/lib/validations/server";
+import { createServerSchema, type ServerInput } from "@/lib/validations/server";
+import type { SshTargetPolicy } from "@/lib/validations/ssh-host";
 import type { IdentityListItem } from "@/lib/validations/identity";
 import { getServerPath } from "@/lib/server-path";
 import { createServerAction, updateServerAction } from "@/server/actions/servers";
@@ -28,9 +29,16 @@ type ServerFormProps = {
   serverId?: string;
   identities: IdentityListItem[];
   defaultValues?: Partial<ServerInput>;
+  sshTargetPolicy: SshTargetPolicy;
 };
 
-export function ServerForm({ mode, serverId, identities, defaultValues }: ServerFormProps) {
+export function ServerForm({
+  mode,
+  serverId,
+  identities,
+  defaultValues,
+  sshTargetPolicy,
+}: ServerFormProps) {
   const router = useRouter();
   const t = useTranslations("serverForm");
   const tf = useTranslations("identityForm");
@@ -38,8 +46,13 @@ export function ServerForm({ mode, serverId, identities, defaultValues }: Server
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const schema = useMemo(
+    () => createServerSchema(sshTargetPolicy),
+    [sshTargetPolicy],
+  );
+
   const form = useForm<ServerInput>({
-    resolver: zodResolver(serverSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       name: "",
       host: "",

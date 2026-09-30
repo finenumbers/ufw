@@ -43,6 +43,7 @@ Legacy `PORT_SCAN_RATE_LIMIT_WINDOW_MS` is **ignored**. Repeat scans use fixed *
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SSH_ALLOWED_CIDRS` | empty | Comma-separated CIDRs allowed as SSH targets |
+| `SSH_ALLOW_DOCKER_HOST` | `false` | `true` allows the server host `host.docker.internal` (this Docker host only) |
 | `TRUST_PROXY` | unset | `1` = trust `X-Forwarded-For` for setup rate limit |
 
 ## Local development

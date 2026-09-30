@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { assertConfigEntryCounts } from "@/lib/imports/import-limits";
 import { authMethodSchema, refineAuthSecrets } from "@/lib/validations/auth-secrets";
+import { readSshTargetPolicy } from "@/lib/ssh/target-policy";
 import { validateSshHost } from "@/lib/validations/ssh-host";
 
 export const identityConfigEntrySchema = z
@@ -26,7 +27,7 @@ export const serverConfigEntrySchema = z
     sshHostKeyFingerprint: z.string().nullable().optional(),
   })
   .superRefine((data, ctx) => {
-    const hostError = validateSshHost(data.host);
+    const hostError = validateSshHost(data.host, readSshTargetPolicy());
     if (hostError) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

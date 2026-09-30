@@ -194,6 +194,7 @@
     "refreshDiscardDescription": "Actualizar estado recargará las reglas del servidor y restablecerá los cambios no guardados.",
     "confirmRefreshDiscard": "Actualizar de todos modos",
     "hostKeyUnverified": "Clave SSH del host no verificada. Actualice el estado antes de aplicar reglas.",
+    "dockerHostWarning": "Este servidor es el equipo donde se ejecuta UFW Remote Manager. Activar UFW o bloquear la red de contenedores puede apagar el panel y cortar la gestión. Conserve acceso por consola al host.",
     "enableUfw": "Activar UFW",
     "enableTitle": "¿Activar UFW?",
     "enableDescription": "UFW se activará en el servidor remoto por SSH.",

@@ -198,7 +198,8 @@
     "refreshDiscardTitle": "Discard unsaved rule edits?",
     "refreshDiscardDescription": "Refresh status will reload rules from the server and reset unsaved changes in the table.",
     "confirmRefreshDiscard": "Refresh anyway",
-    "hostKeyUnverified": "SSH host key is not verified yet. Refresh status to verify before applying rules."
+    "hostKeyUnverified": "SSH host key is not verified yet. Refresh status to verify before applying rules.",
+    "dockerHostWarning": "This server is the machine running UFW Remote Manager. Enabling UFW or blocking the container network can drop the admin panel and cut off further management. Keep console access to the host."
   },
   "rules": {
     "toolbar": {

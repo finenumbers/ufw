@@ -29,3 +29,21 @@ test("resolveScanTarget rejects invalid hostnames", async () => {
     /not allowed/,
   );
 });
+
+test("resolveScanTarget rejects a literal docker gateway even when the alias is allowed", async () => {
+  const previous = process.env.SSH_ALLOW_DOCKER_HOST;
+  process.env.SSH_ALLOW_DOCKER_HOST = "true";
+
+  try {
+    await assert.rejects(() => resolveScanTarget("172.17.0.1"), /not allowed/);
+    const resolved = await resolveScanTarget("host.docker.internal", async () => "172.18.0.1");
+    assert.equal(resolved.host, "host.docker.internal");
+    assert.equal(resolved.ip, "172.18.0.1");
+  } finally {
+    if (previous === undefined) {
+      delete process.env.SSH_ALLOW_DOCKER_HOST;
+    } else {
+      process.env.SSH_ALLOW_DOCKER_HOST = previous;
+    }
+  }
+});

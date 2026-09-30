@@ -194,6 +194,7 @@
     "refreshDiscardDescription": "Status aktualisieren lädt Regeln vom Server neu und setzt ungespeicherte Tabellenänderungen zurück.",
     "confirmRefreshDiscard": "Trotzdem aktualisieren",
     "hostKeyUnverified": "SSH-Host-Key nicht verifiziert. Status aktualisieren vor dem Anwenden von Regeln.",
+    "dockerHostWarning": "Dieser Server ist der Rechner, auf dem UFW Remote Manager läuft. UFW zu aktivieren oder das Container-Netz zu sperren kann das Admin-Panel abschalten und die weitere Verwaltung abschneiden. Behalten Sie Konsolenzugang zum Host.",
     "enableUfw": "UFW aktivieren",
     "enableTitle": "UFW aktivieren?",
     "enableDescription": "UFW wird auf dem Remote-Server per SSH aktiviert.",
