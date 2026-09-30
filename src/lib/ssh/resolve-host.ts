@@ -1,5 +1,11 @@
 import dns from "node:dns/promises";
 
+import {
+  dockerHostOutsideMessage,
+  isIpv4InCidr,
+  readContainerRoutes,
+  type ContainerRoutes,
+} from "@/lib/ssh/docker-host-gateway";
 import { readSshTargetPolicy } from "@/lib/ssh/target-policy";
 import {
   DOCKER_HOST_UNRESOLVED_MESSAGE,
@@ -15,6 +21,7 @@ const IPV4_PATTERN =
   /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|[01]?\d?\d)){3})$/;
 
 export type HostLookup = (host: string) => Promise<string>;
+export type RouteLookup = () => Promise<ContainerRoutes>;
 
 function isLiteralIp(host: string): boolean {
   return IPV4_PATTERN.test(host) || host.includes(":");
@@ -27,13 +34,15 @@ async function defaultLookup(host: string): Promise<string> {
 
 /**
  * Resolve a managed SSH or scan target.
- * The docker-host alias is accepted only when policy allows it and DNS returns an RFC1918 address.
- * Literal private IPs stay blocked unless they match allowedCidrs.
+ * The docker-host alias uses the container default gateway when it sits in that interface subnet.
+ * DNS is accepted only inside a connected container subnet, so docker0 (172.17.0.1) is not used
+ * from another bridge. Literal private IPs stay blocked unless they match allowedCidrs.
  */
 export async function resolveManagedHost(
   host: string,
   policy: SshTargetPolicy,
   lookup: HostLookup = defaultLookup,
+  readRoutes: RouteLookup = readContainerRoutes,
 ): Promise<string> {
   const trimmed = host.trim();
   const validationError = validateSshHost(trimmed, policy);
@@ -51,6 +60,16 @@ export async function resolveManagedHost(
   }
 
   if (isDockerHostAlias(trimmed)) {
+    const routes = await readRoutes();
+    if (
+      routes.gateway &&
+      routes.subnet &&
+      isAcceptableDockerHostGateway(routes.gateway) &&
+      isIpv4InCidr(routes.gateway, routes.subnet)
+    ) {
+      return routes.gateway;
+    }
+
     let address: string;
     try {
       address = await lookup(trimmed);
@@ -60,6 +79,11 @@ export async function resolveManagedHost(
 
     if (!isAcceptableDockerHostGateway(address)) {
       throw new Error(DOCKER_HOST_UNROUTABLE_MESSAGE);
+    }
+
+    const inside = routes.connectedSubnets.some((cidr) => isIpv4InCidr(address, cidr));
+    if (!inside) {
+      throw new Error(dockerHostOutsideMessage(address, routes.connectedSubnets));
     }
 
     return address;

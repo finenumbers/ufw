@@ -1,6 +1,6 @@
 # UFW Remote Manager — Dokumentation (Deutsch)
 
-Vollständiger Leitfaden für Administratoren und Betreiber. Abgestimmt auf **v0.9.16**.
+Vollständiger Leitfaden für Administratoren und Betreiber. Abgestimmt auf **v0.9.17**.
 
 ## Erste Schritte
 

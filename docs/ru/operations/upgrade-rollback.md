@@ -36,10 +36,11 @@ Verify:
 | **v0.9.14** | No | Проверка ТСПУ раз в 10 минут; на карточках серверов только хост |
 | **v0.9.15** | No | Светло-синяя карточка при блокировке ТСПУ; светло-красная при отсутствии ping |
 | **v0.9.16** | No | Opt-in SSH на компьютер с контейнером через `host.docker.internal` |
+| **v0.9.17** | No | SSH к своему хосту идёт на шлюз сети контейнера, не на docker0 |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.16` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.17` in `.env`.
 
 ## Rollback
 

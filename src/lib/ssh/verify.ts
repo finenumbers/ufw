@@ -3,6 +3,8 @@ import {
   sanitizeSshClientError,
   sanitizeSshCommandError,
 } from "@/lib/errors/sanitize";
+import { dockerHostTimeoutMessage, readContainerRoutes } from "@/lib/ssh/docker-host-gateway";
+import { isDockerHostAlias } from "@/lib/validations/ssh-host";
 
 export type SshVerifyResult = {
   success: boolean;
@@ -39,6 +41,15 @@ export async function verifySshConnection(
       hostKeyFingerprint: hostKeyFingerprint ?? config.expectedHostKeyFingerprint ?? undefined,
     };
   } catch (error) {
+    if (isDockerHostAlias(config.host) && isConnectTimeout(error)) {
+      const routes = await readContainerRoutes();
+      return { success: false, message: dockerHostTimeoutMessage(routes) };
+    }
     return { success: false, message: sanitizeSshClientError(error) };
   }
+}
+
+function isConnectTimeout(error: unknown): boolean {
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+  return message.includes("timed out") || message.includes("timeout");
 }

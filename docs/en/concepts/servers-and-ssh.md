@@ -16,9 +16,9 @@ Before save, the app validates the target host:
 
 DNS resolution is validated where applicable so typos fail early.
 
-`SSH_ALLOW_DOCKER_HOST` does not allow arbitrary private IPs. The alias must resolve inside the app container to an RFC1918 address (the Docker host gateway). Loopback, link-local, metadata, and literal gateway IPs such as `172.17.0.1` stay blocked. Block-check does not query this name.
+`SSH_ALLOW_DOCKER_HOST` does not allow arbitrary private IPs. The app connects to the container's own default gateway, and only when that address is inside the container subnet. It does not use `docker0` (`172.17.0.1`) from another bridge, a container name, or a literal gateway typed into the form. Block-check does not query this name.
 
-After deploy, confirm from the app container that the name resolves and TCP to the SSH port is open. `sshd` must listen on `0.0.0.0` or that gateway address, not only the public IP. Allow TCP/22 from the app container's source subnet — look it up on the running container; do not assume `172.18.0.0/16`. The SSH user needs passwordless sudo for `ufw`.
+On the machine, allow TCP/22 from that container subnet only. The timeout message prints the exact command, for example `ufw allow from 172.21.0.0/16 to any port 22 proto tcp`. Do not open `172.16.0.0/12`. `sshd` must listen on `0.0.0.0`. The SSH user needs passwordless sudo for `ufw`.
 
 Enabling UFW on this host, or denying the container subnet, can drop forwarding between the app network and Nginx Proxy Manager. The panel can disappear while SSH from the container still works. Keep console access before you enable UFW or tighten rules here.
 

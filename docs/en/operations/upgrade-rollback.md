@@ -36,10 +36,11 @@ Verify:
 | **v0.9.14** | No | TSPU checks every 10 minutes; server cards show the host only |
 | **v0.9.15** | No | Light blue server cards when TSPU-blocked; light red when ping fails |
 | **v0.9.16** | No | Opt-in SSH to the Docker host via `host.docker.internal` |
+| **v0.9.17** | No | Docker host SSH uses the container's own gateway, not docker0 |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.16` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.17` in `.env`.
 
 ## Rollback
 

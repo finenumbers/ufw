@@ -16,6 +16,7 @@ Symptom → likely cause → fix. For concepts see linked docs.
 |---------|-------|-----|
 | Private IP rejected | Host validation | Use public IP/hostname or `SSH_ALLOWED_CIDRS` |
 | Cannot add the machine running the app | Container SSH cannot use localhost or the public IP of the same host | `SSH_ALLOW_DOCKER_HOST=true`, host `host.docker.internal`, recreate `ufw-app` |
+| Docker host SSH timed out | Host firewall drops the container subnet, or sshd listens only on the public IP | Run the `ufw allow from …` command from the error; `sshd` on `0.0.0.0`. Do not open `172.16.0.0/12` |
 | Connection refused | Firewall, wrong port, host down | Verify from Docker host: `ssh -p PORT user@host` |
 | Auth failed | Wrong identity credentials | Edit identity; re-enter secret |
 | Host key warning | First connect or server rebuilt | **Refresh Status** to capture new fingerprint |

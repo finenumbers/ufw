@@ -16,6 +16,7 @@
 |---------|---------|---------|
 | Private IP отклонён | Проверка хоста | Публичный IP/hostname или `SSH_ALLOWED_CIDRS` |
 | Не добавить компьютер, где запущено приложение | SSH из контейнера не доходит через localhost или публичный IP этого же хоста | `SSH_ALLOW_DOCKER_HOST=true`, хост `host.docker.internal`, пересоздать `ufw-app` |
+| Таймаут SSH до Docker-хоста | Файрвол хоста отбрасывает подсеть контейнера, или sshd слушает только публичный IP | Выполните команду `ufw allow from …` из текста ошибки; `sshd` на `0.0.0.0`. Диапазон `172.16.0.0/12` не открывайте |
 | Connection refused | Firewall, неверный port, host down | С хоста Docker: `ssh -p PORT user@host` |
 | Auth failed | Неверные credentials identity | Измените identity; введите секрет заново |
 | Предупреждение host key | Первое подключение или rebuild сервера | **Обновить статус** для нового fingerprint |
