@@ -25,7 +25,9 @@ Vérifier :
 
 Lors de la mise à niveau depuis pré-v0.9.0, s'assurer que migrate se termine — données inventaire legacy purgées.
 
-Épingler l'image : `GHCR_IMAGE_TAG=v0.9.17` dans `.env`.
+Épingler l'image : `GHCR_IMAGE_TAG=v0.9.18` dans `.env`.
+
+v0.9.18 : AmneziaWG facultatif, uniquement pour les nœuds cochés. Recréez le conteneur avec `NET_ADMIN` et `/dev/net/tun`. La route par défaut reste directe.
 
 ## Retour arrière
 

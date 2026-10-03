@@ -1,6 +1,6 @@
 # Architecture
 
-This page describes how UFW Remote Manager is built, how data flows, and where secrets live. Version **v0.9.17**.
+This page describes how UFW Remote Manager is built, how data flows, and where secrets live. Version **v0.9.18**.
 
 ![Deployment topology](../assets/architecture-topology.svg)
 
@@ -15,6 +15,7 @@ This page describes how UFW Remote Manager is built, how data flows, and where s
 | **ufw-migrate** | One-shot container — `prisma migrate deploy` on each deploy |
 | **Nginx Proxy Manager** | External HTTPS termination (not part of this stack) |
 | **Target Linux servers** | UFW-managed hosts reached over SSH |
+| **AmneziaWG** | Optional userspace tunnel inside `ufw-app`. It is not the default route. Only a node marked “Connect through AmneziaWG” is reached through `awg0` |
 
 ## Request flow (production)
 
@@ -33,6 +34,7 @@ flowchart LR
 3. Server actions orchestrate SSH and database work.
 4. UFW commands run on remote hosts only after explicit apply confirmation.
 5. Port scan (when enabled) runs Naabu/Nmap from the app container — not over SSH.
+6. If a node uses AmneziaWG, SSH, ping, and the port scan for that node go through `awg0`. Postgres, the panel, and cheburcheck.ru stay on the container's normal route. A name that exists only in the VPN DNS must be entered as its internal IPv4 address.
 
 ## Server detail load model (cache-first)
 

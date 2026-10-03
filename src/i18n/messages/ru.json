@@ -7,7 +7,8 @@
     "noServers": "Серверов пока нет",
     "operationsHistory": "История операций",
     "logout": "Выйти",
-    "identities": "SSH-идентификации"
+    "identities": "SSH-идентификации",
+    "amneziawg": "AmneziaWG"
   },
   "footer": {
     "documentation": "Документация",
@@ -111,7 +112,11 @@
     "updating": "Сохранение...",
     "missingServerId": "Отсутствует ID сервера",
     "duplicateServer": "Сервер {host}:{port} с этой SSH-идентификацией уже добавлен.",
-    "unexpectedError": "Не удалось сохранить сервер. Попробуйте снова."
+    "unexpectedError": "Не удалось сохранить сервер. Попробуйте снова.",
+    "useAwg": "Подключаться через AmneziaWG",
+    "useAwgHint": "Через туннель ходит только этот узел. Остальной трафик контейнера идёт как обычно.",
+    "useAwgDisabled": "Сначала загрузите конфигурацию AmneziaWG.",
+    "useAwgInternal": "Если имя существует только внутри VPN, укажите его IPv4-адрес."
   },
   "ufw": {
     "active": "UFW активен",
@@ -387,5 +392,31 @@
       "DENIED": "Запрещено",
       "UNKNOWN": "Неизвестно"
     }
+  },
+  "awg": {
+    "title": "AmneziaWG",
+    "description": "Один туннель для узлов, где это включено. Маршрут по умолчанию контейнера не меняется.",
+    "status": {
+      "missing": "Нет конфигурации",
+      "disabled": "Выключено",
+      "connected": "Подключено",
+      "handshake": "Нет свежего handshake",
+      "error": "Ошибка",
+      "other": "Туннель держит другой экземпляр"
+    },
+    "address": "Адрес интерфейса",
+    "endpoint": "Endpoint",
+    "allowedIps": "AllowedIPs",
+    "updated": "Обновлено",
+    "confLabel": "Конфиг из AmneziaVPN",
+    "confPlaceholder": "Вставьте .conf одного туннеля",
+    "fileLabel": "Или выберите файл .conf",
+    "password": "Пароль администратора",
+    "save": "Сохранить и подключить",
+    "working": "Выполняется...",
+    "connect": "Подключить",
+    "disconnect": "Отключить",
+    "delete": "Удалить конфигурацию",
+    "helperNote": "Туннель работает внутри контейнера приложения и не является маршрутом по умолчанию."
   }
 }

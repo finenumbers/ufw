@@ -25,7 +25,9 @@ Verifique:
 
 Al actualizar desde pre-v0.9.0, asegure que migrate complete — datos de inventario legacy purgados.
 
-Fije imagen: `GHCR_IMAGE_TAG=v0.9.17` en `.env`.
+Fije imagen: `GHCR_IMAGE_TAG=v0.9.18` en `.env`.
+
+v0.9.18: AmneziaWG opcional solo para nodos marcados. Recree el contenedor con `NET_ADMIN` y `/dev/net/tun`. La ruta predeterminada sigue directa.
 
 ## Reversión
 

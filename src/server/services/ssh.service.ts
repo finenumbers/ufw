@@ -1,8 +1,10 @@
+import { awgGate } from "@/lib/awg/gate";
 import {
   runForServer,
   type RunForServerOptions,
 } from "@/lib/queue/queue-registry";
 import { withSshConnection } from "@/lib/ssh/client";
+import { steerAwgDestinationUnlocked } from "@/server/services/awg-steer";
 import {
   enableUfw,
   installUfw,
@@ -24,26 +26,33 @@ export async function runSshForServer<T>(
     serverId,
     async () => {
       const config = await getServerSshConfig(serverId);
-      const { result, hostKeyFingerprint } = await withSshConnection(
-        {
-          host: config.host,
-          port: config.port,
-          username: config.username,
-          password: config.privateKey ? undefined : config.password,
-          privateKey: config.privateKey,
-          passphrase: config.passphrase,
-          expectedHostKeyFingerprint: config.expectedHostKeyFingerprint,
-        },
-        (client) => fn(client, config),
-      );
+      const connect = async () => {
+        const connectHost = config.useAwg
+          ? await steerAwgDestinationUnlocked(config.host)
+          : config.host;
+        const { result, hostKeyFingerprint } = await withSshConnection(
+          {
+            host: connectHost,
+            port: config.port,
+            username: config.username,
+            password: config.privateKey ? undefined : config.password,
+            privateKey: config.privateKey,
+            passphrase: config.passphrase,
+            expectedHostKeyFingerprint: config.expectedHostKeyFingerprint,
+          },
+          (client) => fn(client, config),
+        );
 
-      await persistDiscoveredHostKey(
-        serverId,
-        hostKeyFingerprint,
-        config.expectedHostKeyFingerprint,
-      );
+        await persistDiscoveredHostKey(
+          serverId,
+          hostKeyFingerprint,
+          config.expectedHostKeyFingerprint,
+        );
 
-      return result;
+        return result;
+      };
+
+      return config.useAwg ? awgGate.shared(connect) : connect();
     },
     options,
   );

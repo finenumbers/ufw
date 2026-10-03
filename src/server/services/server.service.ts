@@ -2,9 +2,12 @@ import { cache } from "react";
 
 import type { AuthMethod, Prisma, Server } from "@prisma/client";
 import { Prisma as PrismaClient } from "@prisma/client";
+import { awgGate } from "@/lib/awg/gate";
 import { db } from "@/lib/db";
 import { clearServerQueue, isServerQueueBusy, waitForServerQueueIdle } from "@/lib/queue/queue-registry";
 import type { ServerInput } from "@/lib/validations/server";
+import { reconcileAwgRoutes } from "@/server/services/awg.service";
+import { steerAwgDestinationUnlocked } from "@/server/services/awg-steer";
 import { createAuditEvent } from "@/server/services/audit.service";
 import { getServerInventoryStatsMap } from "@/server/services/server-stats.service";
 import { resolveIdentitySecrets } from "@/server/services/identity.service";
@@ -12,6 +15,24 @@ import { createOperationLog } from "@/server/services/operation-log.service";
 import { verifySshConnection } from "@/lib/ssh/verify";
 
 export const SERVER_DUPLICATE_ERROR = "SERVER_DUPLICATE";
+const AWG_HOST_CONFLICT =
+  "Servers with the same host must all use AmneziaWG or all connect directly";
+
+async function awgHostConflict(
+  host: string,
+  useAwg: boolean,
+  exceptId?: string,
+): Promise<string | null> {
+  const other = await db.server.findFirst({
+    where: {
+      host: { equals: host, mode: "insensitive" },
+      useAwg: { not: useAwg },
+      ...(exceptId ? { NOT: { id: exceptId } } : {}),
+    },
+    select: { id: true },
+  });
+  return other ? AWG_HOST_CONFLICT : null;
+}
 
 async function findServerByConnection(
   host: string,
@@ -87,19 +108,30 @@ export async function createServer(
     return { success: false, error: SERVER_DUPLICATE_ERROR };
   }
 
+  const conflict = await awgHostConflict(input.host, input.useAwg);
+  if (conflict) {
+    return { success: false, error: conflict };
+  }
+
   const identity = await resolveIdentitySecrets(input.identityId);
 
-  const sshResult = await verifyServerSsh({
-    host: input.host,
-    port: input.port,
-    username: identity.username,
-    authMethod: identity.authMethod,
-    password: identity.password,
-    privateKey: identity.privateKey,
-    passphrase: identity.passphrase,
-  });
+  const verify = () =>
+    verifyServerSsh({
+      host: input.host,
+      port: input.port,
+      username: identity.username,
+      authMethod: identity.authMethod,
+      password: identity.password,
+      privateKey: identity.privateKey,
+      passphrase: identity.passphrase,
+      useAwg: input.useAwg,
+    });
+  const sshResult = input.useAwg ? await awgGate.shared(verify) : await verify();
 
   if (!sshResult.success) {
+    if (input.useAwg) {
+      await reconcileAwgRoutes().catch(() => undefined);
+    }
     await createOperationLog({
       userId,
       type: "server.create",
@@ -120,6 +152,7 @@ export async function createServer(
         identityId: input.identityId,
         sshHostKeyFingerprint: sshResult.hostKeyFingerprint ?? null,
         sshHostKeyVerified: Boolean(sshResult.hostKeyFingerprint),
+        useAwg: input.useAwg,
       },
     });
   } catch (error) {
@@ -139,6 +172,10 @@ export async function createServer(
     entityId: server.id,
     metadata: { name: server.name, host: server.host },
   });
+
+  if (input.useAwg) {
+    await reconcileAwgRoutes().catch(() => undefined);
+  }
 
   await createOperationLog({
     serverId: server.id,
@@ -177,6 +214,11 @@ export async function updateServer(
     return { success: false, error: SERVER_DUPLICATE_ERROR };
   }
 
+  const conflict = await awgHostConflict(input.host, input.useAwg, id);
+  if (conflict) {
+    return { success: false, error: conflict };
+  }
+
   const hostChanged =
     existing.host !== input.host || existing.port !== input.port;
   const expectedHostKeyFingerprint = hostChanged
@@ -185,18 +227,24 @@ export async function updateServer(
 
   const identity = await resolveIdentitySecrets(input.identityId);
 
-  const sshResult = await verifyServerSsh({
-    host: input.host,
-    port: input.port,
-    username: identity.username,
-    authMethod: identity.authMethod,
-    password: identity.password,
-    privateKey: identity.privateKey,
-    passphrase: identity.passphrase,
-    expectedHostKeyFingerprint,
-  });
+  const verify = () =>
+    verifyServerSsh({
+      host: input.host,
+      port: input.port,
+      username: identity.username,
+      authMethod: identity.authMethod,
+      password: identity.password,
+      privateKey: identity.privateKey,
+      passphrase: identity.passphrase,
+      expectedHostKeyFingerprint,
+      useAwg: input.useAwg,
+    });
+  const sshResult = input.useAwg ? await awgGate.shared(verify) : await verify();
 
   if (!sshResult.success) {
+    if (input.useAwg || existing.useAwg) {
+      await reconcileAwgRoutes().catch(() => undefined);
+    }
     return { success: false, error: sshResult.message };
   }
 
@@ -207,6 +255,7 @@ export async function updateServer(
       host: input.host,
       port: input.port,
       identityId: input.identityId,
+      useAwg: input.useAwg,
       sshHostKeyFingerprint:
         sshResult.hostKeyFingerprint ?? existing.sshHostKeyFingerprint,
       sshHostKeyVerified: hostChanged
@@ -215,11 +264,16 @@ export async function updateServer(
     },
   });
 
+  if (input.useAwg || existing.useAwg) {
+    await reconcileAwgRoutes().catch(() => undefined);
+  }
+
   await createAuditEvent({
     userId,
     action: "SERVER_UPDATED",
     entityType: "server",
     entityId: server.id,
+    metadata: { useAwg: server.useAwg },
   });
 
   return { success: true, server };
@@ -233,6 +287,7 @@ export async function upsertServerFromConfig(
     identityId: string;
     sshHostKeyFingerprint?: string | null;
     sshHostKeyVerified?: boolean;
+    useAwg?: boolean;
   },
   userId: string,
   options?: { tx?: Prisma.TransactionClient; skipAudit?: boolean },
@@ -256,6 +311,7 @@ export async function upsertServerFromConfig(
         identityId: input.identityId,
         sshHostKeyFingerprint: input.sshHostKeyFingerprint ?? null,
         sshHostKeyVerified: input.sshHostKeyVerified ?? false,
+        useAwg: input.useAwg ?? false,
       },
     });
 
@@ -280,6 +336,7 @@ export async function upsertServerFromConfig(
       identityId: input.identityId,
       sshHostKeyFingerprint: input.sshHostKeyFingerprint ?? null,
       sshHostKeyVerified: input.sshHostKeyVerified ?? false,
+      useAwg: input.useAwg ?? false,
     },
   });
 
@@ -330,6 +387,9 @@ export async function deleteServer(
 
   await db.server.delete({ where: { id } });
   clearServerQueue(id);
+  if (server.useAwg) {
+    await reconcileAwgRoutes().catch(() => undefined);
+  }
 
   await createAuditEvent({
     userId,
@@ -363,6 +423,7 @@ export async function getServerSshConfig(serverId: string) {
     privateKey: identity.privateKey,
     passphrase: identity.passphrase,
     expectedHostKeyFingerprint: server.sshHostKeyFingerprint,
+    useAwg: server.useAwg,
   };
 }
 
@@ -375,9 +436,11 @@ async function verifyServerSsh(config: {
   privateKey?: string;
   passphrase?: string;
   expectedHostKeyFingerprint?: string | null;
+  useAwg?: boolean;
 }) {
+  const host = config.useAwg ? await steerAwgDestinationUnlocked(config.host) : config.host;
   return verifySshConnection({
-    host: config.host,
+    host,
     port: config.port,
     username: config.username,
     password: config.password,

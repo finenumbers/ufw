@@ -7,6 +7,7 @@ import { ServerForm } from "@/components/servers/server-form";
 import { readSshTargetPolicy } from "@/lib/ssh/target-policy";
 import { getServerByAddressAction } from "@/server/actions/servers";
 import { listIdentitiesAction } from "@/server/actions/identities";
+import { awgConfigExists } from "@/server/services/awg.service";
 
 type PageProps = {
   params: Promise<{ serverAddress: string }>;
@@ -18,6 +19,7 @@ export default async function EditServerPage({ params }: PageProps) {
   const { serverAddress } = await params;
   const server = await getServerByAddressAction(serverAddress);
   const identities = await listIdentitiesAction();
+  const awgConfigured = await awgConfigExists();
 
   if (!server) {
     notFound();
@@ -53,8 +55,10 @@ export default async function EditServerPage({ params }: PageProps) {
               host: server.host,
               port: server.port,
               identityId: server.identityId,
+              useAwg: server.useAwg,
             }}
             sshTargetPolicy={readSshTargetPolicy()}
+            awgConfigured={awgConfigured}
           />
         </CardContent>
       </Card>

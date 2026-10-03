@@ -25,6 +25,7 @@ test("createServerSchema uses the passed policy and ignores process env", () => 
       host: "host.docker.internal",
       port: 22,
       identityId: "identity",
+      useAwg: false,
     });
     assert.equal(parsed.success, false);
 
@@ -34,6 +35,7 @@ test("createServerSchema uses the passed policy and ignores process env", () => 
       host: "host.docker.internal",
       port: 22,
       identityId: "identity",
+      useAwg: false,
     });
     assert.equal(allowed.success, true);
 
@@ -42,6 +44,7 @@ test("createServerSchema uses the passed policy and ignores process env", () => 
       host: "172.17.0.1",
       port: 22,
       identityId: "identity",
+      useAwg: false,
     });
     assert.equal(literalGateway.success, false);
   } finally {

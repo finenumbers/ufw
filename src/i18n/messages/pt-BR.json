@@ -7,7 +7,8 @@
     "noServers": "Nenhum servidor ainda",
     "operationsHistory": "Histórico de operações",
     "identities": "Identidades SSH",
-    "logout": "Sair"
+    "logout": "Sair",
+    "amneziawg": "AmneziaWG"
   },
   "footer": {
     "documentation": "Documentação",
@@ -111,7 +112,11 @@
     "updating": "Atualizando...",
     "missingServerId": "ID do servidor ausente",
     "duplicateServer": "O servidor {host}:{port} com esta identidade SSH já está registrado.",
-    "unexpectedError": "Não foi possível salvar o servidor. Tente novamente."
+    "unexpectedError": "Não foi possível salvar o servidor. Tente novamente.",
+    "useAwg": "Conectar por AmneziaWG",
+    "useAwgHint": "Só este nó usa o túnel. O restante do tráfego do contêiner segue a rota normal.",
+    "useAwgDisabled": "Envie primeiro uma configuração AmneziaWG.",
+    "useAwgInternal": "Se o nome existe só dentro da VPN, informe o endereço IPv4."
   },
   "identities": {
     "title": "Identidades SSH",
@@ -387,5 +392,31 @@
       "DENIED": "Denied",
       "UNKNOWN": "Unknown"
     }
+  },
+  "awg": {
+    "title": "AmneziaWG",
+    "description": "Um túnel para os nós que o ativam. A rota padrão do contêiner não muda.",
+    "status": {
+      "missing": "Sem configuração",
+      "disabled": "Desligado",
+      "connected": "Conectado",
+      "handshake": "Sem handshake recente",
+      "error": "Erro",
+      "other": "Outra instância segura o túnel"
+    },
+    "address": "Endereço da interface",
+    "endpoint": "Endpoint",
+    "allowedIps": "AllowedIPs",
+    "updated": "Atualizado",
+    "confLabel": "Configuração do AmneziaVPN",
+    "confPlaceholder": "Cole o .conf de um túnel",
+    "fileLabel": "Ou escolha um arquivo .conf",
+    "password": "Senha do administrador",
+    "save": "Salvar e conectar",
+    "working": "Executando...",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "delete": "Excluir configuração",
+    "helperNote": "O túnel roda dentro do contêiner do aplicativo e não é a rota padrão."
   }
 }

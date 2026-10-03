@@ -7,7 +7,8 @@
     "noServers": "Aún no hay servidores",
     "operationsHistory": "Historial de operaciones",
     "identities": "Identidades SSH",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "amneziawg": "AmneziaWG"
   },
   "footer": {
     "documentation": "Documentación",
@@ -111,7 +112,11 @@
     "updating": "Actualizando...",
     "missingServerId": "Falta el ID del servidor",
     "duplicateServer": "El servidor {host}:{port} con esta identidad SSH ya está registrado.",
-    "unexpectedError": "No se pudo guardar el servidor. Inténtelo de nuevo."
+    "unexpectedError": "No se pudo guardar el servidor. Inténtelo de nuevo.",
+    "useAwg": "Conectar por AmneziaWG",
+    "useAwgHint": "Solo este nodo usa el túnel. El resto del tráfico del contenedor sigue su ruta normal.",
+    "useAwgDisabled": "Suba primero una configuración de AmneziaWG.",
+    "useAwgInternal": "Si el nombre solo existe dentro de la VPN, indique su dirección IPv4."
   },
   "identities": {
     "title": "Identidades SSH",
@@ -387,5 +392,31 @@
       "DENIED": "Denied",
       "UNKNOWN": "Unknown"
     }
+  },
+  "awg": {
+    "title": "AmneziaWG",
+    "description": "Un túnel para los nodos que lo activan. La ruta predeterminada del contenedor no cambia.",
+    "status": {
+      "missing": "Sin configuración",
+      "disabled": "Apagado",
+      "connected": "Conectado",
+      "handshake": "Sin handshake reciente",
+      "error": "Error",
+      "other": "Otra instancia tiene el túnel"
+    },
+    "address": "Dirección de la interfaz",
+    "endpoint": "Endpoint",
+    "allowedIps": "AllowedIPs",
+    "updated": "Actualizado",
+    "confLabel": "Configuración de AmneziaVPN",
+    "confPlaceholder": "Pegue el .conf de un túnel",
+    "fileLabel": "O elija un archivo .conf",
+    "password": "Contraseña de administrador",
+    "save": "Guardar y conectar",
+    "working": "Trabajando...",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "delete": "Eliminar configuración",
+    "helperNote": "El túnel funciona dentro del contenedor de la aplicación y no es la ruta predeterminada."
   }
 }

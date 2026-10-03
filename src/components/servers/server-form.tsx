@@ -30,6 +30,7 @@ type ServerFormProps = {
   identities: IdentityListItem[];
   defaultValues?: Partial<ServerInput>;
   sshTargetPolicy: SshTargetPolicy;
+  awgConfigured?: boolean;
 };
 
 export function ServerForm({
@@ -38,6 +39,7 @@ export function ServerForm({
   identities,
   defaultValues,
   sshTargetPolicy,
+  awgConfigured = false,
 }: ServerFormProps) {
   const router = useRouter();
   const t = useTranslations("serverForm");
@@ -58,9 +60,11 @@ export function ServerForm({
       host: "",
       port: 22,
       identityId: identities[0]?.id ?? "",
+      useAwg: false,
       ...defaultValues,
     },
   });
+  const useAwg = form.watch("useAwg");
 
   const identityId = form.watch("identityId");
 
@@ -140,6 +144,25 @@ export function ServerForm({
           </SelectContent>
         </Select>
       </div>
+
+      <label className="flex items-start gap-3 rounded-md border px-3 py-3 text-sm">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={Boolean(useAwg) && awgConfigured}
+          disabled={!awgConfigured || loading}
+          onChange={(event) => form.setValue("useAwg", event.target.checked && awgConfigured)}
+        />
+        <span>
+          <span className="font-medium">{t("useAwg")}</span>
+          <span className="mt-1 block text-muted-foreground">
+            {awgConfigured ? t("useAwgHint") : t("useAwgDisabled")}
+          </span>
+          {awgConfigured ? (
+            <span className="mt-1 block text-muted-foreground">{t("useAwgInternal")}</span>
+          ) : null}
+        </span>
+      </label>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 

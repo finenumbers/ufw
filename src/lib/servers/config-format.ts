@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { assertConfigEntryCounts } from "@/lib/imports/import-limits";
 import { authMethodSchema, refineAuthSecrets } from "@/lib/validations/auth-secrets";
+import { validateAwgHost } from "@/lib/awg/policy";
 import { readSshTargetPolicy } from "@/lib/ssh/target-policy";
 import { validateSshHost } from "@/lib/validations/ssh-host";
 
@@ -25,9 +26,12 @@ export const serverConfigEntrySchema = z
     port: z.coerce.number().int().min(1).max(65535),
     identityName: z.string().min(1),
     sshHostKeyFingerprint: z.string().nullable().optional(),
+    useAwg: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
-    const hostError = validateSshHost(data.host, readSshTargetPolicy());
+    const hostError = data.useAwg
+      ? validateAwgHost(data.host)
+      : validateSshHost(data.host, readSshTargetPolicy());
     if (hostError) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -57,8 +61,25 @@ export type NormalizedServersConfig = {
     port: number;
     identityName: string;
     sshHostKeyFingerprint?: string | null;
+    useAwg: boolean;
   }>;
 };
+
+export function assertConsistentUseAwg(
+  servers: Array<{ host: string; useAwg?: boolean }>,
+): void {
+  const flags = new Map<string, boolean>();
+  for (const server of servers) {
+    const flag = server.useAwg ?? false;
+    const previous = flags.get(server.host.toLowerCase());
+    if (previous !== undefined && previous !== flag) {
+      throw new Error(
+        `Servers with the same host must all use AmneziaWG or all connect directly: ${server.host}`,
+      );
+    }
+    flags.set(server.host.toLowerCase(), flag);
+  }
+}
 
 export const UNSUPPORTED_CONFIG_FORMAT_MESSAGE =
   "Unsupported configuration format. Export a v2 file from a current version.";
@@ -108,6 +129,7 @@ export type ServersConfigImportDiff = {
 export function normalizeServersConfigFile(file: ServersConfigFile): NormalizedServersConfig {
   assertUniqueIdentityNames(file.identities);
   assertUniqueServerConfigKeys(file.servers);
+  assertConsistentUseAwg(file.servers);
 
   const identityNames = new Set(file.identities.map((identity) => identity.name));
   for (const server of file.servers) {
@@ -124,6 +146,7 @@ export function normalizeServersConfigFile(file: ServersConfigFile): NormalizedS
       port: server.port,
       identityName: server.identityName,
       sshHostKeyFingerprint: server.sshHostKeyFingerprint,
+      useAwg: server.useAwg ?? false,
     })),
   };
 }
@@ -136,6 +159,7 @@ function normalizedEntryMatches(
     port: number;
     identityName: string;
     sshHostKeyFingerprint: string | null;
+    useAwg?: boolean;
     identity: IdentityConfigEntry;
   },
 ): boolean {
@@ -145,6 +169,7 @@ function normalizedEntryMatches(
     left.port === right.port &&
     left.identityName === right.identityName &&
     (left.sshHostKeyFingerprint ?? null) === (right.sshHostKeyFingerprint ?? null) &&
+    (left.useAwg ?? false) === (right.useAwg ?? false) &&
     left.identity.name === right.identity.name &&
     left.identity.username === right.identity.username &&
     left.identity.authMethod === right.identity.authMethod &&
@@ -163,6 +188,7 @@ export function diffServersConfigEntries(
     port: number;
     identityName: string;
     sshHostKeyFingerprint: string | null;
+    useAwg?: boolean;
     identity: IdentityConfigEntry;
   }>,
 ): ServersConfigImportDiff {

@@ -28,6 +28,7 @@ Run only over **HTTPS** in production (`APP_URL` must use https except localhost
 | Secret | Key |
 |--------|-----|
 | Identity passwords and keys | `APP_ENCRYPTION_KEY` (32 bytes) |
+| AmneziaWG private key | `APP_ENCRYPTION_KEY`; replaced or deleted only after the admin password is entered again |
 | Session signing | `BETTER_AUTH_SECRET` (min 32 chars in prod) |
 
 Rotating `APP_ENCRYPTION_KEY` without re-importing identities renders stored ciphertext unusable.
@@ -40,6 +41,7 @@ Production compose (`docker-compose.prod.yml`):
 - App listens inside Docker network for NPM
 - Target SSH from app container to managed servers
 - ICMP from the app container to pinned addresses of managed servers
+- Optional AmneziaWG (`NET_ADMIN` and `/dev/net/tun`) inside the app container. The helper accepts only host routes (`/32`) and refuses the VPN endpoint, container subnets, and a default route. A compromised app process can still steer extra host routes into an already-up tunnel. Health does not depend on the tunnel
 - HTTPS from the app container to cheburcheck.ru to check whether managed server hosts are restricted
 
 TLS terminates at **Nginx Proxy Manager**. Internal HTTP between NPM and `ufw-app` is by design — see [Nginx Proxy Manager](../deployment/nginx-proxy-manager.md).

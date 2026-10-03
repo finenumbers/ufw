@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { AppVersionFooter } from "@/components/layout/app-version-footer";
@@ -9,6 +10,8 @@ import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { ServerBlockBadge } from "@/components/layout/server-block-badge";
 import { ServerReachabilityBadge } from "@/components/layout/server-reachability-badge";
 import { useServerReachability } from "@/components/layout/reachability-provider";
+import { awgStatusTone, emptyAwgStatus } from "@/components/amneziawg/awg-settings";
+import type { AwgPublicStatus } from "@/server/services/awg.service";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth-client";
 import { getDocsUrl } from "@/lib/docs-url";
@@ -57,6 +60,27 @@ export function AppSidebar({ servers }: AppSidebarProps) {
   const pathname = usePathname();
   const locale = useLocale() as AppLocale;
   const t = useTranslations();
+  const [awg, setAwg] = useState<AwgPublicStatus>(emptyAwgStatus);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      void fetch("/api/amneziawg/status")
+        .then((response) => (response.ok ? response.json() : null))
+        .then((body: AwgPublicStatus | null) => {
+          if (!cancelled && body) setAwg(body);
+        })
+        .catch(() => undefined);
+    };
+    load();
+    const timer = setInterval(load, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
+  const tone = awgStatusTone(awg);
 
   async function handleLogout() {
     await signOut();
@@ -94,6 +118,20 @@ export function AppSidebar({ servers }: AppSidebarProps) {
       <div className="space-y-2 border-t p-4">
         <Button asChild variant="ghost" className="w-full justify-start">
           <Link href="/operations">{t("sidebar.operationsHistory")}</Link>
+        </Button>
+        <Button asChild variant="ghost" className="w-full justify-start">
+          <Link href="/amneziawg" className="flex items-center gap-2">
+            <span
+              className={cn(
+                "h-2 w-2 rounded-full",
+                tone === "ok" && "bg-emerald-500",
+                tone === "warn" && "bg-amber-500",
+                tone === "bad" && "bg-red-500",
+                tone === "idle" && "bg-zinc-400",
+              )}
+            />
+            {t("sidebar.amneziawg")}
+          </Link>
         </Button>
         <Button asChild variant="ghost" className="w-full justify-start">
           <Link href="/identities">{t("sidebar.identities")}</Link>

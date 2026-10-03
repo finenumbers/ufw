@@ -7,6 +7,7 @@ UFW Remote Manager — **privileged admin tool**: хранит SSH secrets, вы
 | Asset | Risk | Mitigation |
 |-------|------|------------|
 | SSH credentials | Disclosure | AES-256-GCM at rest; decrypted only for connections |
+| AmneziaWG private key | Disclosure | AES-256-GCM; замена и удаление после повторного пароля администратора |
 | Session cookie | Hijack | HTTPS, HTTP-only cookies, `BETTER_AUTH_SECRET` |
 | Host impersonation | MITM on SSH | Host key fingerprint on first connect; unverified blocks apply |
 | Unauthorized admin | Brute force | Single user; setup rate limit; strong passwords |

@@ -22,6 +22,10 @@ On the machine, allow TCP/22 from that container subnet only. The timeout messag
 
 Enabling UFW on this host, or denying the container subnet, can drop forwarding between the app network and Nginx Proxy Manager. The panel can disappear while SSH from the container still works. Keep console access before you enable UFW or tighten rules here.
 
+## AmneziaWG
+
+On create and edit, a node can connect through the single AmneziaWG tunnel. Nodes without that choice stay on the container's normal route. The tunnel is not the default route. If the tunnel is down, that node is not reached directly. A hostname is resolved by the container DNS, then only that IPv4 is routed into `awg0`. A name that exists only inside the VPN is entered as its internal IPv4 address. Changing only this choice keeps the stored SSH host key and checks it again.
+
 ## Connection verification
 
 **Create Server** and **Edit Server** (when host, port, or identity change) run an SSH connection test automatically. There is no separate *Test connection* button on the edit form.

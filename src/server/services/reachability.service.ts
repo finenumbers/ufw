@@ -1,6 +1,8 @@
 import PQueue from "p-queue";
 
+import { awgGate } from "@/lib/awg/gate";
 import { db } from "@/lib/db";
+import { steerAwgDestinationUnlocked } from "@/server/services/awg-steer";
 import { createChildLogger } from "@/lib/logger";
 import { applyAddressResults } from "@/lib/reachability/cycle";
 import { probeAddress, type PingOutcome } from "@/lib/reachability/ping";
@@ -83,9 +85,10 @@ async function refresh(): Promise<void> {
   const state = getState();
   try {
     const servers = await db.server.findMany({
-      select: { id: true, host: true },
+      select: { id: true, host: true, useAwg: true },
       orderBy: { name: "asc" },
     });
+    const awgHosts = new Set(servers.filter((server) => server.useAwg).map((server) => server.host));
     const hosts = [...new Set(servers.map((server) => server.host))];
     const skipped = new Set(hosts.filter((host) => shouldSkipPingHost(host)));
     const queue = new PQueue({ concurrency: PROBE_CONCURRENCY });
@@ -96,7 +99,22 @@ async function refresh(): Promise<void> {
         .filter((host) => !skipped.has(host))
         .map((host) =>
           queue.add(async () => {
-            outcomes.set(host, await probeAddress(host));
+            if (!awgHosts.has(host)) {
+              outcomes.set(host, await probeAddress(host));
+              return;
+            }
+            try {
+              const outcome = await awgGate.shared(async () => {
+                const ip = await steerAwgDestinationUnlocked(host);
+                return probeAddress(ip);
+              });
+              outcomes.set(host, outcome);
+            } catch (error) {
+              outcomes.set(host, {
+                kind: "unavailable",
+                reason: error instanceof Error ? error.message : "AmneziaWG is down",
+              });
+            }
           }),
         ),
     );

@@ -7,7 +7,8 @@
     "noServers": "Aucun serveur pour l'instant",
     "operationsHistory": "Historique des opérations",
     "identities": "Identités SSH",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "amneziawg": "AmneziaWG"
   },
   "footer": {
     "documentation": "Documentation",
@@ -111,7 +112,11 @@
     "updating": "Mise à jour...",
     "missingServerId": "ID du serveur manquant",
     "duplicateServer": "Le serveur {host}:{port} avec cette identité SSH est déjà enregistré.",
-    "unexpectedError": "Impossible d'enregistrer le serveur. Veuillez réessayer."
+    "unexpectedError": "Impossible d'enregistrer le serveur. Veuillez réessayer.",
+    "useAwg": "Passer par AmneziaWG",
+    "useAwgHint": "Seul ce nœud utilise le tunnel. Le reste du trafic du conteneur garde sa route normale.",
+    "useAwgDisabled": "Importez d'abord une configuration AmneziaWG.",
+    "useAwgInternal": "Si le nom n'existe que dans le VPN, indiquez son adresse IPv4."
   },
   "identities": {
     "title": "Identités SSH",
@@ -387,5 +392,31 @@
       "DENIED": "Denied",
       "UNKNOWN": "Unknown"
     }
+  },
+  "awg": {
+    "title": "AmneziaWG",
+    "description": "Un seul tunnel pour les nœuds qui l'activent. La route par défaut du conteneur ne change pas.",
+    "status": {
+      "missing": "Pas de configuration",
+      "disabled": "Arrêté",
+      "connected": "Connecté",
+      "handshake": "Pas de handshake récent",
+      "error": "Erreur",
+      "other": "Une autre instance détient le tunnel"
+    },
+    "address": "Adresse de l'interface",
+    "endpoint": "Endpoint",
+    "allowedIps": "AllowedIPs",
+    "updated": "Mis à jour",
+    "confLabel": "Configuration AmneziaVPN",
+    "confPlaceholder": "Collez le .conf d'un tunnel",
+    "fileLabel": "Ou choisissez un fichier .conf",
+    "password": "Mot de passe administrateur",
+    "save": "Enregistrer et connecter",
+    "working": "En cours...",
+    "connect": "Connecter",
+    "disconnect": "Déconnecter",
+    "delete": "Supprimer la configuration",
+    "helperNote": "Le tunnel tourne dans le conteneur de l'application et n'est pas la route par défaut."
   }
 }

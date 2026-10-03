@@ -7,7 +7,8 @@
     "noServers": "Noch keine Server",
     "operationsHistory": "Vorgangsverlauf",
     "identities": "SSH-Identitäten",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "amneziawg": "AmneziaWG"
   },
   "footer": {
     "documentation": "Dokumentation",
@@ -111,7 +112,11 @@
     "updating": "Wird aktualisiert...",
     "missingServerId": "Server-ID fehlt",
     "duplicateServer": "Server {host}:{port} mit dieser SSH-Identität ist bereits registriert.",
-    "unexpectedError": "Server konnte nicht gespeichert werden. Bitte erneut versuchen."
+    "unexpectedError": "Server konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "useAwg": "Über AmneziaWG verbinden",
+    "useAwgHint": "Nur dieser Knoten nutzt den Tunnel. Der übrige Verkehr des Containers bleibt auf der normalen Route.",
+    "useAwgDisabled": "Laden Sie zuerst eine AmneziaWG-Konfiguration hoch.",
+    "useAwgInternal": "Wenn der Name nur im VPN existiert, geben Sie seine IPv4-Adresse ein."
   },
   "identities": {
     "title": "SSH-Identitäten",
@@ -387,5 +392,31 @@
       "DENIED": "Denied",
       "UNKNOWN": "Unknown"
     }
+  },
+  "awg": {
+    "title": "AmneziaWG",
+    "description": "Ein Tunnel für Knoten, die ihn nutzen. Die Standardroute des Containers bleibt unverändert.",
+    "status": {
+      "missing": "Nicht konfiguriert",
+      "disabled": "Aus",
+      "connected": "Verbunden",
+      "handshake": "Kein aktueller Handshake",
+      "error": "Fehler",
+      "other": "Eine andere Instanz hält den Tunnel"
+    },
+    "address": "Schnittstellenadresse",
+    "endpoint": "Endpoint",
+    "allowedIps": "AllowedIPs",
+    "updated": "Aktualisiert",
+    "confLabel": "Konfiguration aus AmneziaVPN",
+    "confPlaceholder": ".conf eines Tunnels einfügen",
+    "fileLabel": "Oder eine .conf-Datei wählen",
+    "password": "Administratorpasswort",
+    "save": "Speichern und verbinden",
+    "working": "Wird ausgeführt...",
+    "connect": "Verbinden",
+    "disconnect": "Trennen",
+    "delete": "Konfiguration löschen",
+    "helperNote": "Der Tunnel läuft im App-Container und ist nicht die Standardroute."
   }
 }

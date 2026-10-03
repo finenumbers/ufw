@@ -7,7 +7,8 @@
     "noServers": "Nessun server ancora",
     "operationsHistory": "Cronologia operazioni",
     "identities": "Identità SSH",
-    "logout": "Esci"
+    "logout": "Esci",
+    "amneziawg": "AmneziaWG"
   },
   "footer": {
     "documentation": "Documentazione",
@@ -111,7 +112,11 @@
     "updating": "Aggiornamento...",
     "missingServerId": "ID server mancante",
     "duplicateServer": "Il server {host}:{port} con questa identità SSH è già registrato.",
-    "unexpectedError": "Impossibile salvare il server. Riprova."
+    "unexpectedError": "Impossibile salvare il server. Riprova.",
+    "useAwg": "Passa da AmneziaWG",
+    "useAwgHint": "Solo questo nodo usa il tunnel. Il resto del traffico del contenitore resta sulla rotta normale.",
+    "useAwgDisabled": "Carica prima una configurazione AmneziaWG.",
+    "useAwgInternal": "Se il nome esiste solo nella VPN, inserisci il suo indirizzo IPv4."
   },
   "identities": {
     "title": "Identità SSH",
@@ -387,5 +392,31 @@
       "DENIED": "Denied",
       "UNKNOWN": "Unknown"
     }
+  },
+  "awg": {
+    "title": "AmneziaWG",
+    "description": "Un tunnel per i nodi che lo attivano. La rotta predefinita del contenitore non cambia.",
+    "status": {
+      "missing": "Non configurato",
+      "disabled": "Spento",
+      "connected": "Connesso",
+      "handshake": "Nessun handshake recente",
+      "error": "Errore",
+      "other": "Un'altra istanza tiene il tunnel"
+    },
+    "address": "Indirizzo interfaccia",
+    "endpoint": "Endpoint",
+    "allowedIps": "AllowedIPs",
+    "updated": "Aggiornato",
+    "confLabel": "Configurazione da AmneziaVPN",
+    "confPlaceholder": "Incolla il .conf di un tunnel",
+    "fileLabel": "Oppure scegli un file .conf",
+    "password": "Password amministratore",
+    "save": "Salva e connetti",
+    "working": "Operazione...",
+    "connect": "Connetti",
+    "disconnect": "Disconnetti",
+    "delete": "Elimina configurazione",
+    "helperNote": "Il tunnel gira nel contenitore dell'applicazione e non è la rotta predefinita."
   }
 }

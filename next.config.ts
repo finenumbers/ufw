@@ -41,7 +41,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["ssh2", "pino", "pino-pretty"],
+  serverExternalPackages: ["ssh2", "pino", "pino-pretty", "pg"],
   outputFileTracingRoot: process.cwd(),
   outputFileTracingIncludes: {
     "/**": ["./node_modules/@swc/helpers/**/*"],

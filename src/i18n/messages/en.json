@@ -7,7 +7,8 @@
     "noServers": "No servers yet",
     "operationsHistory": "Operations History",
     "identities": "SSH Identities",
-    "logout": "Logout"
+    "logout": "Logout",
+    "amneziawg": "AmneziaWG"
   },
   "footer": {
     "documentation": "Documentation",
@@ -111,7 +112,11 @@
     "updating": "Updating...",
     "missingServerId": "Missing server ID",
     "duplicateServer": "Server {host}:{port} with this SSH identity is already registered.",
-    "unexpectedError": "Could not save the server. Please try again."
+    "unexpectedError": "Could not save the server. Please try again.",
+    "useAwg": "Connect through AmneziaWG",
+    "useAwgHint": "Only this node uses the tunnel. Other container traffic stays on its normal route.",
+    "useAwgDisabled": "Upload an AmneziaWG config before choosing this.",
+    "useAwgInternal": "If the name exists only inside the VPN, enter its IPv4 address."
   },
   "identities": {
     "title": "SSH Identities",
@@ -387,5 +392,31 @@
       "DENIED": "Denied",
       "UNKNOWN": "Unknown"
     }
+  },
+  "awg": {
+    "title": "AmneziaWG",
+    "description": "One tunnel for nodes that opt in. The container default route stays unchanged.",
+    "status": {
+      "missing": "Not configured",
+      "disabled": "Off",
+      "connected": "Connected",
+      "handshake": "No recent handshake",
+      "error": "Error",
+      "other": "Another instance holds the tunnel"
+    },
+    "address": "Interface address",
+    "endpoint": "Endpoint",
+    "allowedIps": "AllowedIPs",
+    "updated": "Updated",
+    "confLabel": "Config from AmneziaVPN",
+    "confPlaceholder": "Paste the .conf of one tunnel",
+    "fileLabel": "Or choose a .conf file",
+    "password": "Administrator password",
+    "save": "Save and connect",
+    "working": "Working...",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "delete": "Delete config",
+    "helperNote": "The tunnel runs inside the app container and is not the default route."
   }
 }

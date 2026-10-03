@@ -1,6 +1,8 @@
 import type { Prisma } from "@prisma/client";
 
+import { awgGate } from "@/lib/awg/gate";
 import { db } from "@/lib/db";
+import { steerAwgDestinationUnlocked } from "@/server/services/awg-steer";
 import { getPortScanHistoryLimit } from "@/lib/port-scan/config";
 import { buildCoverageMap } from "@/lib/port-scan/coverage";
 import { mergeDiscoveryAndEnrichment, summarizeFindings } from "@/lib/port-scan/normalize";
@@ -220,32 +222,37 @@ async function runPortScanPipeline(scanId: string, tracker: OperationTracker): P
     await tracker.markRunning();
     await tracker.startStep("resolve_target", semanticStep("resolve_target", "steps.port_scan_resolve"));
 
-    const resolved = await resolveScanTarget(scan.server.host);
-    if (resolved.host !== scan.targetHost) {
+    if (scan.server.host !== scan.targetHost) {
       throw new Error("Scan target mismatch");
     }
 
-    const scanAddress = resolved.ip;
+    const probe = async (scanAddress: string) => {
+      await db.portScan.update({
+        where: { id: scanId },
+        data: {
+          status: "RUNNING",
+          targetIp: scanAddress,
+        },
+      });
 
-    await db.portScan.update({
-      where: { id: scanId },
-      data: {
-        status: "RUNNING",
-        targetIp: resolved.ip,
-      },
-    });
+      await tracker.completeStep("resolve_target");
+      await tracker.startStep("discovery", semanticStep("discovery", "steps.port_scan_discovery"));
+      await tracker.setProgress(1, 4, { key: "messages.port_scan_discovery" });
 
-    await tracker.completeStep("resolve_target");
-    await tracker.startStep("discovery", semanticStep("discovery", "steps.port_scan_discovery"));
-    await tracker.setProgress(1, 4, { key: "messages.port_scan_discovery" });
+      const discovery = await runNaabuDiscovery(scanAddress);
 
-    const discovery = await runNaabuDiscovery(scanAddress);
+      await tracker.completeStep("discovery");
+      await tracker.startStep("enrichment", semanticStep("enrichment", "steps.port_scan_enrichment"));
+      await tracker.setProgress(2, 4, { key: "messages.port_scan_enrichment" });
 
-    await tracker.completeStep("discovery");
-    await tracker.startStep("enrichment", semanticStep("enrichment", "steps.port_scan_enrichment"));
-    await tracker.setProgress(2, 4, { key: "messages.port_scan_enrichment" });
+      const enrichment = await runNmapEnrichment(scanAddress, discovery.rows);
+      return { discovery, enrichment };
+    };
 
-    const enrichment = await runNmapEnrichment(scanAddress, discovery.rows);
+    const probed = scan.server.useAwg
+      ? await awgGate.shared(async () => probe(await steerAwgDestinationUnlocked(scan.server.host)))
+      : await probe((await resolveScanTarget(scan.server.host)).ip);
+    const { discovery, enrichment } = probed;
 
     await tracker.completeStep("enrichment");
     await tracker.startStep("normalize", semanticStep("normalize", "steps.port_scan_normalize"));

@@ -1,6 +1,6 @@
 # UFW Remote Manager — Documentation
 
-Choose your language. Each locale contains **29 topics** aligned with **v0.9.17**.
+Choose your language. Each locale contains **29 topics** aligned with **v0.9.18**.
 
 | Language | Index |
 |----------|-------|

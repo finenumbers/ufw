@@ -150,6 +150,9 @@ enum AuditAction {
   LOGOUT
   PORT_SCAN_STARTED
   PORT_SCAN_COMPLETED
+  AWG_CONFIG_APPLIED
+  AWG_DISCONNECTED
+  AWG_CONFIG_DELETED
 }
 
 enum PortScanPerspective {
@@ -216,6 +219,7 @@ model Server {
   identity              SshIdentity @relation(fields: [identityId], references: [id], onDelete: Restrict)
   sshHostKeyFingerprint String?
   sshHostKeyVerified    Boolean     @default(false)
+  useAwg                Boolean     @default(false)
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
 
@@ -227,6 +231,26 @@ model Server {
   portScans     PortScan[]
   @@unique([host, port, identityId])
   @@map("server")
+}
+
+model AmneziaWgConfig {
+  id             String   @id @default("default")
+  address        String
+  endpointHost   String
+  endpointPort   Int
+  allowedIps     String
+  peerPublicKey  String
+  mtu            Int
+  keepalive      Int
+  enabled        Boolean  @default(false)
+  encryptedData  String
+  iv             String
+  authTag        String
+  keyVersion     Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("amnezia_wg_config")
 }
 
 model ServerSnapshot {

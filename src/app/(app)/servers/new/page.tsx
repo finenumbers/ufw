@@ -4,10 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ServerForm } from "@/components/servers/server-form";
 import { readSshTargetPolicy } from "@/lib/ssh/target-policy";
 import { listIdentitiesAction } from "@/server/actions/identities";
+import { awgConfigExists } from "@/server/services/awg.service";
 
 export default async function NewServerPage() {
   const t = await getTranslations("servers.new");
   const identities = await listIdentitiesAction();
+  const awgConfigured = await awgConfigExists();
 
   return (
     <div className="space-y-6">
@@ -25,6 +27,7 @@ export default async function NewServerPage() {
             mode="create"
             identities={identities}
             sshTargetPolicy={readSshTargetPolicy()}
+            awgConfigured={awgConfigured}
           />
         </CardContent>
       </Card>

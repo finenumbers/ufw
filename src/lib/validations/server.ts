@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { validateAwgHost } from "@/lib/awg/policy";
 import {
   DEFAULT_SSH_TARGET_POLICY,
   validateSshHost,
@@ -13,9 +14,10 @@ export function createServerSchema(policy: SshTargetPolicy = DEFAULT_SSH_TARGET_
       host: z.string().min(1, "Host is required"),
       port: z.coerce.number().int().min(1).max(65535),
       identityId: z.string().min(1, "Identity is required"),
+      useAwg: z.boolean(),
     })
     .superRefine((data, ctx) => {
-      const hostError = validateSshHost(data.host, policy);
+      const hostError = data.useAwg ? validateAwgHost(data.host) : validateSshHost(data.host, policy);
       if (hostError) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

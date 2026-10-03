@@ -25,7 +25,9 @@ Verifizieren:
 
 Beim Upgrade von vor v0.9.0 sicherstellen, dass Migrate abgeschlossen ist — Legacy-Inventar-Daten bereinigt.
 
-Image pinnen: `GHCR_IMAGE_TAG=v0.9.17` in `.env`.
+Image pinnen: `GHCR_IMAGE_TAG=v0.9.18` in `.env`.
+
+v0.9.18: optionales AmneziaWG nur für markierte Knoten. Container mit `NET_ADMIN` und `/dev/net/tun` neu erstellen. Die Standardroute bleibt direkt.
 
 ## Rollback
 

@@ -16,6 +16,7 @@ import {
 import { createAuditEvent } from "@/server/services/audit.service";
 import { prepareServersForMaintenanceOperation } from "@/server/services/apply-maintenance";
 import { upsertIdentityFromConfig } from "@/server/services/identity.service";
+import { reconcileAwgRoutes } from "@/server/services/awg.service";
 import { upsertServerFromConfig } from "@/server/services/server.service";
 
 type ExistingConfigSnapshotEntry = Awaited<
@@ -59,6 +60,7 @@ async function listExistingConfigSnapshot() {
         port: server.port,
         identityName: server.identity.name,
         sshHostKeyFingerprint: server.sshHostKeyFingerprint,
+        useAwg: server.useAwg,
         identity,
       };
     }),
@@ -97,6 +99,7 @@ export async function buildServersConfigExport(
       port: server.port,
       identityName: server.identityName,
       sshHostKeyFingerprint: server.sshHostKeyFingerprint,
+      ...(server.useAwg ? { useAwg: true } : {}),
     })),
   };
 
@@ -179,6 +182,7 @@ async function applyNormalizedConfigInTransaction(
         identityId,
         sshHostKeyFingerprint: entry.sshHostKeyFingerprint,
         sshHostKeyVerified: false,
+        useAwg: entry.useAwg,
       },
       userId,
       { tx, skipAudit: true },
@@ -234,6 +238,8 @@ export async function applyServersConfigImport(
   for (const serverId of deletedServerIds) {
     clearServerQueue(serverId);
   }
+
+  await reconcileAwgRoutes().catch(() => undefined);
 
   await createAuditEvent({
     userId,
