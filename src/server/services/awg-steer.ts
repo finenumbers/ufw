@@ -7,7 +7,6 @@ import {
   isIpv4,
   validateAwgHost,
 } from "@/lib/awg/policy";
-import { awgGate } from "@/lib/awg/gate";
 import { readContainerRoutes } from "@/lib/ssh/docker-host-gateway";
 import { db } from "@/lib/db";
 import {
@@ -16,10 +15,6 @@ import {
 } from "@/server/services/awg-helper-client";
 
 const CONFIG_ID = "default";
-
-export async function steerAwgDestination(host: string): Promise<string> {
-  return awgGate.shared(() => steerAwgDestinationUnlocked(host));
-}
 
 export async function steerAwgDestinationUnlocked(host: string): Promise<string> {
   const row = await db.amneziaWgConfig.findUnique({ where: { id: CONFIG_ID } });
