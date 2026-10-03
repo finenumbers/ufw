@@ -22,6 +22,16 @@ test("parseContainerRoutes uses the lowest-metric gateway inside its own subnet"
   assert.deepEqual(routes.connectedSubnets.sort(), ["172.17.0.0/16", "172.21.0.0/16"]);
 });
 
+test("parseContainerRoutes ignores AmneziaWG host routes", () => {
+  const routes = parseContainerRoutes(`
+Iface Destination Gateway Flags RefCnt Use Metric Mask MTU Window IRTT
+eth0 000017AC 00000000 0001 0 0 0 0000FFFF 0 0 0
+eth1 000015AC 00000000 0001 0 0 0 0000FFFF 0 0 0
+awg0 B7467C8A 00000000 0001 0 0 0 FFFFFFFF 0 0 0
+`);
+  assert.deepEqual(routes.connectedSubnets.sort(), ["172.21.0.0/16", "172.23.0.0/16"]);
+});
+
 test("parseContainerRoutes ignores a default gateway that is not on its interface subnet", () => {
   const routes = parseContainerRoutes(`
 Iface Destination Gateway Flags RefCnt Use Metric Mask

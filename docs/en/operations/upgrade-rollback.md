@@ -41,10 +41,11 @@ Verify:
 | **v0.9.19** | No | TSPU restriction badge stays on the server dashboard and is no longer shown in the sidebar |
 | **v0.9.21** | No | After a restart the only app instance takes the AmneziaWG tunnel instead of reporting that another instance holds it |
 | **v0.9.22** | No | UFW sync for an AmneziaWG node uses the tunnel. The operation shows the connection error |
+| **v0.9.23** | No | An AmneziaWG node stays reachable after its /32 route is already installed |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.22` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.23` in `.env`.
 
 ## Rollback
 

@@ -1,5 +1,7 @@
 import fs from "node:fs/promises";
 
+import { AWG_INTERFACE } from "@/lib/awg/policy";
+
 export type ContainerRoutes = {
   gateway: string | null;
   subnet: string | null;
@@ -90,7 +92,13 @@ function parseRows(routeTable: string): RouteRow[] {
 export function parseContainerRoutes(routeTable: string): ContainerRoutes {
   const rows = parseRows(routeTable);
   const connectedSubnets = rows
-    .filter((row) => row.gateway === 0 && row.mask !== 0 && row.destination !== 0)
+    .filter(
+      (row) =>
+        row.iface !== AWG_INTERFACE &&
+        row.gateway === 0 &&
+        row.mask !== 0 &&
+        row.destination !== 0,
+    )
     .map((row) => cidrOf(row.destination, row.mask));
 
   const defaults = rows
