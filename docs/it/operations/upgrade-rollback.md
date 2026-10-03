@@ -25,13 +25,13 @@ Verificate:
 
 Aggiornando da pre-v0.9.0, assicuratevi che migrate completi — dati inventario legacy eliminati.
 
-Fissate immagine: `GHCR_IMAGE_TAG=v0.9.20` in `.env`.
+Fissate immagine: `GHCR_IMAGE_TAG=v0.9.21` in `.env`.
 
 v0.9.18: AmneziaWG facoltativo solo per i nodi selezionati. Ricreate il contenitore con `NET_ADMIN` e `/dev/net/tun`. La rotta predefinita resta diretta.
 
 v0.9.19: il contrassegno di restrizione TSPU resta nella dashboard e non compare più nella barra laterale.
 
-v0.9.20: dopo il riavvio, l'unica istanza riprende il tunnel AmneziaWG.
+v0.9.21: dopo il riavvio, l'unica istanza riprende il tunnel AmneziaWG.
 
 ## Rollback
 

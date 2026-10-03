@@ -82,17 +82,23 @@ export async function getAwgPublicStatus(): Promise<AwgPublicStatus> {
     };
   }
 
-  let helper: AwgHelperStatus | null = null;
-  let helperError: string | null = null;
-  const readHelper = async () => {
+  const readHelper = async (): Promise<{
+    helper: AwgHelperStatus | null;
+    helperError: string | null;
+  }> => {
     try {
-      helper = await awgHelperRequest<AwgHelperStatus>({ cmd: "status" }, 3000);
-      helperError = null;
+      return {
+        helper: await awgHelperRequest<AwgHelperStatus>({ cmd: "status" }, 3000),
+        helperError: null,
+      };
     } catch (error) {
-      helperError = error instanceof Error ? error.message : "AmneziaWG helper failed";
+      return {
+        helper: null,
+        helperError: error instanceof Error ? error.message : "AmneziaWG helper failed",
+      };
     }
   };
-  await readHelper();
+  let { helper, helperError } = await readHelper();
 
   let leader = awgLeaderHeld();
   if (row.enabled && !leader) {
@@ -106,7 +112,7 @@ export async function getAwgPublicStatus(): Promise<AwgPublicStatus> {
           "AmneziaWG restore after taking the lock failed",
         );
       }
-      await readHelper();
+      ({ helper, helperError } = await readHelper());
     }
   }
 
