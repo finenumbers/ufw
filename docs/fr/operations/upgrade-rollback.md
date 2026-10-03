@@ -25,7 +25,7 @@ Vérifier :
 
 Lors de la mise à niveau depuis pré-v0.9.0, s'assurer que migrate se termine — données inventaire legacy purgées.
 
-Épingler l'image : `GHCR_IMAGE_TAG=v0.9.23` dans `.env`.
+Épingler l'image : `GHCR_IMAGE_TAG=v0.9.24` dans `.env`.
 
 v0.9.18 : AmneziaWG facultatif, uniquement pour les nœuds cochés. Recréez le conteneur avec `NET_ADMIN` et `/dev/net/tun`. La route par défaut reste directe.
 
@@ -36,6 +36,8 @@ v0.9.21 : après redémarrage, la seule instance reprend le tunnel AmneziaWG.
 v0.9.22 : la synchro UFW d'un nœud AmneziaWG passe par le tunnel.
 
 v0.9.23 : un nœud AmneziaWG reste joignable quand sa route /32 est déjà installée.
+
+v0.9.24 : les lignes de serveurs dans le panneau utilisent les mêmes fonds bleu et rouge que les cartes du tableau de bord.
 
 ## Retour arrière
 

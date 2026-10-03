@@ -42,10 +42,11 @@ Verify:
 | **v0.9.21** | No | После перезапуска единственный экземпляр сам забирает туннель AmneziaWG, а не сообщает, что его держит другой |
 | **v0.9.22** | No | Синхронизация UFW узла с AmneziaWG идёт через туннель. Ошибка соединения показывается в операции |
 | **v0.9.23** | No | Узел AmneziaWG открывается повторно, когда его маршрут /32 уже стоит на туннеле |
+| **v0.9.24** | No | Строки узлов в боковой панели закрашиваются так же, как карточки на dashboard: синим и красным |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.23` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.24` in `.env`.
 
 ## Rollback
 

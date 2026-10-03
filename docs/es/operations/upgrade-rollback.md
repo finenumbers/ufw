@@ -25,7 +25,7 @@ Verifique:
 
 Al actualizar desde pre-v0.9.0, asegure que migrate complete — datos de inventario legacy purgados.
 
-Fije imagen: `GHCR_IMAGE_TAG=v0.9.23` en `.env`.
+Fije imagen: `GHCR_IMAGE_TAG=v0.9.24` en `.env`.
 
 v0.9.18: AmneziaWG opcional solo para nodos marcados. Recree el contenedor con `NET_ADMIN` y `/dev/net/tun`. La ruta predeterminada sigue directa.
 
@@ -36,6 +36,8 @@ v0.9.21: Tras reiniciar, la única instancia toma el túnel AmneziaWG.
 v0.9.22: La sincronización UFW de un nodo AmneziaWG usa el túnel.
 
 v0.9.23: Un nodo AmneziaWG sigue accesible cuando su ruta /32 ya está instalada.
+
+v0.9.24: Las filas de servidores en el panel usan el mismo relleno azul y rojo que las tarjetas del panel.
 
 ## Reversión
 

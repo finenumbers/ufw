@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { AppVersionFooter } from "@/components/layout/app-version-footer";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { useServerBlockCheck } from "@/components/layout/block-check-provider";
 import { ServerReachabilityBadge } from "@/components/layout/server-reachability-badge";
 import { useServerReachability } from "@/components/layout/reachability-provider";
 import { awgStatusTone, emptyAwgStatus } from "@/components/amneziawg/awg-settings";
@@ -31,19 +32,28 @@ type AppSidebarProps = {
 function SidebarServerLink({ server, active }: { server: ServerItem; active: boolean }) {
   const reachability = useServerReachability(server.id);
   const unreachable = reachability?.status === "unreachable";
+  const tspuBlocked = useServerBlockCheck(server.id) === "blocked";
 
   return (
     <div
       className={cn(
         "mb-1 flex items-start justify-between gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-zinc-100",
         active && "bg-zinc-200 font-medium text-foreground hover:bg-zinc-200",
+        tspuBlocked && "bg-blue-100 text-blue-950 hover:bg-blue-200",
+        tspuBlocked && active && "bg-blue-200 font-medium hover:bg-blue-200",
         unreachable && "bg-red-100 text-red-950 hover:bg-red-200",
         unreachable && active && "bg-red-200 font-medium hover:bg-red-200",
       )}
     >
       <Link href={getServerPath(server.host)} className="min-w-0 flex-1">
         <div className="truncate">{server.name}</div>
-        <div className={cn("truncate text-xs text-muted-foreground", unreachable && "text-red-800")}>
+        <div
+          className={cn(
+            "truncate text-xs text-muted-foreground",
+            tspuBlocked && "text-blue-800",
+            unreachable && "text-red-800",
+          )}
+        >
           {server.host}
         </div>
       </Link>
