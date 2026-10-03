@@ -38,10 +38,11 @@ Verify:
 | **v0.9.16** | No | Opt-in SSH to the Docker host via `host.docker.internal` |
 | **v0.9.17** | No | Docker host SSH uses the container's own gateway, not docker0 |
 | **v0.9.18** | Yes — AmneziaWG config | Optional AmneziaWG tunnel for opted-in nodes only. Recreate the app container with `NET_ADMIN` and `/dev/net/tun`. The default route stays direct |
+| **v0.9.19** | No | TSPU restriction badge stays on the server dashboard and is no longer shown in the sidebar |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.18` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.19` in `.env`.
 
 ## Rollback
 

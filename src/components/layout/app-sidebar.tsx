@@ -7,7 +7,6 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { AppVersionFooter } from "@/components/layout/app-version-footer";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
-import { ServerBlockBadge } from "@/components/layout/server-block-badge";
 import { ServerReachabilityBadge } from "@/components/layout/server-reachability-badge";
 import { useServerReachability } from "@/components/layout/reachability-provider";
 import { awgStatusTone, emptyAwgStatus } from "@/components/amneziawg/awg-settings";
@@ -48,10 +47,7 @@ function SidebarServerLink({ server, active }: { server: ServerItem; active: boo
           {server.host}
         </div>
       </Link>
-      <div className="flex shrink-0 flex-col items-end gap-1">
-        <ServerReachabilityBadge serverId={server.id} className="mt-0.5" />
-        <ServerBlockBadge serverId={server.id} host={server.host} />
-      </div>
+      <ServerReachabilityBadge serverId={server.id} className="mt-0.5 shrink-0" />
     </div>
   );
 }

@@ -25,9 +25,11 @@ Verifique:
 
 Ao atualizar de pré-v0.9.0, garanta que migrate complete — dados de inventário legacy purgados.
 
-Fixe imagem: `GHCR_IMAGE_TAG=v0.9.18` no `.env`.
+Fixe imagem: `GHCR_IMAGE_TAG=v0.9.19` no `.env`.
 
 v0.9.18: AmneziaWG opcional só para nós marcados. Recrie o contêiner com `NET_ADMIN` e `/dev/net/tun`. A rota padrão continua direta.
+
+v0.9.19: a marca de restrição TSPU permanece no painel e não aparece mais na barra lateral.
 
 ## Rollback
 
