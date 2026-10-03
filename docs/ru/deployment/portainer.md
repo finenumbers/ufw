@@ -41,6 +41,8 @@ docker inspect <npm_container> --format '{{range $k,$v := .NetworkSettings.Netwo
 2. Compose path: `deploy/portainer.stack.yml`
 3. Set environment in Portainer UI — never commit secrets
 
+Стек даёт контейнеру `app` `NET_ADMIN` и `/dev/net/tun`. Одного pull образа мало: в Portainer нужно обновить compose стека и пересоздать контейнер. На хосте должен существовать `/dev/net/tun`.
+
 ## Configure NPM
 
 Forward Proxy Host to `ufw-app:8088` — see [Nginx Proxy Manager](./nginx-proxy-manager.md).

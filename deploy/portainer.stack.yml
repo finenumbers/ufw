@@ -7,7 +7,8 @@
 #   3. Configure NPM Proxy Host: ufw-app:8088, WebSockets ON, Force SSL.
 #
 # Images are pinned in this file as :latest (updated on each GitHub release).
-# Redeploy: Update the stack with "Pull latest image" — no image env vars needed.
+# Redeploy: update this stack in Portainer, then redeploy. Pulling the image alone
+# does not add NET_ADMIN or /dev/net/tun. The host must have /dev/net/tun.
 # To pin a version temporarily, edit the two image: lines below (e.g. :v0.2.3).
 #
 # See docs/en/deployment/portainer.md
@@ -48,6 +49,9 @@ services:
     restart: unless-stopped
     cap_add:
       - NET_RAW
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
     extra_hosts:

@@ -41,6 +41,8 @@ docker inspect <npm_container> --format '{{range $k,$v := .NetworkSettings.Netwo
 2. Compose path: `deploy/portainer.stack.yml`
 3. Set environment in Portainer UI — never commit secrets
 
+The stack gives the `app` container `NET_ADMIN` and `/dev/net/tun`. Pulling the image alone does not apply that. Update the stack compose in Portainer and recreate the container. The host must have `/dev/net/tun`.
+
 ## Configure NPM
 
 Forward Proxy Host to `ufw-app:8088` — see [Nginx Proxy Manager](./nginx-proxy-manager.md).
