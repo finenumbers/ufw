@@ -19,6 +19,8 @@ export type SshConnectionConfig = {
   readyTimeout?: number;
   expectedHostKeyFingerprint?: string | null;
   execTimeoutMs?: number;
+  /** Caller already chose the IPv4, including an address that direct SSH would reject. */
+  pinnedHost?: boolean;
 };
 
 export type SshConnectResult = {
@@ -206,7 +208,7 @@ export async function withSshConnection<T>(
   config: SshConnectionConfig,
   fn: (client: SshClient) => Promise<T>,
 ): Promise<{ result: T; hostKeyFingerprint: string | null }> {
-  const connectHost = await resolveSshConnectHost(config.host);
+  const connectHost = config.pinnedHost ? config.host : await resolveSshConnectHost(config.host);
   const client = new SshClient();
   try {
     const connectResult = await client.connect({ ...config, host: connectHost });

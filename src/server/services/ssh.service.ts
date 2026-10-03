@@ -39,6 +39,7 @@ export async function runSshForServer<T>(
             privateKey: config.privateKey,
             passphrase: config.passphrase,
             expectedHostKeyFingerprint: config.expectedHostKeyFingerprint,
+            pinnedHost: config.useAwg,
           },
           (client) => fn(client, config),
         );
@@ -100,21 +101,28 @@ async function persistDiscoveredHostKey(
 
 export async function detectUfwStateWithoutQueue(serverId: string): Promise<UfwDetectionResult> {
   const config = await getServerSshConfig(serverId);
-  const { result, hostKeyFingerprint } = await withSshConnection(
-    {
-      host: config.host,
-      port: config.port,
-      username: config.username,
-      password: config.privateKey ? undefined : config.password,
-      privateKey: config.privateKey,
-      passphrase: config.passphrase,
-      expectedHostKeyFingerprint: config.expectedHostKeyFingerprint,
-    },
-    (client) => loadDetectionFromClient(client, config.password),
-  );
+  const connect = async () => {
+    const connectHost = config.useAwg
+      ? await steerAwgDestinationUnlocked(config.host)
+      : config.host;
+    const { result, hostKeyFingerprint } = await withSshConnection(
+      {
+        host: connectHost,
+        port: config.port,
+        username: config.username,
+        password: config.privateKey ? undefined : config.password,
+        privateKey: config.privateKey,
+        passphrase: config.passphrase,
+        expectedHostKeyFingerprint: config.expectedHostKeyFingerprint,
+        pinnedHost: config.useAwg,
+      },
+      (client) => loadDetectionFromClient(client, config.password),
+    );
+    await persistDiscoveredHostKey(serverId, hostKeyFingerprint, config.expectedHostKeyFingerprint);
+    return result;
+  };
 
-  await persistDiscoveredHostKey(serverId, hostKeyFingerprint, config.expectedHostKeyFingerprint);
-  return result;
+  return config.useAwg ? awgGate.shared(connect) : connect();
 }
 
 export async function detectUfwState(

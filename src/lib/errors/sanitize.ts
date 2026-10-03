@@ -48,6 +48,20 @@ export function sanitizeApplyClientError(errors: string[]): string {
   return "One or more UFW commands failed on the remote server. Review operations history for details.";
 }
 
+export function sanitizeRemoteOperationError(error: unknown, fallback: string): string {
+  const message = error instanceof Error ? error.message : fallback;
+  if (
+    message.startsWith("AmneziaWG") ||
+    message.startsWith("Refusing to connect") ||
+    message.startsWith("This address is outside") ||
+    message.startsWith("Use the node address") ||
+    message.startsWith("Upload an AmneziaWG")
+  ) {
+    return message;
+  }
+  return sanitizeSshClientError(error);
+}
+
 export function sanitizeGenericClientError(
   error: unknown,
   fallback: string,

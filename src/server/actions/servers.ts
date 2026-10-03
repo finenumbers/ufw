@@ -8,7 +8,7 @@ import { requireUserId, requireUserIdForAction } from "@/lib/auth/require-user";
 import { createExportToken } from "@/lib/export-token";
 import {
   sanitizeConfigImportError,
-  sanitizeGenericClientError,
+  sanitizeRemoteOperationError,
 } from "@/lib/errors/sanitize";
 import { assertImportFileSize } from "@/lib/imports/import-limits";
 import {
@@ -198,7 +198,7 @@ async function runRemoteRulesSync(
     await tracker.complete({ key: "messages.sync_complete" });
     return { success: true };
   } catch (error) {
-    const message = sanitizeGenericClientError(error, "Sync failed");
+    const message = sanitizeRemoteOperationError(error, "Sync failed");
     await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
     return { success: false, error: message };
   }
@@ -247,7 +247,7 @@ export async function loadUfwStateAction(
     await tracker.complete({ key: "messages.refresh_complete" });
     return { success: true, state };
   } catch (error) {
-    const message = sanitizeGenericClientError(error, "Refresh failed");
+    const message = sanitizeRemoteOperationError(error, "Refresh failed");
     await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
     return { success: false, error: message };
   }
@@ -352,7 +352,7 @@ export async function installUfwAction(
     await revalidateServerPaths(serverId);
     return { success: true, message: "UFW installed and enabled successfully" };
   } catch (error) {
-    const message = sanitizeGenericClientError(error, "Install failed");
+    const message = sanitizeRemoteOperationError(error, "Install failed");
     await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
     return { success: false, message };
   }
@@ -430,7 +430,7 @@ export async function enableUfwAction(
     await revalidateServerPaths(serverId);
     return { success: true, message: "UFW enabled successfully" };
   } catch (error) {
-    const message = sanitizeGenericClientError(error, "Enable failed");
+    const message = sanitizeRemoteOperationError(error, "Enable failed");
     await tracker.fail({ key: "messages.operation_failed", params: { error: message } }, [message]);
     return { success: false, message };
   }

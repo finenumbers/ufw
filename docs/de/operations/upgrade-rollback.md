@@ -25,13 +25,15 @@ Verifizieren:
 
 Beim Upgrade von vor v0.9.0 sicherstellen, dass Migrate abgeschlossen ist — Legacy-Inventar-Daten bereinigt.
 
-Image pinnen: `GHCR_IMAGE_TAG=v0.9.21` in `.env`.
+Image pinnen: `GHCR_IMAGE_TAG=v0.9.22` in `.env`.
 
 v0.9.18: optionales AmneziaWG nur für markierte Knoten. Container mit `NET_ADMIN` und `/dev/net/tun` neu erstellen. Die Standardroute bleibt direkt.
 
 v0.9.19: Die TSPU-Markierung bleibt im Dashboard und erscheint nicht mehr in der Seitenleiste.
 
 v0.9.21: Nach einem Neustart übernimmt die einzige App-Instanz den AmneziaWG-Tunnel.
+
+v0.9.22: UFW-Sync eines AmneziaWG-Knotens läuft durch den Tunnel.
 
 ## Rollback
 

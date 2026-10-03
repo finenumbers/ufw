@@ -447,5 +447,6 @@ async function verifyServerSsh(config: {
     privateKey: config.privateKey,
     passphrase: config.passphrase,
     expectedHostKeyFingerprint: config.expectedHostKeyFingerprint,
+    pinnedHost: Boolean(config.useAwg),
   });
 }
