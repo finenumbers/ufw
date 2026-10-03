@@ -84,16 +84,36 @@ export async function getAwgPublicStatus(): Promise<AwgPublicStatus> {
 
   let helper: AwgHelperStatus | null = null;
   let helperError: string | null = null;
-  try {
-    helper = await awgHelperRequest<AwgHelperStatus>({ cmd: "status" }, 3000);
-  } catch (error) {
-    helperError = error instanceof Error ? error.message : "AmneziaWG helper failed";
+  const readHelper = async () => {
+    try {
+      helper = await awgHelperRequest<AwgHelperStatus>({ cmd: "status" }, 3000);
+      helperError = null;
+    } catch (error) {
+      helperError = error instanceof Error ? error.message : "AmneziaWG helper failed";
+    }
+  };
+  await readHelper();
+
+  let leader = awgLeaderHeld();
+  if (row.enabled && !leader) {
+    leader = await ensureAwgLeaderLock();
+    if (leader && !helper?.up) {
+      try {
+        await restoreAwgOnStartup();
+      } catch (error) {
+        log.warn(
+          { error: error instanceof Error ? error.message : String(error) },
+          "AmneziaWG restore after taking the lock failed",
+        );
+      }
+      await readHelper();
+    }
   }
 
   return {
     configured: true,
     enabled: row.enabled,
-    leader: awgLeaderHeld(),
+    leader,
     up: Boolean(helper?.up),
     handshakeAgeSec: handshakeAge(helper?.latestHandshake ?? null),
     address: row.address,

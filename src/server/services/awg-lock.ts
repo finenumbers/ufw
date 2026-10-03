@@ -2,31 +2,47 @@ import { Client } from "pg";
 
 const LOCK_KEY = "ufw-amneziawg";
 
-let client: Client | null = null;
-let holdsLock = false;
-let pending: Promise<boolean> | null = null;
+type AwgLockState = {
+  client: Client | null;
+  holdsLock: boolean;
+  pending: Promise<boolean> | null;
+};
+
+const processState = globalThis as typeof globalThis & {
+  __ufwAwgLock?: AwgLockState;
+};
+
+function state(): AwgLockState {
+  if (!processState.__ufwAwgLock) {
+    processState.__ufwAwgLock = { client: null, holdsLock: false, pending: null };
+  }
+  return processState.__ufwAwgLock;
+}
 
 export function awgLeaderHeld(): boolean {
-  return holdsLock && client !== null;
+  const current = state();
+  return current.holdsLock && current.client !== null;
 }
 
 /** One app process owns the tunnel. The lock lives on a dedicated Postgres session. */
 export async function ensureAwgLeaderLock(): Promise<boolean> {
-  if (holdsLock) {
+  const current = state();
+  if (current.holdsLock && current.client) {
     return true;
   }
   if (!process.env.DATABASE_URL) {
     return false;
   }
-  if (!pending) {
-    pending = acquire().finally(() => {
-      pending = null;
+  if (!current.pending) {
+    current.pending = acquire().finally(() => {
+      state().pending = null;
     });
   }
-  return pending;
+  return current.pending;
 }
 
 async function acquire(): Promise<boolean> {
+  const current = state();
   const next = new Client({ connectionString: process.env.DATABASE_URL });
   await next.connect();
   const result = await next.query<{ locked: boolean }>(
@@ -39,11 +55,14 @@ async function acquire(): Promise<boolean> {
     return false;
   }
 
-  holdsLock = true;
-  client = next;
+  current.holdsLock = true;
+  current.client = next;
   next.on("error", () => {
-    holdsLock = false;
-    client = null;
+    const latest = state();
+    if (latest.client === next) {
+      latest.holdsLock = false;
+      latest.client = null;
+    }
   });
   return true;
 }

@@ -39,10 +39,11 @@ Verify:
 | **v0.9.17** | No | SSH к своему хосту идёт на шлюз сети контейнера, не на docker0 |
 | **v0.9.18** | Yes — конфигурация AmneziaWG | Необязательный туннель AmneziaWG только для узлов, где это включено. Пересоздайте контейнер app с `NET_ADMIN` и `/dev/net/tun`. Маршрут по умолчанию остаётся прямым |
 | **v0.9.19** | No | Метка ограничения ТСПУ остаётся на dashboard и больше не показывается в боковой панели |
+| **v0.9.20** | No | После перезапуска единственный экземпляр сам забирает туннель AmneziaWG, а не сообщает, что его держит другой |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.19` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.20` in `.env`.
 
 ## Rollback
 
