@@ -182,8 +182,9 @@ async function assertRouteAllowed(ip) {
   if (state?.address && ip === state.address) {
     throw new Error("Resolved IP is not allowed");
   }
-  const endpoint = await endpointIp();
-  if (ip === endpoint) {
+  const endpoint = canonicalIpv4(await endpointIp());
+  const target = canonicalIpv4(ip);
+  if (endpoint && target && target === endpoint) {
     throw new Error("Use the node address inside the VPN, not the Amnezia endpoint");
   }
   for (const cidr of await localCidrs()) {

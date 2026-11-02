@@ -24,7 +24,7 @@ Enabling UFW on this host, or denying the container subnet, can drop forwarding 
 
 ## AmneziaWG
 
-On create and edit, a node can connect through the single AmneziaWG tunnel. Nodes without that choice stay on the container's normal route. The tunnel is not the default route. If the tunnel is down, that node is not reached directly. A hostname is resolved by the container DNS, then only that IPv4 is routed into `awg0`. A name that exists only inside the VPN is entered as its internal IPv4 address. Changing only this choice keeps the stored SSH host key and checks it again.
+On create and edit, a node can connect through the single AmneziaWG tunnel. Nodes without that choice stay on the container's normal route. The tunnel is not the default route. If the tunnel is down, that node is not reached directly. A hostname is resolved by the container DNS, then only that IPv4 is routed into `awg0`. A name that exists only inside the VPN is entered as its internal IPv4 address. The public name or address of the AmneziaWG endpoint is refused. To manage that same server through the tunnel, enter its IPv4 address inside the VPN. Changing only this choice keeps the stored SSH host key and checks it again.
 
 The AmneziaWG page lists these nodes and the /32 routes installed on `awg0`. Removing a node there clears the choice and deletes its host route without another SSH check. The node stays in the inventory. Later connections use the normal route, so an address that exists only inside the VPN can become unreachable. Private addresses are still rejected on the direct path unless SSH policy allows them. The checkbox on the node form still checks the stored host key.
 

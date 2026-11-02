@@ -24,6 +24,14 @@ test("AWG host policy allows a VPN address and rejects metadata, endpoint, and c
     /endpoint/,
   );
   assert.match(
+    awgDestinationBlockReason("5.39.250.149", { endpointIp: "05.39.250.149" }) ?? "",
+    /endpoint/,
+  );
+  assert.match(
+    awgDestinationBlockReason("05.39.250.149", { endpointIp: "5.39.250.149" }) ?? "",
+    /endpoint/,
+  );
+  assert.match(
     awgDestinationBlockReason("172.18.0.4", { containerCidrs: ["172.18.0.0/16"] }) ?? "",
     /container network/,
   );

@@ -44,10 +44,11 @@ Verify:
 | **v0.9.23** | No | An AmneziaWG node stays reachable after its /32 route is already installed |
 | **v0.9.24** | No | Sidebar server rows use the same blue and red fills as the dashboard cards |
 | **v0.9.25** | No | The AmneziaWG page lists nodes routed through the tunnel and can remove their /32 |
+| **v0.9.26** | No | Saving a node reports an AmneziaWG endpoint refusal, and that address is compared numerically |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.25` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.26` in `.env`.
 
 ## Rollback
 

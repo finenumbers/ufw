@@ -64,7 +64,8 @@ export function awgDestinationBlockReason(
   if (first === 169 && ((value >>> 16) & 0xff) === 254) {
     return "Resolved IP is not allowed";
   }
-  if (options.endpointIp && trimmed === options.endpointIp.trim()) {
+  const endpoint = options.endpointIp ? canonicalIpv4(options.endpointIp) : null;
+  if (endpoint && canonicalIpv4(trimmed) === endpoint) {
     return "Use the node address inside the VPN, not the Amnezia endpoint";
   }
   if (options.tunnelAddress && trimmed === options.tunnelAddress.trim()) {

@@ -25,7 +25,7 @@ Verifique:
 
 Ao atualizar de pré-v0.9.0, garanta que migrate complete — dados de inventário legacy purgados.
 
-Fixe imagem: `GHCR_IMAGE_TAG=v0.9.25` no `.env`.
+Fixe imagem: `GHCR_IMAGE_TAG=v0.9.26` no `.env`.
 
 v0.9.18: AmneziaWG opcional só para nós marcados. Recrie o contêiner com `NET_ADMIN` e `/dev/net/tun`. A rota padrão continua direta.
 
@@ -40,6 +40,8 @@ v0.9.23: um nó AmneziaWG continua acessível quando a rota /32 já está instal
 v0.9.24: as linhas de servidores na barra lateral usam os mesmos fundos azul e vermelho dos cartões do painel.
 
 v0.9.25: a página AmneziaWG lista os nós no túnel e pode remover a rota /32 deles.
+
+v0.9.26: ao salvar um nó, a recusa do endpoint AmneziaWG aparece, e esse endereço é comparado numericamente.
 
 ## Rollback
 

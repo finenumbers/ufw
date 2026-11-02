@@ -4,6 +4,7 @@ import type { AuthMethod, Prisma, Server } from "@prisma/client";
 import { Prisma as PrismaClient } from "@prisma/client";
 import { awgGate } from "@/lib/awg/gate";
 import { db } from "@/lib/db";
+import { sanitizeRemoteOperationError } from "@/lib/errors/sanitize";
 import { clearServerQueue, isServerQueueBusy, waitForServerQueueIdle } from "@/lib/queue/queue-registry";
 import type { ServerInput } from "@/lib/validations/server";
 import { reconcileAwgRoutes } from "@/server/services/awg.service";
@@ -15,6 +16,8 @@ import { createOperationLog } from "@/server/services/operation-log.service";
 import { verifySshConnection } from "@/lib/ssh/verify";
 
 export const SERVER_DUPLICATE_ERROR = "SERVER_DUPLICATE";
+const SSH_SAVE_FAILURE =
+  "SSH connection failed. Check host, credentials, and network access.";
 const AWG_HOST_CONFLICT =
   "Servers with the same host must all use AmneziaWG or all connect directly";
 
@@ -126,7 +129,23 @@ export async function createServer(
       passphrase: identity.passphrase,
       useAwg: input.useAwg,
     });
-  const sshResult = input.useAwg ? await awgGate.shared(verify) : await verify();
+  let sshResult;
+  try {
+    sshResult = input.useAwg ? await awgGate.shared(verify) : await verify();
+  } catch (error) {
+    if (input.useAwg) {
+      await reconcileAwgRoutes().catch(() => undefined);
+    }
+    const message = sanitizeRemoteOperationError(error, SSH_SAVE_FAILURE);
+    await createOperationLog({
+      userId,
+      type: "server.create",
+      status: "FAILED",
+      message,
+      metadata: { host: input.host },
+    });
+    return { success: false, error: message };
+  }
 
   if (!sshResult.success) {
     if (input.useAwg) {
@@ -239,7 +258,15 @@ export async function updateServer(
       expectedHostKeyFingerprint,
       useAwg: input.useAwg,
     });
-  const sshResult = input.useAwg ? await awgGate.shared(verify) : await verify();
+  let sshResult;
+  try {
+    sshResult = input.useAwg ? await awgGate.shared(verify) : await verify();
+  } catch (error) {
+    if (input.useAwg || existing.useAwg) {
+      await reconcileAwgRoutes().catch(() => undefined);
+    }
+    return { success: false, error: sanitizeRemoteOperationError(error, SSH_SAVE_FAILURE) };
+  }
 
   if (!sshResult.success) {
     if (input.useAwg || existing.useAwg) {

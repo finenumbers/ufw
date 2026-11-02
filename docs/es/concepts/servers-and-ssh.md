@@ -17,7 +17,7 @@ La resolución DNS se valida cuando corresponde para detectar errores tipográfi
 
 ## AmneziaWG
 
-La página AmneziaWG lista los nodos que van por el túnel y las rutas /32 instaladas en `awg0`. Quitar un nodo borra esa elección y su ruta de host sin otra comprobación SSH. El nodo sigue en el inventario. Las conexiones siguientes usan la ruta normal, así que una dirección que solo existe en la VPN puede dejar de alcanzarse. Las direcciones privadas siguen rechazadas en el camino directo, salvo que la política SSH las permita. La casilla del formulario del nodo sigue comprobando la clave host guardada.
+La página AmneziaWG lista los nodos que van por el túnel y las rutas /32 instaladas en `awg0`. Quitar un nodo borra esa elección y su ruta de host sin otra comprobación SSH. El nodo sigue en el inventario. Las conexiones siguientes usan la ruta normal, así que una dirección que solo existe en la VPN puede dejar de alcanzarse. Las direcciones privadas siguen rechazadas en el camino directo, salvo que la política SSH las permita. La casilla del formulario del nodo sigue comprobando la clave host guardada. El nombre o la dirección pública del endpoint de AmneziaWG se rechaza. Ese mismo servidor se indica por el túnel con su IPv4 dentro de la VPN.
 
 ## Verificación de conexión
 

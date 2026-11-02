@@ -44,10 +44,11 @@ Verify:
 | **v0.9.23** | No | Узел AmneziaWG открывается повторно, когда его маршрут /32 уже стоит на туннеле |
 | **v0.9.24** | No | Строки узлов в боковой панели закрашиваются так же, как карточки на dashboard: синим и красным |
 | **v0.9.25** | No | Страница AmneziaWG показывает узлы, которые идут через туннель, и может снять их /32 |
+| **v0.9.26** | No | Сохранение узла показывает отказ из-за endpoint AmneziaWG, а сам адрес сравнивается численно |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.25` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.26` in `.env`.
 
 ## Rollback
 

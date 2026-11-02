@@ -17,7 +17,7 @@ La résolution DNS est validée le cas échéant pour que les fautes de frappe �
 
 ## AmneziaWG
 
-La page AmneziaWG liste les nœuds qui passent par le tunnel et les routes /32 installées sur `awg0`. Retirer un nœud enlève ce choix et sa route hôte sans nouveau contrôle SSH. Le nœud reste dans l'inventaire. Les connexions suivantes utilisent la route normale, donc une adresse qui n'existe que dans le VPN peut devenir injoignable. Les adresses privées restent refusées sur le chemin direct, sauf si la politique SSH les autorise. La case du formulaire du nœud vérifie toujours la clé hôte enregistrée.
+La page AmneziaWG liste les nœuds qui passent par le tunnel et les routes /32 installées sur `awg0`. Retirer un nœud enlève ce choix et sa route hôte sans nouveau contrôle SSH. Le nœud reste dans l'inventaire. Les connexions suivantes utilisent la route normale, donc une adresse qui n'existe que dans le VPN peut devenir injoignable. Les adresses privées restent refusées sur le chemin direct, sauf si la politique SSH les autorise. La case du formulaire du nœud vérifie toujours la clé hôte enregistrée. Le nom ou l'adresse publique de l'endpoint AmneziaWG est refusé. Ce même serveur se gère via le tunnel par son adresse IPv4 dans le VPN.
 
 ## Vérification de connexion
 

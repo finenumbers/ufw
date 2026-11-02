@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { sanitizeSshClientError } from "@/lib/errors/sanitize";
+import { sanitizeRemoteOperationError, sanitizeSshClientError } from "@/lib/errors/sanitize";
 
 test("sanitizeSshClientError keeps an AmneziaWG removal message", () => {
   assert.equal(
@@ -26,6 +26,32 @@ test("sanitizeSshClientError keeps host validation messages", () => {
   assert.equal(
     sanitizeSshClientError(new Error("Docker host alias did not resolve")),
     "Docker host alias did not resolve",
+  );
+});
+
+const SSH_SAVE_FAILURE = "SSH connection failed. Check host, credentials, and network access.";
+
+test("sanitizeRemoteOperationError keeps the AmneziaWG endpoint refusal", () => {
+  assert.equal(
+    sanitizeRemoteOperationError(
+      new Error("Use the node address inside the VPN, not the Amnezia endpoint"),
+      SSH_SAVE_FAILURE,
+    ),
+    "Use the node address inside the VPN, not the Amnezia endpoint",
+  );
+});
+
+test("sanitizeRemoteOperationError hides resolver and route command text", () => {
+  assert.equal(
+    sanitizeRemoteOperationError(new Error("getaddrinfo ENOTFOUND latvia.gate.example"), SSH_SAVE_FAILURE),
+    SSH_SAVE_FAILURE,
+  );
+  assert.equal(
+    sanitizeRemoteOperationError(
+      new Error("RTNETLINK answers: Network is unreachable"),
+      SSH_SAVE_FAILURE,
+    ),
+    SSH_SAVE_FAILURE,
   );
 });
 

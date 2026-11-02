@@ -25,7 +25,7 @@ Verificate:
 
 Aggiornando da pre-v0.9.0, assicuratevi che migrate completi — dati inventario legacy eliminati.
 
-Fissate immagine: `GHCR_IMAGE_TAG=v0.9.25` in `.env`.
+Fissate immagine: `GHCR_IMAGE_TAG=v0.9.26` in `.env`.
 
 v0.9.18: AmneziaWG facoltativo solo per i nodi selezionati. Ricreate il contenitore con `NET_ADMIN` e `/dev/net/tun`. La rotta predefinita resta diretta.
 
@@ -40,6 +40,8 @@ v0.9.23: un nodo AmneziaWG resta raggiungibile quando la sua route /32 è già i
 v0.9.24: le righe dei server nella barra laterale usano gli stessi riempimenti blu e rosso delle schede della dashboard.
 
 v0.9.25: la pagina AmneziaWG elenca i nodi nel tunnel e può togliere la loro rotta /32.
+
+v0.9.26: il salvataggio di un nodo mostra il rifiuto dell'endpoint AmneziaWG, e quell'indirizzo è confrontato in modo numerico.
 
 ## Rollback
 

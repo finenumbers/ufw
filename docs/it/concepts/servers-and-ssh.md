@@ -17,7 +17,7 @@ La risoluzione DNS è validata dove applicabile così gli errori di battitura fa
 
 ## AmneziaWG
 
-La pagina AmneziaWG elenca i nodi che passano dal tunnel e le rotte /32 installate su `awg0`. Rimuovere un nodo cancella quella scelta e la sua rotta host senza un nuovo controllo SSH. Il nodo resta nell'inventario. I collegamenti successivi usano la rotta normale, quindi un indirizzo che esiste solo nella VPN può diventare irraggiungibile. Gli indirizzi privati restano rifiutati sul percorso diretto, salvo che la policy SSH li consenta. La casella nel modulo del nodo controlla ancora la chiave host salvata.
+La pagina AmneziaWG elenca i nodi che passano dal tunnel e le rotte /32 installate su `awg0`. Rimuovere un nodo cancella quella scelta e la sua rotta host senza un nuovo controllo SSH. Il nodo resta nell'inventario. I collegamenti successivi usano la rotta normale, quindi un indirizzo che esiste solo nella VPN può diventare irraggiungibile. Gli indirizzi privati restano rifiutati sul percorso diretto, salvo che la policy SSH li consenta. La casella nel modulo del nodo controlla ancora la chiave host salvata. Il nome o l'indirizzo pubblico dell'endpoint AmneziaWG viene rifiutato. Lo stesso server attraverso il tunnel si indica con il suo IPv4 dentro la VPN.
 
 ## Verifica connessione
 

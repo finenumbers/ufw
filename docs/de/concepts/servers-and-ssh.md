@@ -17,7 +17,7 @@ DNS-Auflösung wird wo anwendbar validiert, damit Tippfehler früh scheitern.
 
 ## AmneziaWG
 
-Die Seite AmneziaWG listet Knoten, die durch den Tunnel gehen, und die /32-Routen auf `awg0`. Entfernen löscht die Auswahl und die Host-Route ohne eine neue SSH-Prüfung. Der Knoten bleibt im Bestand. Weitere Verbindungen nutzen die normale Route, daher kann eine Adresse, die nur im VPN existiert, unerreichbar werden. Private Adressen bleiben auf dem direkten Weg gesperrt, solange die SSH-Richtlinie sie nicht erlaubt. Die Auswahl im Knotenformular prüft den gespeicherten Host-Key weiter.
+Die Seite AmneziaWG listet Knoten, die durch den Tunnel gehen, und die /32-Routen auf `awg0`. Entfernen löscht die Auswahl und die Host-Route ohne eine neue SSH-Prüfung. Der Knoten bleibt im Bestand. Weitere Verbindungen nutzen die normale Route, daher kann eine Adresse, die nur im VPN existiert, unerreichbar werden. Private Adressen bleiben auf dem direkten Weg gesperrt, solange die SSH-Richtlinie sie nicht erlaubt. Die Auswahl im Knotenformular prüft den gespeicherten Host-Key weiter. Der öffentliche Name oder die Adresse des AmneziaWG-Endpoints wird abgelehnt. Derselbe Server wird durch den Tunnel mit seiner IPv4-Adresse im VPN angegeben.
 
 ## Verbindungsverifizierung
 
