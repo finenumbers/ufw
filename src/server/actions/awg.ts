@@ -3,6 +3,13 @@
 import { verifyUserPassword } from "@/lib/auth/password-verify";
 import { requireUserIdForAction } from "@/lib/auth/require-user";
 import { assertRateLimit } from "@/lib/rate-limit";
+import type { AwgRouteSnapshot } from "@/lib/awg/route-plan";
+import {
+  awgRouteError,
+  listAwgRoutes,
+  removeOrphanAwgRoute,
+  removeServerFromAwg,
+} from "@/server/services/awg-routes.service";
 import {
   deleteAwgConfig,
   getAwgPublicStatus,
@@ -21,6 +28,51 @@ async function authorized(): Promise<{ ok: true; userId: string } | { ok: false;
     return { ok: false, error: "Too many AmneziaWG changes. Wait a moment and try again." };
   }
   return { ok: true, userId: auth.userId };
+}
+
+const EMPTY_ROUTES: AwgRouteSnapshot = {
+  availability: "helper-error",
+  canRemove: false,
+  servers: [],
+  orphans: [],
+};
+
+export async function getAwgRoutesAction(): Promise<AwgRouteSnapshot> {
+  const auth = await requireUserIdForAction();
+  if (!auth.ok) return EMPTY_ROUTES;
+  return listAwgRoutes();
+}
+
+export async function removeAwgServerAction(
+  serverId: string,
+): Promise<{ success: true; routeKept: boolean } | { success: false; error: string }> {
+  const auth = await authorized();
+  if (!auth.ok) return { success: false, error: auth.error };
+  try {
+    const result = await removeServerFromAwg(serverId, auth.userId);
+    return { success: true, routeKept: result.routeKept };
+  } catch (error) {
+    return {
+      success: false,
+      error: awgRouteError(error, "Could not remove the AmneziaWG route"),
+    };
+  }
+}
+
+export async function removeAwgOrphanAction(
+  ip: string,
+): Promise<{ success: true } | { success: false; error: string }> {
+  const auth = await authorized();
+  if (!auth.ok) return { success: false, error: auth.error };
+  try {
+    await removeOrphanAwgRoute(ip);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: awgRouteError(error, "Could not remove the AmneziaWG route"),
+    };
+  }
 }
 
 export async function getAwgStatusAction(): Promise<AwgPublicStatus> {

@@ -15,6 +15,18 @@ export function ipv4ToInt(ip: string): number | null {
   return (((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>> 0);
 }
 
+/** Kernel and wire form: no leading zeros. */
+export function canonicalIpv4(ip: string): string | null {
+  const value = ipv4ToInt(ip);
+  if (value === null) return null;
+  return [
+    (value >>> 24) & 255,
+    (value >>> 16) & 255,
+    (value >>> 8) & 255,
+    value & 255,
+  ].join(".");
+}
+
 export function ipv4InCidr(ip: string, cidr: string): boolean {
   const [network, prefixRaw] = cidr.split("/");
   const prefix = prefixRaw === undefined ? 32 : Number(prefixRaw);

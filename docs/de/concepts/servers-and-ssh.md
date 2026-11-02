@@ -15,6 +15,10 @@ Vor dem Speichern validiert die App den Ziel-Host:
 
 DNS-Auflösung wird wo anwendbar validiert, damit Tippfehler früh scheitern.
 
+## AmneziaWG
+
+Die Seite AmneziaWG listet Knoten, die durch den Tunnel gehen, und die /32-Routen auf `awg0`. Entfernen löscht die Auswahl und die Host-Route ohne eine neue SSH-Prüfung. Der Knoten bleibt im Bestand. Weitere Verbindungen nutzen die normale Route, daher kann eine Adresse, die nur im VPN existiert, unerreichbar werden. Private Adressen bleiben auf dem direkten Weg gesperrt, solange die SSH-Richtlinie sie nicht erlaubt. Die Auswahl im Knotenformular prüft den gespeicherten Host-Key weiter.
+
 ## Verbindungsverifizierung
 
 **Server erstellen** und **Server bearbeiten** (wenn Host, Port oder Identität sich ändern) führen automatisch einen SSH-Verbindungstest aus. Es gibt keinen separaten *Verbindung testen*-Button im Bearbeitungsformular.

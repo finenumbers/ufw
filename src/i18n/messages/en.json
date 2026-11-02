@@ -417,6 +417,32 @@
     "connect": "Connect",
     "disconnect": "Disconnect",
     "delete": "Delete config",
-    "helperNote": "The tunnel runs inside the app container and is not the default route."
+    "helperNote": "The tunnel runs inside the app container and is not the default route.",
+    "routes": {
+      "title": "Nodes through the tunnel",
+      "description": "These nodes are reached through AmneziaWG. Removing one drops its /32 and leaves the node in the inventory.",
+      "empty": "No node is using the tunnel.",
+      "name": "Name",
+      "host": "Host",
+      "port": "Port",
+      "ip": "Route",
+      "installed": "Routed",
+      "notInstalled": "No route",
+      "tunnelDown": "The tunnel is off. These nodes will be routed again the next time it connects.",
+      "otherInstance": "Another instance holds the tunnel, so routes cannot be changed here.",
+      "helperError": "The route table could not be read.",
+      "remove": "Remove from tunnel",
+      "working": "Working...",
+      "confirmTitle": "Remove from AmneziaWG",
+      "confirmBody": "{name} ({host}) will leave the tunnel. The node stays in the inventory.",
+      "confirmSiblings": "The same host is also used by {names}. They leave the tunnel together.",
+      "confirmDirect": "Later SSH, ping, and port scan use the normal route. An address that exists only inside the VPN may become unreachable from the panel.",
+      "confirmShared": "The /32 stays because {names} still use this address.",
+      "orphanTitle": "Route without a node",
+      "orphanRemove": "Delete route",
+      "orphanConfirmTitle": "Delete this route",
+      "orphanConfirmBody": "{ip} will be removed from awg0. No inventory node uses it.",
+      "routeKept": "The node left the tunnel. The address is still routed for another node."
+    }
   }
 }

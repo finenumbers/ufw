@@ -43,10 +43,11 @@ Verify:
 | **v0.9.22** | No | UFW sync for an AmneziaWG node uses the tunnel. The operation shows the connection error |
 | **v0.9.23** | No | An AmneziaWG node stays reachable after its /32 route is already installed |
 | **v0.9.24** | No | Sidebar server rows use the same blue and red fills as the dashboard cards |
+| **v0.9.25** | No | The AmneziaWG page lists nodes routed through the tunnel and can remove their /32 |
 
 When upgrading from pre-v0.9.0, ensure migrate completes — legacy inventory data purged.
 
-Pin image: `GHCR_IMAGE_TAG=v0.9.24` in `.env`.
+Pin image: `GHCR_IMAGE_TAG=v0.9.25` in `.env`.
 
 ## Rollback
 

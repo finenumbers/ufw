@@ -96,20 +96,65 @@ function readState() {
   }
 }
 
-function readRoutes() {
+function canonicalIpv4(ip) {
+  const text = String(ip ?? "").trim();
+  if (!isIpv4(text)) return null;
+  return text.split(".").map((part) => String(Number(part))).join(".");
+}
+
+function validRouteHost(host) {
+  const text = String(host ?? "").trim();
+  if (!text || text.length > 253 || /\s/.test(text)) return null;
+  return text;
+}
+
+function readRouteRecords() {
+  let text = "";
   try {
-    return fs
-      .readFileSync(ROUTES_PATH, "utf8")
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
+    text = fs.readFileSync(ROUTES_PATH, "utf8");
   } catch {
     return [];
   }
+  const records = [];
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const tab = trimmed.indexOf("\t");
+    const ip = canonicalIpv4(tab === -1 ? trimmed : trimmed.slice(0, tab));
+    const hostText = tab === -1 ? "" : trimmed.slice(tab + 1).trim();
+    if (!ip) continue;
+    if (hostText && !validRouteHost(hostText)) continue;
+    records.push({ ip, host: hostText });
+  }
+  return records;
 }
 
-function writeRoutes(ips) {
-  fs.writeFileSync(ROUTES_PATH, ips.length ? `${ips.join("\n")}\n` : "", { mode: 0o600 });
+function writeRouteRecords(records) {
+  const lines = records.map((record) => (record.host ? `${record.ip}\t${record.host}` : record.ip));
+  fs.writeFileSync(ROUTES_PATH, lines.length ? `${lines.join("\n")}\n` : "", { mode: 0o600 });
+}
+
+function kernelHostIps(dump) {
+  if (!Array.isArray(dump)) return [];
+  const ips = [];
+  for (const row of dump) {
+    const dst = typeof row?.dst === "string" ? row.dst : "";
+    if (!dst || dst === "default" || dst.includes(":")) continue;
+    const slash = dst.indexOf("/");
+    const address = slash === -1 ? dst : dst.slice(0, slash);
+    const prefix = slash === -1 ? null : dst.slice(slash + 1);
+    if (prefix !== null && prefix !== "32") continue;
+    const ip = canonicalIpv4(address);
+    if (ip) ips.push(ip);
+  }
+  return [...new Set(ips)];
+}
+
+async function readKernelDump() {
+  const { stdout } = await run("ip", ["-json", "route", "show", "dev", IFACE]);
+  const dump = JSON.parse(stdout || "[]");
+  if (!Array.isArray(dump)) throw new Error("AmneziaWG route list failed");
+  return dump;
 }
 
 async function endpointIp() {
@@ -384,43 +429,104 @@ async function replaceRoute(ip) {
   return got.stdout.trim();
 }
 
-async function ensureRoute(ip) {
-  const routeGet = await replaceRoute(ip);
-  const routes = new Set(readRoutes());
-  routes.add(ip);
-  writeRoutes([...routes]);
-  return { ip, routeGet };
+async function deleteHostRoute(ip) {
+  try {
+    await run("ip", ["route", "del", `${ip}/32`, "dev", IFACE]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/No such process|not found|Cannot find device/i.test(message)) return;
+    throw new Error("AmneziaWG route removal failed");
+  }
+}
+
+async function ensureRoute(ip, host) {
+  const canonical = canonicalIpv4(ip);
+  const routeHost = validRouteHost(host);
+  if (!canonical || !routeHost) {
+    throw new Error("Only IPv4 host routes are allowed");
+  }
+  const records = readRouteRecords();
+  const previousIps = records
+    .filter((record) => record.host.toLowerCase() === routeHost.toLowerCase())
+    .map((record) => record.ip);
+  const routeGet = await replaceRoute(canonical);
+  const next = records.filter((record) => record.host.toLowerCase() !== routeHost.toLowerCase());
+  next.push({ ip: canonical, host: routeHost });
+  for (const old of new Set(previousIps)) {
+    if (old === canonical || next.some((record) => record.ip === old)) continue;
+    await deleteHostRoute(old);
+  }
+  writeRouteRecords(next);
+  return { ip: canonical, routeGet };
 }
 
 async function removeRoute(ip) {
-  if (!isIpv4(ip)) {
+  const canonical = canonicalIpv4(ip);
+  if (!canonical) {
     throw new Error("Only IPv4 host routes are allowed");
   }
-  await run("ip", ["route", "del", `${ip}/32`, "dev", IFACE]).catch(() => {});
-  writeRoutes(readRoutes().filter((route) => route !== ip));
-  return { ip };
+  await deleteHostRoute(canonical);
+  writeRouteRecords(readRouteRecords().filter((record) => record.ip !== canonical));
+  return { ip: canonical };
 }
 
-async function syncRoutes(ips) {
-  if (!Array.isArray(ips) || ips.some((ip) => !isIpv4(ip))) {
-    throw new Error("Only IPv4 host routes are allowed");
-  }
-  const desired = [...new Set(ips)];
-  for (const ip of desired) {
-    await assertRouteAllowed(ip);
-  }
-  const current = readRoutes();
-  for (const ip of current) {
-    if (!desired.includes(ip)) {
-      await run("ip", ["route", "del", `${ip}/32`, "dev", IFACE]).catch(() => {});
+async function dropHost(host) {
+  const routeHost = validRouteHost(host);
+  if (!routeHost) throw new Error("AmneziaWG host is invalid");
+  writeRouteRecords(
+    readRouteRecords().filter((record) => record.host.toLowerCase() !== routeHost.toLowerCase()),
+  );
+  return { host: routeHost };
+}
+
+async function syncRoutes(routes) {
+  if (!Array.isArray(routes)) throw new Error("Only IPv4 host routes are allowed");
+  const desired = [];
+  const seenHosts = new Set();
+  const seenBare = new Set();
+  for (const route of routes) {
+    const ip = canonicalIpv4(route?.ip);
+    const hostText = String(route?.host ?? "").trim();
+    if (!ip) throw new Error("Only IPv4 host routes are allowed");
+    if (hostText && !validRouteHost(hostText)) throw new Error("AmneziaWG host is invalid");
+    const hostKey = hostText.toLowerCase();
+    if (hostKey) {
+      if (seenHosts.has(hostKey)) continue;
+      seenHosts.add(hostKey);
+    } else if (seenBare.has(ip)) {
+      continue;
+    } else {
+      seenBare.add(ip);
     }
+    desired.push({ ip, host: hostText });
   }
-  const routeGets = [];
-  for (const ip of desired) {
-    routeGets.push({ ip, routeGet: await replaceRoute(ip) });
+  const desiredIps = new Set(desired.map((route) => route.ip));
+  const kernel = (await interfaceUp()) ? kernelHostIps(await readKernelDump()) : [];
+  const toInstall = [...desiredIps].filter((ip) => !kernel.includes(ip));
+  for (const address of toInstall) {
+    await assertRouteAllowed(address);
   }
-  writeRoutes(desired);
-  return { routes: routeGets };
+  for (const address of kernel) {
+    if (!desiredIps.has(address)) await deleteHostRoute(address);
+  }
+  for (const address of toInstall) {
+    await replaceRoute(address);
+  }
+  writeRouteRecords(desired);
+  return { routes: desired };
+}
+
+async function listRoutes() {
+  const up = await interfaceUp();
+  const records = readRouteRecords();
+  if (!up) return { up: false, kernel: [], records };
+  let kernel;
+  try {
+    kernel = await readKernelDump();
+  } catch {
+    throw new Error("AmneziaWG route list failed");
+  }
+  return { up: true, kernel, records };
 }
 
 async function handle(message) {
@@ -432,9 +538,11 @@ async function handle(message) {
     lastError = "";
     return { up: false };
   }
-  if (command === "ensure-route") return ensureRoute(message.ip);
+  if (command === "routes") return listRoutes();
+  if (command === "ensure-route") return ensureRoute(message.ip, message.host);
   if (command === "remove-route") return removeRoute(message.ip);
-  if (command === "sync-routes") return syncRoutes(message.ips);
+  if (command === "drop-host") return dropHost(message.host);
+  if (command === "sync-routes") return syncRoutes(message.routes);
   throw new Error("Unknown AmneziaWG helper command");
 }
 

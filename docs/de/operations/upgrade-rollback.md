@@ -25,7 +25,7 @@ Verifizieren:
 
 Beim Upgrade von vor v0.9.0 sicherstellen, dass Migrate abgeschlossen ist — Legacy-Inventar-Daten bereinigt.
 
-Image pinnen: `GHCR_IMAGE_TAG=v0.9.24` in `.env`.
+Image pinnen: `GHCR_IMAGE_TAG=v0.9.25` in `.env`.
 
 v0.9.18: optionales AmneziaWG nur für markierte Knoten. Container mit `NET_ADMIN` und `/dev/net/tun` neu erstellen. Die Standardroute bleibt direkt.
 
@@ -38,6 +38,8 @@ v0.9.22: UFW-Sync eines AmneziaWG-Knotens läuft durch den Tunnel.
 v0.9.23: Ein AmneziaWG-Knoten bleibt erreichbar, wenn seine /32-Route schon steht.
 
 v0.9.24: Serverzeilen in der Seitenleiste nutzen dieselben blauen und roten Flächen wie die Dashboard-Karten.
+
+v0.9.25: Die AmneziaWG-Seite zeigt die Knoten im Tunnel und kann ihre /32-Route entfernen.
 
 ## Rollback
 

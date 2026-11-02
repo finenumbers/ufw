@@ -1,6 +1,6 @@
 # Arquitectura
 
-Esta página describe cómo está construido UFW Remote Manager, cómo fluyen los datos y dónde residen los secretos. Versión **v0.9.2**.
+Esta página describe cómo está construido UFW Remote Manager, cómo fluyen los datos y dónde residen los secretos. Versión **v0.9.25**.
 
 ![Topología de despliegue](../assets/architecture-topology.svg)
 

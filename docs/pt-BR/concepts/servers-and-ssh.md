@@ -15,6 +15,10 @@ Antes de salvar, o app valida o host de destino:
 
 A resolução DNS é validada quando aplicável para que erros de digitação falhem cedo.
 
+## AmneziaWG
+
+A página AmneziaWG lista os nós que passam pelo túnel e as rotas /32 instaladas em `awg0`. Remover um nó apaga essa escolha e a rota do host sem nova verificação SSH. O nó continua no inventário. As conexões seguintes usam a rota normal, então um endereço que existe só na VPN pode ficar inacessível. Endereços privados continuam recusados no caminho direto, a menos que a política SSH os permita. A caixa no formulário do nó ainda verifica a chave de host salva.
+
 ## Verificação de conexão
 
 **Criar servidor** e **Editar servidor** (quando host, porta ou identidade mudam) executam teste de conexão SSH automaticamente. Não há botão separado *Testar conexão* no formulário de edição.

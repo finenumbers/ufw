@@ -417,6 +417,32 @@
     "connect": "Conectar",
     "disconnect": "Desconectar",
     "delete": "Excluir configuração",
-    "helperNote": "O túnel roda dentro do contêiner do aplicativo e não é a rota padrão."
+    "helperNote": "O túnel roda dentro do contêiner do aplicativo e não é a rota padrão.",
+    "routes": {
+      "title": "Nós no túnel",
+      "description": "Estes nós passam pelo AmneziaWG. Remover um apaga a rota /32 e mantém o nó no inventário.",
+      "empty": "Nenhum nó usa o túnel.",
+      "name": "Nome",
+      "host": "Host",
+      "port": "Porta",
+      "ip": "Rota",
+      "installed": "Roteado",
+      "notInstalled": "Sem rota",
+      "tunnelDown": "O túnel está desligado. Estes nós voltam a ser roteados na próxima conexão.",
+      "otherInstance": "Outra instância segura o túnel, então as rotas não mudam aqui.",
+      "helperError": "Não foi possível ler a tabela de rotas.",
+      "remove": "Remover do túnel",
+      "working": "Executando...",
+      "confirmTitle": "Remover do AmneziaWG",
+      "confirmBody": "{name} ({host}) sai do túnel. O nó continua no inventário.",
+      "confirmSiblings": "{names} também usam este host. Eles saem do túnel juntos.",
+      "confirmDirect": "Depois, SSH, ping e varredura de portas usam a rota normal. Um endereço que existe só na VPN pode ficar inacessível pelo painel.",
+      "confirmShared": "A /32 permanece porque {names} ainda usam este endereço.",
+      "orphanTitle": "Rota sem nó",
+      "orphanRemove": "Excluir rota",
+      "orphanConfirmTitle": "Excluir esta rota",
+      "orphanConfirmBody": "{ip} será removido de awg0. Nenhum nó do inventário o usa.",
+      "routeKept": "O nó saiu do túnel. O endereço continua roteado para outro nó."
+    }
   }
 }

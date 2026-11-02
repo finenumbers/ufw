@@ -417,6 +417,32 @@
     "connect": "Connecter",
     "disconnect": "Déconnecter",
     "delete": "Supprimer la configuration",
-    "helperNote": "Le tunnel tourne dans le conteneur de l'application et n'est pas la route par défaut."
+    "helperNote": "Le tunnel tourne dans le conteneur de l'application et n'est pas la route par défaut.",
+    "routes": {
+      "title": "Nœuds dans le tunnel",
+      "description": "Ces nœuds passent par AmneziaWG. Retirer un nœud supprime sa route /32 et le laisse dans l'inventaire.",
+      "empty": "Aucun nœud n'utilise le tunnel.",
+      "name": "Nom",
+      "host": "Hôte",
+      "port": "Port",
+      "ip": "Route",
+      "installed": "Routé",
+      "notInstalled": "Pas de route",
+      "tunnelDown": "Le tunnel est arrêté. Ces nœuds seront routés à la prochaine connexion.",
+      "otherInstance": "Une autre instance détient le tunnel : les routes ne se changent pas ici.",
+      "helperError": "La table de routage n'a pas pu être lue.",
+      "remove": "Retirer du tunnel",
+      "working": "En cours...",
+      "confirmTitle": "Retirer d'AmneziaWG",
+      "confirmBody": "{name} ({host}) quitte le tunnel. Le nœud reste dans l'inventaire.",
+      "confirmSiblings": "{names} utilisent aussi cet hôte. Ils quittent le tunnel ensemble.",
+      "confirmDirect": "SSH, ping et scan de ports passent ensuite par la route normale. Une adresse qui n'existe que dans le VPN peut devenir injoignable depuis le panneau.",
+      "confirmShared": "La route /32 reste, car {names} utilisent encore cette adresse.",
+      "orphanTitle": "Route sans nœud",
+      "orphanRemove": "Supprimer la route",
+      "orphanConfirmTitle": "Supprimer cette route",
+      "orphanConfirmBody": "{ip} sera retirée de awg0. Aucun nœud de l'inventaire ne l'utilise.",
+      "routeKept": "Le nœud a quitté le tunnel. L'adresse reste routée pour un autre nœud."
+    }
   }
 }

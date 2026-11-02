@@ -417,6 +417,32 @@
     "connect": "Connetti",
     "disconnect": "Disconnetti",
     "delete": "Elimina configurazione",
-    "helperNote": "Il tunnel gira nel contenitore dell'applicazione e non è la rotta predefinita."
+    "helperNote": "Il tunnel gira nel contenitore dell'applicazione e non è la rotta predefinita.",
+    "routes": {
+      "title": "Nodi nel tunnel",
+      "description": "Questi nodi passano da AmneziaWG. Rimuoverne uno cancella la /32 e lascia il nodo nell'inventario.",
+      "empty": "Nessun nodo usa il tunnel.",
+      "name": "Nome",
+      "host": "Host",
+      "port": "Porta",
+      "ip": "Rotta",
+      "installed": "Instradato",
+      "notInstalled": "Nessuna rotta",
+      "tunnelDown": "Il tunnel è spento. Questi nodi verranno instradati alla prossima connessione.",
+      "otherInstance": "Un'altra istanza tiene il tunnel: le rotte non si cambiano da qui.",
+      "helperError": "Impossibile leggere la tabella di routing.",
+      "remove": "Togli dal tunnel",
+      "working": "In corso...",
+      "confirmTitle": "Togli da AmneziaWG",
+      "confirmBody": "{name} ({host}) esce dal tunnel. Il nodo resta nell'inventario.",
+      "confirmSiblings": "Lo stesso host è usato anche da {names}. Escono dal tunnel insieme.",
+      "confirmDirect": "Poi SSH, ping e port scan usano la rotta normale. Un indirizzo che esiste solo nella VPN può diventare irraggiungibile dal pannello.",
+      "confirmShared": "La /32 resta perché {names} usano ancora questo indirizzo.",
+      "orphanTitle": "Rotta senza nodo",
+      "orphanRemove": "Elimina rotta",
+      "orphanConfirmTitle": "Elimina questa rotta",
+      "orphanConfirmBody": "{ip} sarà tolta da awg0. Nessun nodo dell'inventario la usa.",
+      "routeKept": "Il nodo ha lasciato il tunnel. L'indirizzo resta instradato per un altro nodo."
+    }
   }
 }

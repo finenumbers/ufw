@@ -15,6 +15,10 @@ Avant l'enregistrement, l'application valide l'hôte cible :
 
 La résolution DNS est validée le cas échéant pour que les fautes de frappe échouent tôt.
 
+## AmneziaWG
+
+La page AmneziaWG liste les nœuds qui passent par le tunnel et les routes /32 installées sur `awg0`. Retirer un nœud enlève ce choix et sa route hôte sans nouveau contrôle SSH. Le nœud reste dans l'inventaire. Les connexions suivantes utilisent la route normale, donc une adresse qui n'existe que dans le VPN peut devenir injoignable. Les adresses privées restent refusées sur le chemin direct, sauf si la politique SSH les autorise. La case du formulaire du nœud vérifie toujours la clé hôte enregistrée.
+
 ## Vérification de connexion
 
 **Créer le serveur** et **Modifier le serveur** (lorsque l'hôte, le port ou l'identité changent) exécutent automatiquement un test de connexion SSH. Il n'y a pas de bouton *Tester la connexion* séparé sur le formulaire de modification.

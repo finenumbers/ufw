@@ -105,6 +105,11 @@ async function refresh(): Promise<void> {
             }
             try {
               const outcome = await awgGate.shared(async () => {
+                const still = await db.server.findFirst({
+                  where: { host: { equals: host, mode: "insensitive" }, useAwg: true },
+                  select: { id: true },
+                });
+                if (!still) return probeAddress(host);
                 const ip = await steerAwgDestinationUnlocked(host);
                 return probeAddress(ip);
               });

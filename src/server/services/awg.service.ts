@@ -2,6 +2,12 @@ import { decryptUtf8, encryptUtf8 } from "@/lib/crypto";
 import { db } from "@/lib/db";
 import { awgGate } from "@/lib/awg/gate";
 import { parseAmneziaWgConf, type SanitizedAwgConfig } from "@/lib/awg/parse-conf";
+import { canonicalIpv4 } from "@/lib/awg/policy";
+import {
+  normalizeRouteRecords,
+  parseKernelRoutes,
+  planReconcile,
+} from "@/lib/awg/route-plan";
 import { createChildLogger } from "@/lib/logger";
 import { createAuditEvent } from "@/server/services/audit.service";
 import {
@@ -267,24 +273,47 @@ export async function reconcileAwgRoutesUnlocked(): Promise<void> {
     where: { useAwg: true },
     select: { host: true },
   });
-  const hosts = new Map<string, string>();
+  const hosts: string[] = [];
+  const seen = new Set<string>();
   for (const server of servers) {
-    hosts.set(server.host.toLowerCase(), server.host);
+    const key = server.host.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    hosts.push(server.host);
   }
 
-  const ips: string[] = [];
-  for (const host of hosts.values()) {
+  let listed: { up: boolean; kernel: unknown; records: { ip: string; host: string }[] };
+  try {
+    listed = await awgHelperRequest({ cmd: "routes" }, 8000);
+  } catch (error) {
+    log.warn(
+      { error: error instanceof Error ? error.message : String(error) },
+      "Skipped AmneziaWG route sync because the helper did not answer",
+    );
+    return;
+  }
+  if (!listed.up) return;
+
+  const resolvedByHost = new Map<string, string | null>();
+  for (const host of hosts) {
     try {
-      ips.push(await resolveAwgIp(host, row));
+      resolvedByHost.set(host.toLowerCase(), canonicalIpv4(await resolveAwgIp(host, row)));
     } catch (error) {
       log.warn(
         { host, error: error instanceof Error ? error.message : String(error) },
         "Skipped AmneziaWG route",
       );
+      resolvedByHost.set(host.toLowerCase(), null);
     }
   }
 
-  await awgHelperRequest({ cmd: "sync-routes", ips });
+  const planned = planReconcile({
+    hosts,
+    records: normalizeRouteRecords(listed.records),
+    kernelIps: parseKernelRoutes(listed.kernel),
+    resolvedByHost,
+  });
+  await awgHelperRequest({ cmd: "sync-routes", routes: planned.records });
 }
 
 export async function restoreAwgOnStartup(): Promise<void> {

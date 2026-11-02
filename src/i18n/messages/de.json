@@ -417,6 +417,32 @@
     "connect": "Verbinden",
     "disconnect": "Trennen",
     "delete": "Konfiguration löschen",
-    "helperNote": "Der Tunnel läuft im App-Container und ist nicht die Standardroute."
+    "helperNote": "Der Tunnel läuft im App-Container und ist nicht die Standardroute.",
+    "routes": {
+      "title": "Knoten im Tunnel",
+      "description": "Diese Knoten werden über AmneziaWG erreicht. Das Entfernen löscht die /32 und lässt den Knoten im Bestand.",
+      "empty": "Kein Knoten nutzt den Tunnel.",
+      "name": "Name",
+      "host": "Host",
+      "port": "Port",
+      "ip": "Route",
+      "installed": "Geroutet",
+      "notInstalled": "Keine Route",
+      "tunnelDown": "Der Tunnel ist aus. Diese Knoten werden beim nächsten Verbinden wieder geroutet.",
+      "otherInstance": "Eine andere Instanz hält den Tunnel, Routen lassen sich hier nicht ändern.",
+      "helperError": "Die Routentabelle konnte nicht gelesen werden.",
+      "remove": "Aus dem Tunnel nehmen",
+      "working": "Wird ausgeführt...",
+      "confirmTitle": "Aus AmneziaWG nehmen",
+      "confirmBody": "{name} ({host}) verlässt den Tunnel. Der Knoten bleibt im Bestand.",
+      "confirmSiblings": "Denselben Host nutzen auch {names}. Sie verlassen den Tunnel zusammen.",
+      "confirmDirect": "SSH, Ping und Portscan laufen danach über die normale Route. Eine Adresse, die es nur im VPN gibt, kann aus dem Panel unerreichbar werden.",
+      "confirmShared": "Die /32 bleibt, weil {names} diese Adresse weiter nutzen.",
+      "orphanTitle": "Route ohne Knoten",
+      "orphanRemove": "Route löschen",
+      "orphanConfirmTitle": "Diese Route löschen",
+      "orphanConfirmBody": "{ip} wird von awg0 entfernt. Kein Knoten im Bestand nutzt sie.",
+      "routeKept": "Der Knoten hat den Tunnel verlassen. Die Adresse bleibt für einen anderen Knoten geroutet."
+    }
   }
 }

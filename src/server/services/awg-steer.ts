@@ -30,6 +30,7 @@ export async function steerAwgDestinationUnlocked(host: string): Promise<string>
   const ensured = await awgHelperRequest<{ ip: string; routeGet: string }>({
     cmd: "ensure-route",
     ip,
+    host: host.trim(),
   });
   assertAwgConnectAllowed(status.up, ensured.routeGet);
   return ip;

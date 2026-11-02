@@ -14,6 +14,22 @@ import { collectInterfaceOptions, loadNetworkInterfaces } from "@/lib/ssh/interf
 import type { UfwDetectionResult } from "@/types/ufw";
 import { getServerSshConfig } from "@/server/services/server.service";
 
+const AWG_ROUTE_REMOVED = "AmneziaWG route was removed for this node";
+
+async function steeredSshTarget(serverId: string): Promise<{
+  host: string;
+  config: Awaited<ReturnType<typeof getServerSshConfig>>;
+}> {
+  const fresh = await getServerSshConfig(serverId);
+  if (!fresh.useAwg) {
+    throw new Error(AWG_ROUTE_REMOVED);
+  }
+  return {
+    host: await steerAwgDestinationUnlocked(fresh.host),
+    config: fresh,
+  };
+}
+
 export async function runSshForServer<T>(
   serverId: string,
   fn: (
@@ -27,27 +43,27 @@ export async function runSshForServer<T>(
     async () => {
       const config = await getServerSshConfig(serverId);
       const connect = async () => {
-        const connectHost = config.useAwg
-          ? await steerAwgDestinationUnlocked(config.host)
-          : config.host;
+        const steered = config.useAwg ? await steeredSshTarget(serverId) : null;
+        const active = steered?.config ?? config;
+        const connectHost = steered?.host ?? config.host;
         const { result, hostKeyFingerprint } = await withSshConnection(
           {
             host: connectHost,
-            port: config.port,
-            username: config.username,
-            password: config.privateKey ? undefined : config.password,
-            privateKey: config.privateKey,
-            passphrase: config.passphrase,
-            expectedHostKeyFingerprint: config.expectedHostKeyFingerprint,
-            pinnedHost: config.useAwg,
+            port: active.port,
+            username: active.username,
+            password: active.privateKey ? undefined : active.password,
+            privateKey: active.privateKey,
+            passphrase: active.passphrase,
+            expectedHostKeyFingerprint: active.expectedHostKeyFingerprint,
+            pinnedHost: active.useAwg,
           },
-          (client) => fn(client, config),
+          (client) => fn(client, active),
         );
 
         await persistDiscoveredHostKey(
           serverId,
           hostKeyFingerprint,
-          config.expectedHostKeyFingerprint,
+          active.expectedHostKeyFingerprint,
         );
 
         return result;
@@ -102,23 +118,27 @@ async function persistDiscoveredHostKey(
 export async function detectUfwStateWithoutQueue(serverId: string): Promise<UfwDetectionResult> {
   const config = await getServerSshConfig(serverId);
   const connect = async () => {
-    const connectHost = config.useAwg
-      ? await steerAwgDestinationUnlocked(config.host)
-      : config.host;
+    const steered = config.useAwg ? await steeredSshTarget(serverId) : null;
+    const active = steered?.config ?? config;
+    const connectHost = steered?.host ?? config.host;
     const { result, hostKeyFingerprint } = await withSshConnection(
       {
         host: connectHost,
-        port: config.port,
-        username: config.username,
-        password: config.privateKey ? undefined : config.password,
-        privateKey: config.privateKey,
-        passphrase: config.passphrase,
-        expectedHostKeyFingerprint: config.expectedHostKeyFingerprint,
-        pinnedHost: config.useAwg,
+        port: active.port,
+        username: active.username,
+        password: active.privateKey ? undefined : active.password,
+        privateKey: active.privateKey,
+        passphrase: active.passphrase,
+        expectedHostKeyFingerprint: active.expectedHostKeyFingerprint,
+        pinnedHost: active.useAwg,
       },
-      (client) => loadDetectionFromClient(client, config.password),
+      (client) => loadDetectionFromClient(client, active.password),
     );
-    await persistDiscoveredHostKey(serverId, hostKeyFingerprint, config.expectedHostKeyFingerprint);
+    await persistDiscoveredHostKey(
+      serverId,
+      hostKeyFingerprint,
+      active.expectedHostKeyFingerprint,
+    );
     return result;
   };
 

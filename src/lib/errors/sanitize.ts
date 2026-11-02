@@ -7,6 +7,7 @@ export function sanitizeSshClientError(error: unknown): string {
   log.warn({ err: message }, "SSH client error");
 
   if (
+    message.startsWith("AmneziaWG") ||
     message.startsWith("Host ") ||
     message.startsWith("Resolved IP ") ||
     message.startsWith("Docker host alias ")

@@ -250,7 +250,16 @@ async function runPortScanPipeline(scanId: string, tracker: OperationTracker): P
     };
 
     const probed = scan.server.useAwg
-      ? await awgGate.shared(async () => probe(await steerAwgDestinationUnlocked(scan.server.host)))
+      ? await awgGate.shared(async () => {
+          const fresh = await db.server.findUnique({
+            where: { id: scan.serverId },
+            select: { useAwg: true, host: true },
+          });
+          if (!fresh?.useAwg) {
+            throw new Error("AmneziaWG route was removed for this node");
+          }
+          return probe(await steerAwgDestinationUnlocked(fresh.host));
+        })
       : await probe((await resolveScanTarget(scan.server.host)).ip);
     const { discovery, enrichment } = probed;
 

@@ -3,6 +3,13 @@ import test from "node:test";
 
 import { sanitizeSshClientError } from "@/lib/errors/sanitize";
 
+test("sanitizeSshClientError keeps an AmneziaWG removal message", () => {
+  assert.equal(
+    sanitizeSshClientError(new Error("AmneziaWG route was removed for this node")),
+    "AmneziaWG route was removed for this node",
+  );
+});
+
 test("sanitizeSshClientError keeps host validation messages", () => {
   assert.equal(
     sanitizeSshClientError(new Error("Host is not allowed")),

@@ -417,6 +417,32 @@
     "connect": "Conectar",
     "disconnect": "Desconectar",
     "delete": "Eliminar configuración",
-    "helperNote": "El túnel funciona dentro del contenedor de la aplicación y no es la ruta predeterminada."
+    "helperNote": "El túnel funciona dentro del contenedor de la aplicación y no es la ruta predeterminada.",
+    "routes": {
+      "title": "Nodos en el túnel",
+      "description": "Estos nodos se alcanzan por AmneziaWG. Quitar uno elimina su /32 y deja el nodo en el inventario.",
+      "empty": "Ningún nodo usa el túnel.",
+      "name": "Nombre",
+      "host": "Host",
+      "port": "Puerto",
+      "ip": "Ruta",
+      "installed": "Enrutado",
+      "notInstalled": "Sin ruta",
+      "tunnelDown": "El túnel está apagado. Estos nodos volverán a enrutarse al conectar.",
+      "otherInstance": "Otra instancia tiene el túnel, así que aquí no se cambian las rutas.",
+      "helperError": "No se pudo leer la tabla de rutas.",
+      "remove": "Quitar del túnel",
+      "working": "Trabajando...",
+      "confirmTitle": "Quitar de AmneziaWG",
+      "confirmBody": "{name} ({host}) saldrá del túnel. El nodo sigue en el inventario.",
+      "confirmSiblings": "{names} usan el mismo host. Salen del túnel juntos.",
+      "confirmDirect": "Después, SSH, ping y el escaneo de puertos usan la ruta normal. Una dirección que solo existe en la VPN puede dejar de alcanzarse desde el panel.",
+      "confirmShared": "La /32 se queda porque {names} siguen usando esta dirección.",
+      "orphanTitle": "Ruta sin nodo",
+      "orphanRemove": "Eliminar ruta",
+      "orphanConfirmTitle": "Eliminar esta ruta",
+      "orphanConfirmBody": "{ip} se quitará de awg0. Ningún nodo del inventario la usa.",
+      "routeKept": "El nodo salió del túnel. La dirección sigue enrutada para otro nodo."
+    }
   }
 }

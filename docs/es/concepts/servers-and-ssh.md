@@ -15,6 +15,10 @@ Antes de guardar, la app valida el host destino:
 
 La resolución DNS se valida cuando corresponde para detectar errores tipográficos pronto.
 
+## AmneziaWG
+
+La página AmneziaWG lista los nodos que van por el túnel y las rutas /32 instaladas en `awg0`. Quitar un nodo borra esa elección y su ruta de host sin otra comprobación SSH. El nodo sigue en el inventario. Las conexiones siguientes usan la ruta normal, así que una dirección que solo existe en la VPN puede dejar de alcanzarse. Las direcciones privadas siguen rechazadas en el camino directo, salvo que la política SSH las permita. La casilla del formulario del nodo sigue comprobando la clave host guardada.
+
 ## Verificación de conexión
 
 **Crear servidor** y **Editar servidor** (cuando cambian host, puerto o identidad) ejecutan una prueba de conexión SSH automáticamente. No hay botón separado *Probar conexión* en el formulario de edición.

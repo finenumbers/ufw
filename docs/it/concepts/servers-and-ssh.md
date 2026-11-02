@@ -15,6 +15,10 @@ Prima del salvataggio, l'app valida l'host target:
 
 La risoluzione DNS è validata dove applicabile così gli errori di battitura falliscono presto.
 
+## AmneziaWG
+
+La pagina AmneziaWG elenca i nodi che passano dal tunnel e le rotte /32 installate su `awg0`. Rimuovere un nodo cancella quella scelta e la sua rotta host senza un nuovo controllo SSH. Il nodo resta nell'inventario. I collegamenti successivi usano la rotta normale, quindi un indirizzo che esiste solo nella VPN può diventare irraggiungibile. Gli indirizzi privati restano rifiutati sul percorso diretto, salvo che la policy SSH li consenta. La casella nel modulo del nodo controlla ancora la chiave host salvata.
+
 ## Verifica connessione
 
 **Crea server** e **Modifica server** (quando host, porta o identità cambiano) eseguono automaticamente un test di connessione SSH. Non esiste un pulsante separato *Test connessione* nel modulo di modifica.
